@@ -15,6 +15,13 @@ import lib.core as CORE
 def optParse(globs):
 # This function handles the command line options and prepares the output directory and files.
 # Defaults are set in params.py
+    try:
+        import psutil
+        globs['psutil'] = True;
+    except:
+        globs['psutil'] = False;
+    # Check if psutil is installed for memory usage stats.
+
     parser = argparse.ArgumentParser(description="degenotate: Annotation of codon degeneracy for coding sequences");
 
     parser.add_argument("-a", dest="annotation_file", help="A gff or gtf file that contains the coordinates of transcripts in the provided genome file (-g). Only one of -a/-g OR -s is REQUIRED.", default=False);
@@ -70,6 +77,16 @@ def optParse(globs):
             CORE.errorOut("OP2", "A genome fasta file be specified with -g when an annotation file is given with -g", globs);
         globs['gxf-file'] = args.annotation_file;
         globs['fa-file'] = args.genome_file;
+
+        if any(globs['gxf-file'].endswith(gff_ext) for gff_ext in ['.gff', '.gff.gz', '.gff3', '.gff3.gz']):
+            globs['gxf-type'] = 'gff';
+        elif any(globs['gxf-file'].endswith(gtf_ext) for gtf_ext in ['.gtf', '.gtf.gz']):
+            globs['gxf-type'] = 'gtf';
+        else:
+            CORE.errorOut("OP3", "Cannot guess annotation file type from extension. Make sure it ends with '.gff' or '.gtf'.", globs);
+        # Guess whether the input annotation file is GFF or GTF from the file extension
+        # TODO: Can probably do this better, or let the user specify an option
+
     elif args.in_seq:
         globs['in-seq'] = args.in_seq;
         if os.path.isfile(globs['in-seq']):
@@ -88,7 +105,7 @@ def optParse(globs):
         globs['outdir'] = args.out_dest;
 
     if not globs['overwrite'] and os.path.exists(globs['outdir']):
-        CORE.errorOut("OP9", "Output directory already exists: " + globs['outdir'] + ". Specify new directory name OR set --overwrite to overwrite all files in that directory.", globs);
+        CORE.errorOut("OP4", "Output directory already exists: " + globs['outdir'] + ". Specify new directory name OR set --overwrite to overwrite all files in that directory.", globs);
 
     if not os.path.isdir(globs['outdir']) and not globs['norun'] and not globs['info']:
         os.makedirs(globs['outdir']);
@@ -106,6 +123,10 @@ def optParse(globs):
     #globs['scf-pool'] = mp.Pool(processes=globs['num-procs']);
     # Create the pool of processes for sCF calculation here so we copy the memory profile of the parent process
     # before we've read any large data in
+
+    if globs['psutil']:
+        globs['pids'] = [psutil.Process(os.getpid())];
+    # Get the starting process ids to calculate memory usage throughout.
 
     startProg(globs);
     # After all the essential options have been set, call the welcome function.
@@ -141,6 +162,7 @@ def startProg(globs):
 
     if globs['gxf-file']:
         CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Annotation file:", pad) + globs['gxf-file']);
+        CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Annotation file type (guessed from extension):", pad) + globs['gxf-type']);
         CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Genome file:", pad) + globs['fa-file']);
     elif globs['in-seq']:
         CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Sequence " + globs['in-seq-type'] + ":", pad) + globs['in-seq']);

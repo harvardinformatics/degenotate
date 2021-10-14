@@ -32,6 +32,7 @@ def init():
 
         'gxf-file' : False,
         'fa-file' : False,
+        'gxf-type' : False,
         # Input with annotation file and genome file
 
         'in-seq' : False,
@@ -52,10 +53,8 @@ def init():
         'overwrite' : False,
         # I/O options
 
-        'in-seqs' : {},
-        'in-bed' : {},
-        'alns' : {},
-        'aln-stats' : {},
+        'genome-seqs' : {},
+        'cds-seqs' : {},
         # Sequence variables
 
         'num-procs' : 1,

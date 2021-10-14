@@ -4,7 +4,7 @@
 # genome. This is the main interface.
 #
 # Gregg Thomas
-# Summer 2021
+# Fall 2021
 #############################################################################
 
 import sys
@@ -13,10 +13,10 @@ import lib.core as CORE
 import lib.params as params
 import lib.opt_parse as OP
 import lib.gxf as gxf
-# import lib.seq as SEQ
-# import lib.tree as TREE
+import lib.seq as SEQ
+# import lib.degen as degen
 # import lib.output as OUT
-# import lib.batch as BATCH
+## TODO: Commented libaries need to be created
 
 #############################################################################
 
@@ -55,12 +55,32 @@ if __name__ == '__main__':
     step_start_time = CORE.report_step(globs, "", "", "", start=True);
     # Initialize the step headers
 
-    # if globs['gxf-file']:
-    #    globs = gxf.read(globs);
+    if globs['gxf-file']:
+        globs = gxf.read(globs);
+        # Read the features from the annotation file
 
-    # globs = SEQ.read(globs);
-    # # Library to read input sequences
+        globs = SEQ.readGenome(globs);
+        # Read the full sequence from the input genome
 
+        globs = SEQ.extractCDS(globs);
+        # Extract the coding sequences based on the annotation and the genome sequences
+
+        step = "Removing genome sequence from memory";
+        step_start_time = CORE.report_step(globs, step, False, "In progress...");
+        del(globs['genome-seqs']);
+        step_start_time = CORE.report_step(globs, step, step_start_time, "Success");
+        # Free up the memory from the whole genome sequence since we don't need it anymore
+    
+    # else:
+    #     globs = SEQ.readCDS(globs);
+    #     # Read the individual coding sequences         
+    ## TODO: Function to read sequences from file(s)
+
+    # globs = degen.lookup(globs)
+    ## TODO: Function to loop through loci and lookup degeneracy in codon table. NEED TO CREATE DEGEN LIBRARY
+    
+    # globs = OUT.writeDegen(globs);
+    ## TODO: Function to write output. NEED TO CREATE OUTPUT LIBRARY
 
     CORE.endProg(globs);
 
