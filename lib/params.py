@@ -1,6 +1,6 @@
 #############################################################################
 # This file holds some global variables for some of the input options.
-# These global parameters should be read only -- they are not modified anywhere 
+# These global parameters should be read only -- they are not modified anywhere
 # else in the code except when reading the input options.
 #
 # This dictionary will also be used to track output.
@@ -56,6 +56,12 @@ def init():
         'genome-seqs' : {},
         'cds-seqs' : {},
         # Sequence variables
+
+        'degeneracy' : {},
+        # Degeneracy output
+
+        'annotation' : {},
+        # Annotation information
 
         'num-procs' : 1,
         # Number of processes to use

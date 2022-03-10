@@ -76,8 +76,7 @@ if __name__ == '__main__':
     #     # Read the individual coding sequences         
     ## TODO: Function to read sequences from file(s)
 
-    # globs = degen.lookup(globs)
-    ## TODO: Function to loop through loci and lookup degeneracy in codon table. NEED TO CREATE DEGEN LIBRARY
+    globs = degen.calcDegen(globs)
     
     # globs = OUT.writeDegen(globs);
     ## TODO: Function to write output. NEED TO CREATE OUTPUT LIBRARY
