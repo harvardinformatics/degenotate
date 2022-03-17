@@ -37,6 +37,7 @@ def optParse(globs):
     # User params
 
     parser.add_argument("--overwrite", dest="ow_flag", help="Set this to overwrite existing files.", action="store_true", default=False);
+    parser.add_argument("--appendlog", dest="append_log_flag", help="Set this to keep the old log file even if --overwrite is specified. New log information will instead be appended to the previous log file.", action="store_true", default=False);
     # User options
 
     parser.add_argument("--info", dest="info_flag", help="Print some meta information about the program and exit. No other options required.", action="store_true", default=False);
@@ -114,6 +115,12 @@ def optParse(globs):
     globs['run-name'] = os.path.basename(os.path.normpath(globs['outdir']));
     globs['logfilename'] = os.path.join(globs['outdir'], globs['run-name'] + ".log");
     # Log file
+
+    if not args.append_log_flag and not globs['norun']:
+        logfile = open(globs['logfilename'], "w");
+        logfile.write("");
+        logfile.close();
+    # Prep the logfile to be overwritten if --appendlog isn't specified
 
     if args.quiet_flag:
         globs['quiet'] = True;

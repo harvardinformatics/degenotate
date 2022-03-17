@@ -71,10 +71,9 @@ if __name__ == '__main__':
         step_start_time = CORE.report_step(globs, step, step_start_time, "Success");
         # Free up the memory from the whole genome sequence since we don't need it anymore
     
-    # else:
-    #     globs = SEQ.readCDS(globs);
-    #     # Read the individual coding sequences         
-    ## TODO: Function to read sequences from file(s)
+    else:
+        globs = SEQ.readCDS(globs);
+        # Read the individual coding sequences from input        
 
     step = "Caclulating degeneracy per transcript";
     step_start_time = CORE.report_step(globs, step, False, "In progress...");
