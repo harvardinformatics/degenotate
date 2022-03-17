@@ -11,15 +11,15 @@ from itertools import groupby
 
 ############################################################################# 
 
-def readFasta(filename, globs):
+def readFasta(filename, seq_compression):
 # Read a FASTA formatted sequence file
 # Great iterator and groupby code from: https://www.biostars.org/p/710/ 
 
-    if globs['seq-compression'] == "gz":
+    if seq_compression == "gz":
         file_stream = gzip.open(filename);
         fa_iter = (x[1] for x in groupby(file_stream, lambda line: line.decode()[0] == ">"));
         readstr = lambda s : s.decode().strip();
-    elif globs['seq-compression'] == "none":
+    elif seq_compression == "none":
         file_stream = open(filename); 
         fa_iter = (x[1] for x in groupby(file_stream, lambda line: line[0] == ">"));
         readstr = lambda s : s.strip();
@@ -72,7 +72,7 @@ def readGenome(globs):
 
     step = "Reading genome FASTA file";
     step_start_time = CORE.report_step(globs, step, False, "In progress...");
-    globs['genome-seqs'] = readFasta(globs['fa-file'], globs);
+    globs['genome-seqs'] = readFasta(globs['fa-file'], globs['seq-compression']);
     step_start_time = CORE.report_step(globs, step, step_start_time, "Success: " + str(len(globs['genome-seqs'])) + " seqs read");
     # Read the input sequence file
 
@@ -151,17 +151,20 @@ def extractCDS(globs):
     # step_start_time = CORE.report_step(globs, step, False, "In progress...");
     # written = 0;
 
-    # outdir = "test-data/mm10/cds/";
+    # outdir = "test-data/mm10/ensembl/cds/";
     # if not os.path.isdir(outdir):
     #     os.system("mkdir " + outdir);
 
     # for seq in globs['cds-seqs']:
     #     outfile = os.path.join(outdir, seq + ".fa");
     #     with open(outfile, "w") as of:
-    #         for header in globs['cds-seqs'][seq]:
-    #             of.write(">" + seq + "\n");
-    #             of.write(globs['cds-seqs'][seq] + "\n");
+    #         of.write(">" + seq + "\n");
+    #         of.write(globs['cds-seqs'][seq] + "\n");
     #     written += 1;
+
+    #     if written == 100:
+    #         break;
+
     # step_start_time = CORE.report_step(globs, step, step_start_time, "Success: " + str(written) + " sequences written");
     # # Chunk of code to write out the sequences in a concatenated file to individual files by locus -- for development
     # ###
@@ -172,15 +175,58 @@ def extractCDS(globs):
 
 def readCDS(globs):
     
+    step = "Reading CDS FASTA file(s)";
+    step_start_time = CORE.report_step(globs, step, False, "In progress...", full_update=True);
+
     if globs['in-seq-type'] == "directory":
         seq_files = [ f for f in os.listdir(globs['in-seq']) if any(f.endswith(fasta_ext) for fasta_ext in [".fa", ".fa.gz", ".fasta", ".fasta.gz", ".fna", ".fna.gz"]) ];
         ## TODO: Make sure these are all the plausible extensions.
         ## TODO: Add extension lists to globs so they aren't all typed out here?
-        ## TODO: Make sure seq_files isn't empty and error out if it is
+        ## NOTE: Do we even want to do this check?
     else:
-        seq_files = globs['in-seq'];
+        seq_files = [globs['in-seq']];
+    # Get a list of files from the input
+    # If the input is a directory, this will be all files in that directory
+    # If the input is a file, this will just be a list with only that file in it
 
-    ## TODO: Loop to call readFasta() on each file and save each sequence within the file to globs['cds-seqs']
-    ## TODO: Add checks to make sure each sequence is divisible by 3
+    if seq_files == []:
+        CORE.errorOut("SEQ2", "No files in the input have extensions indicating they are FASTA files.", globs);
+    # Makes sure some files have been read    
+
+    for seq_file in seq_files:
+        if globs['in-seq-type'] == "directory":
+            seq_file_path = os.path.join(globs['in-seq'], seq_file);
+        else:
+            seq_file_path = seq_file;
+        # For multiple input sequence files (directory), the path will be that directory and the current file
+
+        cur_seqs = readFasta(seq_file_path, CORE.detectCompression(seq_file_path));
+        # Read sequences in current file
+        # Not sure if it is necessary to do the compression detections for each file... seems to take a while
+
+        if len(cur_seqs) == 0:
+            CORE.printWrite(globs['logfilename'], globs['log-v'], "# WARNING: file " + seq_file + " doesn't appear to be FASTA formatted... skipping");
+            globs['warnings'] += 1;
+            continue;
+        # Check if we have actually read any sequence
+
+        for seq in cur_seqs:
+            if len(cur_seqs[seq]) % 3 != 0:
+                CORE.printWrite(globs['logfilename'], globs['log-v'], "# WARNING: sequence " + seq + " in file " + seq_file + " isn't in frame 1... skipping");
+                globs['warnings'] += 1;
+                continue;
+            # Check that the current sequence is in frame 1
+
+            globs['cds-seqs'][seq] = cur_seqs[seq];
+            # Add the current sequence to the global sequence dict
+
+    if not globs['cds-seqs']:
+       CORE.errorOut("SEQ3", "No FASTA sequences were read from input. Exiting.", globs); 
+    # If no sequences were read from the input, error out
+
+    step_start_time = CORE.report_step(globs, step, step_start_time, "Success: " + str(len(globs['cds-seqs'])) + " CDS read", full_update=True);
+    # Status update
+
+    return globs;
 
 #############################################################################

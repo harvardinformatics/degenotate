@@ -173,57 +173,111 @@ def spacedOut(string, totlen, sep=" "):
 
 #############################################################################
 
-def report_step(globs, step, step_start_time, step_status, start=False):
+def report_step(globs, step, step_start_time, step_status, start=False, full_update=False):
 # Uses psutil to gather memory and time info between steps and print them to the screen.
-    #log = logger(globs['logfilename']);
 
     dashes = 150
     if globs['psutil']:
         import psutil;
         dashes = 175;
+    # Determine the number of dashes to frame the update table depending on the presence of psutil
 
     cur_time = timeit.default_timer();
+    # The time at the start of the status update
+
     col_widths = [ 14, 10, 50, 40, 20, 16 ];
     if globs['psutil']:
-        col_widths += [25, 20];
+        col_widths += [18, 10];
+    # The column widths
+
     if start:
         headers = [ "# Date", "Time", "Current step", "Status", "Elapsed time (s)", "Step time (s)" ];
         if globs['psutil']:
-            headers += ["Current mem usage (MB)", "Virtual mem usage (MB)"]
+            headers += ["Current mem (MB)", "Virtual mem (MB)"]
+        # A list of the headers
 
         headers = "".join([ spacedOut(str(headers[i]), col_widths[i]) for i in range(len(headers)) ]);
+        # Converting the list to a string based on the column widths
 
         printWrite(globs['logfilename'], globs['log-v'], "# " + "-" * dashes);
         printWrite(globs['logfilename'], globs['log-v'], headers);
         printWrite(globs['logfilename'], globs['log-v'], "# " + "-" * dashes);
+        # Print the dashes and the headers
+    # The first call is just to print the headers
+
+    ##########
 
     else:
         prog_elapsed = str(round(cur_time - globs['starttime'], 5));
+        # Get the total amount of time that the program has been running
+
         if not step_start_time:
+        # If no step start time is given, then this is the first entry for this status
+        # update, that will display "In progress..." or similar.
+
             out_line = [ "# " + getDate(), getTime(), step, step_status ];
+            # The output for the initial status entry includes the date, time, step label, and progress message
+
             term_col_widths = col_widths[:4];
+            # Only get the first 4 column widths for the initial status entry
+
             out_line = [ spacedOut(str(out_line[i]), term_col_widths[i]) for i in range(len(out_line)) ];
-            sys.stdout.write("".join(out_line));
-            sys.stdout.flush();
+
+            if full_update:
+                out_line += "\n";
+            # For some status updates, intermediate info will be printed, in which case we add a newline here
+
+            if not globs['quiet']:
+                sys.stdout.write("".join(out_line));
+                sys.stdout.flush();
+            # Convert the output list to a string, write, and flush stdout
+
+        ## The initial status entry to display "In progress..."
+        #####
 
         else:
             step_elapsed = str(round(cur_time - step_start_time, 5));
+            # Get the full step time here
+
             out_line = [ step_status, prog_elapsed, step_elapsed ];
+            # Gather info for the full output line to print to screen
+
             if globs['psutil']:
                 mem = round(sum([p.memory_info()[0] for p in globs['pids']]) / float(2 ** 20), 5);
                 vmem = round(sum([p.memory_info()[1] for p in globs['pids']]) / float(2 ** 20), 5);
                 out_line += [str(mem), str(vmem)];
+            # If psutil is present, get current memory info
+
             term_col_widths = col_widths[3:];
+            # Get the column widths for the print to screen output
+
             file_line = [ "# " + getDate(), getTime(), step ] + out_line;
             file_col_widths = col_widths[:3] + [30] + col_widths[4:];
+            # For output to the file, we write the whole line each time
+            # Add the initial entry fields here
+            # This will also be used for some status updates where the whole message needs to be printed
+            # to the screen
             
             out_line = [ spacedOut(str(out_line[i]), term_col_widths[i]) for i in range(len(out_line)) ];
-            sys.stdout.write("\b" * 40);
-            sys.stdout.write("".join(out_line) + "\n");
-            sys.stdout.flush();
-            #print(file_col_widths);
             file_line = [ spacedOut(str(file_line[i]), col_widths[i]) for i in range(len(file_line)) ];
-            printWrite(globs['logfilename'], 3, "".join(file_line));
+            # Compile both the truncated and the full status update
+
+            if not globs['quiet']:
+                if full_update:
+                    sys.stdout.write("".join(file_line) + "\n");
+                    sys.stdout.flush();
+                else:         
+                    sys.stdout.write("\b" * 40);
+                    sys.stdout.write("".join(out_line) + "\n");
+                    sys.stdout.flush();
+            # For full updates, print the full line to the screen
+            # For others, delete the "In progress..." column and update the same status line
+            
+            printWrite(globs['logfilename'], 0, "".join(file_line));
+            # Write the full line to the file.
+        # The final status entry
+        #####
+
     return cur_time;
 
 #############################################################################
@@ -261,6 +315,9 @@ def endProg(globs):
         printWrite(globs['logfilename'], globs['log-v'], "#\n# ERROR: NON-ZERO EXIT STATUS.");
         printWrite(globs['logfilename'], globs['log-v'], "# ERROR: DEGENOTATE FINISHED WITH ERRORS.");
         printWrite(globs['logfilename'], globs['log-v'], "# ERROR: PLEASE CHECK THE LOG FILE FOR MORE INFO: " + globs['logfilename'] + "\n#");
+
+    if globs['warnings'] != 0:
+        printWrite(globs['logfilename'], globs['log-v'], "\n# degenotate finished with WARNINGS -- check log file for more info");
 
     #print("# " + "=" * 125);
     printWrite(globs['logfilename'], globs['log-v'], "# " + "=" * 175);

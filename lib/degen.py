@@ -56,8 +56,11 @@ def calcDegen(globs):
         #use dict.get() to return value or a default option if key doesn't exist
         #assumes that globs['annotation'][transcript]['start-frame'] won't exist
         #unless start frame was parsed from GFF
-        frame = globs['annotation'][transcript].get('start-frame', 1)
-
+        if globs['gxf-file']:
+            frame = globs['annotation'][transcript].get('start-frame', 1)
+        else:
+            frame = 1
+            
         #check frame
         if frameError(globs['cds-seqs'][transcript],frame):
             continue
@@ -75,7 +78,7 @@ def calcDegen(globs):
 
         #use list comprehension to make new list of degenercy codes based on codons
         #TO DO: error checking
-        degen = [DEGEN_DICT(x) for x in codons]
+        degen = [DEGEN_DICT[x] for x in codons]
 
         globs['degeneracy'][transcript] = "".join(degen)
 

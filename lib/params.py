@@ -79,6 +79,7 @@ def init():
         'quiet' : False,
         # Other user options
 
+        'warnings' : 0,
         'skip-chars' : ["-", "N"],
         'aln-stats-written' : False,
         'scf-stats-written' : False,
