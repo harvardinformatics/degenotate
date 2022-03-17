@@ -130,9 +130,8 @@ dmypy.json
 
 ###########################
 
-test*
 lib/__pycache__
 lib/*.pyc
 *.code-workspace
 *.errlog
-test-data/
+test-out
