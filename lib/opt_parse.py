@@ -95,7 +95,7 @@ def optParse(globs):
             globs['in-seq-type'] = "directory";
     # Save the input type as a global param
 
-    globs = CORE.fileCheck(globs);
+    globs = CORE.fileCheck(globs); 
     # Make sure all the input files actually exist, and get their
     # full paths
 

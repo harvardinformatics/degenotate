@@ -14,7 +14,7 @@ import lib.params as params
 import lib.opt_parse as OP
 import lib.gxf as gxf
 import lib.seq as SEQ
-# import lib.degen as degen
+import lib.degen as degen
 # import lib.output as OUT
 ## TODO: Commented libaries need to be created
 
@@ -29,10 +29,10 @@ if __name__ == '__main__':
     print("\n" + " ".join(sys.argv) + "\n");
 
     if any(v in sys.argv for v in ["--version", "-version", "--v", "-v"]):
-        print("# PhyloAcc version " + globs['interface-version'] + " released on " + globs['releasedate'])
+        print("# degenotate version " + globs['version'] + " released on " + globs['releasedate'])
         sys.exit(0);
     # The version option to simply print the version and exit.
-    # Need to get actual PhyloAcc version for this, and not just the interface version.
+    # Need to get actual degenotate version for this, and not just the interface version.
 
     print("#");
     print("# " + "=" * 125);
@@ -76,7 +76,10 @@ if __name__ == '__main__':
     #     # Read the individual coding sequences         
     ## TODO: Function to read sequences from file(s)
 
+    step = "Caclulating degeneracy per transcript";
+    step_start_time = CORE.report_step(globs, step, False, "In progress...");
     globs = degen.calcDegen(globs)
+    step_start_time = CORE.report_step(globs, step, step_start_time, "Success");
     
     # globs = OUT.writeDegen(globs);
     ## TODO: Function to write output. NEED TO CREATE OUTPUT LIBRARY

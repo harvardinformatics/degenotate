@@ -2,6 +2,7 @@
 # Functions to compute degeneracy for CDS sequences in degenotate
 #############################################################################
 
+import os
 import csv
 import re
 
@@ -21,7 +22,7 @@ def readDegen():
 #     mutations are synonymous
 
     DEGEN_DICT = {}
-    with open(os.path.join(os.path.dirname(__file__), "codon_table.tsv"), "r") as dd:
+    with open(os.path.join(os.path.dirname(__file__), "codon_table.csv"), "r") as dd:
         reader = csv.reader(dd)
         DEGEN_DICT = {rows[0]:rows[1] for rows in reader}
 
@@ -32,7 +33,7 @@ def readDegen():
 
 def frameError(seq,frame):
 
-#Check that the sequence is the correct muliple of three for the starting frame
+#Check that the sequence is the correct multiple of three for the starting frame
 
     seq_mod = len(seq) % 3
     if frame == 1 and seq_mod == 0:
@@ -51,19 +52,19 @@ def calcDegen(globs):
 
     DEGEN_DICT = readDegen()
 
-    for transcript in globs['cds-seq']:
+    for transcript in globs['cds-seqs']:
         #use dict.get() to return value or a default option if key doesn't exist
         #assumes that globs['annotation'][transcript]['start-frame'] won't exist
         #unless start frame was parsed from GFF
         frame = globs['annotation'][transcript].get('start-frame', 1)
 
         #check frame
-        if frameError(globs['cds-seq'][transcript],frame):
+        if frameError(globs['cds-seqs'][transcript],frame):
             continue
         ## TO DO: ADD ERROR REPORTING FOR FRAME ERRORS
 
         #if frame is not 1, need to skip the first frame-1 bases
-        fasta = globs['cds-seq'][transcript][frame:]
+        fasta = globs['cds-seqs'][transcript][frame:]
 
         #also add . (degeneracy cannot be called) to frame-1 beginning of degeneracy string
         globs['annotation'][transcript] = "." * (frame-1) if frame > 1 else ""
@@ -76,6 +77,8 @@ def calcDegen(globs):
         #TO DO: error checking
         degen = [DEGEN_DICT(x) for x in codons]
 
-        globs['degenercy'][transcript] = "".join(degen)
+        globs['degeneracy'][transcript] = "".join(degen)
 
         return globs
+
+#############################################################################

@@ -36,11 +36,11 @@ def readFasta(filename, globs):
     # <sequence id/header> : <sequence>
 
     for header_obj in fa_iter:
-        #print(header_obj)
         header = readstr(header_obj.__next__());
         # The header object is an iterator. This gets the string.
 
-        curkey = header[1:header.index(" ")];
+        curkey = header[1:];
+        #curkey = header[1:header.index(" ")];
         # This removes the ">" character from the header string to act as the key in seqdict
         # TODO: Need to decide if splitting the input sequence header on " " is good for most cases, or if we should
         #       add this as a user option?
@@ -93,59 +93,55 @@ def extractCDS(globs):
                    'a' : 't', 'c' : 'g', 'g' : 'c', 't' : 'a', 'n' : 'n'  };
     # A dictionary with base complements for use when reverse complementing sequences
 
-    for gene in globs['annotation']:
-        transcripts = globs['annotation'][gene]['transcripts'];
-        # Get the transcripts for the current gene
+    for transcript in globs['annotation']:
 
-        for transcript in transcripts:
+        cur_seq = "";
+        # Initialize the sequence string for the current transcript. This will be added to the 'seqs' dict later
 
-            cur_seq = "";
-            # Initialize the sequence string for the current transcript. This will be added to the 'seqs' dict later
+        header = globs['annotation'][transcript]['header'];
+        strand = globs['annotation'][transcript]['strand'];
+        # Unpack some info about the transcript
 
-            header = transcripts[transcript]['header'];
-            strand = transcripts[transcript]['strand'];
-            # Unpack some info about the transcript
+        exons = globs['annotation'][transcript]['exons'];
+        # Get the exons for the current transcript
 
-            exons = transcripts[transcript]['exons'];
-            # Get the exons for the current transcript
+        if not all(exons[exon]['strand'] == strand for exon in exons):
+            print("\n\n");
+            print(transcript, strand);
+            print(exons);
+            print("\n\n");
+            CORE.errorOut("SEQ1", "Some exons have differing strands", globs);
+        # Add check to make sure exons all have same strand as transcript?
 
-            if not all(exons[exon]['strand'] == strand for exon in exons):
-                print("\n\n");
-                print(transcript, strand);
-                print(exons);
-                print("\n\n");
-                CORE.errorOut("SEQ1", "Some exons have differing strands", globs);
-            # Add check to make sure exons all have same strand as transcript?
+        exon_coords = { exons[exon]['start']-1 : exons[exon]['end'] for exon in exons };
+        # Get the coordinates of all the exons in this transcript
+        # Subtract 1 from the starting coord because GXF are 1-based and python strings are 0-based
 
-            exon_coords = { exons[exon]['start']-1 : exons[exon]['end'] for exon in exons };
-            # Get the coordinates of all the exons in this transcript
-            # Subtract 1 from the starting coord because GXF are 1-based and python strings are 0-based
+        if strand == "+":
+            sorted_starts = sorted(list(exon_coords.keys()));
+        elif strand == "-":
+            sorted_starts = sorted(list(exon_coords.keys()), reverse=True);
+        # Make sure the exons are sorted correctly, reversing the order if the strand is "-"
 
-            if strand == "+":
-                sorted_starts = sorted(list(exon_coords.keys()));
-            elif strand == "-":
-                sorted_starts = sorted(list(exon_coords.keys()), reverse=True);
-            # Make sure the exons are sorted correctly, reversing the order if the strand is "-"
+        for start in sorted_starts:
+            cur_exon_seq = globs['genome-seqs'][header][start:exon_coords[start]];
+            # For each exon starting coordinate, extract the sequence that corresponds to the current header and
+            # start and end coordinates
 
-            for start in sorted_starts:
-                cur_exon_seq = globs['genome-seqs'][header][start:exon_coords[start]];
-                # For each exon starting coordinate, extract the sequence that corresponds to the current header and
-                # start and end coordinates
+            if strand == "-": 
+                cur_exon_seq = "".join(complement.get(base, base) for base in reversed(cur_exon_seq));
+            # If the strand is "-", get the reverse complement of the sequence
 
-                if strand == "-": 
-                    cur_exon_seq = "".join(complement.get(base, base) for base in reversed(cur_exon_seq));
-                # If the strand is "-", get the reverse complement of the sequence
+            cur_seq += cur_exon_seq;
+            # Concatenate the current exon sequence onto the overall transcript sequence
 
-                cur_seq += cur_exon_seq;
-                # Concatenate the current exon sequence onto the overall transcript sequence
+        globs['cds-seqs'][transcript] = cur_seq;
+        # Save the current transcript sequence to the global seqs dict
 
-            globs['cds-seqs'][transcript] = cur_seq;
-            # Save the current transcript sequence to the global seqs dict
-
-            # if strand == "-":
-            #     print(transcript);
-            #     print(globs['in-seqs'][transcript]);
-            #     sys.exit();
+        # if strand == "-":
+        #     print(transcript);
+        #     print(globs['in-seqs'][transcript]);
+        #     sys.exit();
 
     step_start_time = CORE.report_step(globs, step, step_start_time, "Success: " + str(len(globs['cds-seqs'])) + " CDS read");
     # Status update
