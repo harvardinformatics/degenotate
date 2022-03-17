@@ -135,3 +135,4 @@ lib/__pycache__
 lib/*.pyc
 *.code-workspace
 *.errlog
+test-data/
