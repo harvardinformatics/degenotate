@@ -125,8 +125,8 @@ def processCodons(globs):
                         #for in group variants, we treat each as independent
 
                         poly_aa = CODON_DICT[poly_codon]
-                        ps++ if poly_aa == ref_aa
-                        pn++ if poly_aa != ref_aa
+                        ps+=1 if poly_aa == ref_aa
+                        pn+=1 if poly_aa != ref_aa
 
                 if div_codon:
                     #there are fixed differences
@@ -136,8 +136,8 @@ def processCodons(globs):
 
                     if diffs == 1:
                         div_aa = CODON_DICT[div_codon]
-                        ds++ if div_aa == ref_aa
-                        dn++ if div_aa != ref_aa
+                        ds+=1 if div_aa == ref_aa
+                        dn+=1 if div_aa != ref_aa
                     if diffs >= 2:
                         ds,dn = codonPath(ref_aa,div_aa)
 
@@ -154,19 +154,19 @@ def getVariants(globs,transcript,transcript_position):
 def codonPath(start_codon,end_codon,CODON_GRAPH):
 
     #function to calculate syn/nonsyn for multi-step paths
+    #by default returns the average nonsyn and syn subs over all shortest paths b/w two codons
     dn=0.0
     ds=0.0
     paths = nx.all_shortest_paths(CODON_GRAPH, source=start_codon, target=end_codon)
     numpaths = len(paths)
     for path in paths:
-        pathlen=len(path)
         for pairs in pairwise(path):
             aa1 = CODON_DICT[pairs[0]]
             aa2 = CODON_DICT[pairs[1]]
             if aa1 == aa2:
-                ds++
-            else:
-                dn++
+                ds+=1
+            if aa1 != aa2:
+                dn+=1
     dn = dn/numpaths
     ds = ds/numpaths
     return ds,dn
