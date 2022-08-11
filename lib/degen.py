@@ -6,6 +6,8 @@ import os
 import csv
 import re
 from collections import namedtuple
+#use networkx to turn codon table into a graph to allow easy computation of paths
+import networkx as nx
 
 #############################################################################
 
@@ -30,7 +32,20 @@ def readDegen():
         DEGEN_DICT = {rows[0]:rows[1] for rows in reader}
         CODON_DICT = {rows[0]:rows[2] for rows in reader}
 
-    return [ DEGEN_DICT, CODON_DICT ]
+    #compute codon graph
+    CODON_GRAPH = nx.Graph()
+    #add a node for every codon
+    CODON_GRAPH.add_nodes_from([CODON_DICT.keys])
+    #add an edge between all codons that are 1 mutation apart
+    for codon1 in CODON_DICT.keys:
+        for codon2 in CODON_DICT.keys:
+            ed = codonHamming(codon1,codon2)
+            if ed == 1:
+                CODON_GRAPH.add_edge(codon1,codon2)
+            else:
+                continue
+
+    return [ DEGEN_DICT, CODON_DICT, CODON_GRAPH ]
 
 #############################################################################
 
@@ -53,7 +68,7 @@ def processCodons(globs):
 # take CDS sequence and split into list of codons, computing degeneracy, ns, or both
 # might need a clearer name?
 
-    DEGEN_DICT, CODON_DICT = readDegen()
+    DEGEN_DICT, CODON_DICT, CODON_GRAPH = readDegen()
     MKTable = namedtuple("MKTable", "pn ps dn ds")
 
     for transcript in globs['cds-seqs']:
@@ -92,10 +107,10 @@ def processCodons(globs):
                 #DOUBLE CHECK THIS PLEASE
                 transcript_position = (i*3)+1+coord_shift
                 ref_aa = CODON_DICT[codon]
-                ps = 0
-                pn = 0
-                ds = 0
-                dn = 0
+                ps = 0.0
+                pn = 0.0
+                ds = 0.0
+                dn = 0.0
 
                 #assume getVariants returns a data structure of variant codons
                 #this should be a list (empty, 1, or more) for in group codons
@@ -116,7 +131,7 @@ def processCodons(globs):
                     #there are fixed differences
 
                     #get number of differences between the codons
-                    diffs = sum(1 for a, b in zip(codon, div_codon) if a != b)
+                    diffs = codonHamming(div_codon,codon)
 
                     if diffs == 1:
                         div_aa = CODON_DICT[div_codon]
@@ -138,3 +153,6 @@ def getVariants(globs,transcript,transcript_position):
 def codonPath(start_codon,end_codon):
 
     #TO DO - function to calculate syn/nonsyn for multi-step paths
+
+def codonHamming(codon1,codon2):
+    sum(1 for a, b in zip(codon1, codon2) if a != b)
