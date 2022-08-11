@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #############################################################################
-# Degenotate is a script to calculate degeneracy of coding sites within a 
+# Degenotate is a script to calculate degeneracy of coding sites within a
 # genome. This is the main interface.
 #
 # Gregg Thomas
@@ -25,7 +25,7 @@ if __name__ == '__main__':
 
     globs = params.init();
     # Get the global params as a dictionary.
-    
+
     print("\n" + " ".join(sys.argv) + "\n");
 
     if any(v in sys.argv for v in ["--version", "-version", "--v", "-v"]):
@@ -70,20 +70,19 @@ if __name__ == '__main__':
         del(globs['genome-seqs']);
         step_start_time = CORE.report_step(globs, step, step_start_time, "Success");
         # Free up the memory from the whole genome sequence since we don't need it anymore
-    
+
     else:
         globs = SEQ.readCDS(globs);
-        # Read the individual coding sequences from input        
+        # Read the individual coding sequences from input
 
     step = "Caclulating degeneracy per transcript";
     step_start_time = CORE.report_step(globs, step, False, "In progress...");
-    globs = degen.calcDegen(globs)
+    globs = degen.processCodons(globs)
     step_start_time = CORE.report_step(globs, step, step_start_time, "Success");
-    
+
     # globs = OUT.writeDegen(globs);
     ## TODO: Function to write output. NEED TO CREATE OUTPUT LIBRARY
 
     CORE.endProg(globs);
 
 #############################################################################
-

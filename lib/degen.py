@@ -65,7 +65,51 @@ def frameError(seq,frame):
         return True
 
 #############################################################################
+
+def getVariants(globs,transcript,transcript_position):
+
+    #TO DO - function to return a list of variant codons based on vcf
+    #should return two lists: one with all ingroup codons, the other with all outgroup codons
+    #because outgroup is assumed to be only fixed differences, should only ever return a single
+    #outgroup codon
+
+def codonPath(start_codon,end_codon,CODON_GRAPH):
+
+    #function to calculate syn/nonsyn for multi-step paths
+    #by default returns the average nonsyn and syn subs over all shortest paths b/w two codons
+    dn=0.0
+    ds=0.0
+
+    #get all shortest paths using networkx functions
+    paths = nx.all_shortest_paths(CODON_GRAPH, source=start_codon, target=end_codon)
+
+    #number of possible shortest paths
+    numpaths = len(paths)
+
+    #for each path, calculate the number of syn and nonsyn subs implied
+    for path in paths:
+        for pairs in pairwise(path):
+            aa1 = CODON_DICT[pairs[0]]
+            aa2 = CODON_DICT[pairs[1]]
+            if aa1 == aa2:
+                ds+=1
+            if aa1 != aa2:
+                dn+=1
+
+    #calculate average over all paths
+    dn = dn/numpaths
+    ds = ds/numpaths
+
+    #return values
+    return ds,dn
+
+def codonHamming(codon1,codon2):
+    sum(1 for a, b in zip(codon1, codon2) if a != b)
+
+####################################
+
 def processCodons(globs):
+
 # take CDS sequence and split into list of codons, computing degeneracy, ns, or both
 # might need a clearer name?
 
@@ -143,43 +187,4 @@ def processCodons(globs):
 
                 globs['nonsyn'][transcript][i] = MKTable(pn,ps,dn,ds)
 
-####################################
-def getVariants(globs,transcript,transcript_position):
-
-    #TO DO - function to return a list of variant codons based on vcf
-    #should return two lists: one with all ingroup codons, the other with all outgroup codons
-    #because outgroup is assumed to be only fixed differences, should only ever return a single
-    #outgroup codon
-
-def codonPath(start_codon,end_codon,CODON_GRAPH):
-
-    #function to calculate syn/nonsyn for multi-step paths
-    #by default returns the average nonsyn and syn subs over all shortest paths b/w two codons
-    dn=0.0
-    ds=0.0
-
-    #get all shortest paths using networkx functions
-    paths = nx.all_shortest_paths(CODON_GRAPH, source=start_codon, target=end_codon)
-
-    #number of possible shortest paths
-    numpaths = len(paths)
-
-    #for each path, calculate the number of syn and nonsyn subs implied
-    for path in paths:
-        for pairs in pairwise(path):
-            aa1 = CODON_DICT[pairs[0]]
-            aa2 = CODON_DICT[pairs[1]]
-            if aa1 == aa2:
-                ds+=1
-            if aa1 != aa2:
-                dn+=1
-
-    #calculate average over all paths
-    dn = dn/numpaths
-    ds = ds/numpaths
-
-    #return values
-    return ds,dn
-
-def codonHamming(codon1,codon2):
-    sum(1 for a, b in zip(codon1, codon2) if a != b)
+    return globs
