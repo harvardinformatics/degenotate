@@ -6,6 +6,7 @@ import os
 import csv
 import re
 from collections import namedtuple
+from itertools import pairwise
 #use networkx to turn codon table into a graph to allow easy computation of paths
 import networkx as nx
 
@@ -150,9 +151,25 @@ def getVariants(globs,transcript,transcript_position):
     #because outgroup is assumed to be only fixed differences, should only ever return a single
     #outgroup codon
 
-def codonPath(start_codon,end_codon):
+def codonPath(start_codon,end_codon,CODON_GRAPH):
 
-    #TO DO - function to calculate syn/nonsyn for multi-step paths
+    #function to calculate syn/nonsyn for multi-step paths
+    dn=0.0
+    ds=0.0
+    paths = nx.all_shortest_paths(CODON_GRAPH, source=start_codon, target=end_codon)
+    numpaths = len(paths)
+    for path in paths:
+        pathlen=len(path)
+        for pairs in pairwise(path):
+            aa1 = CODON_DICT[pairs[0]]
+            aa2 = CODON_DICT[pairs[1]]
+            if aa1 == aa2:
+                ds++
+            else:
+                dn++
+    dn = dn/numpaths
+    ds = ds/numpaths
+    return ds,dn
 
 def codonHamming(codon1,codon2):
     sum(1 for a, b in zip(codon1, codon2) if a != b)
