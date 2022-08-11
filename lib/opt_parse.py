@@ -32,7 +32,7 @@ def optParse(globs):
 
     parser.add_argument("-o", dest="out_dest", help="Desired output directory. This will be created for you if it doesn't exist. Default: degenotate-[date]-[time]", default=False);
     # Output
-    
+
     parser.add_argument("-p", dest="num_procs", help="The total number of processes that degenotate can use. Default: 1.", type=int, default=1);
     # User params
 
@@ -96,7 +96,7 @@ def optParse(globs):
             globs['in-seq-type'] = "directory";
     # Save the input type as a global param
 
-    globs = CORE.fileCheck(globs); 
+    globs = CORE.fileCheck(globs);
     # Make sure all the input files actually exist, and get their
     # full paths
 
@@ -180,41 +180,41 @@ def startProg(globs):
     #######################
 
     CORE.printWrite(globs['logfilename'], globs['log-v'], "# " + "-" * 125);
-    CORE.printWrite(globs['logfilename'], globs['log-v'], "# OPTIONS INFO:");    
-    CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Option", pad) + CORE.spacedOut("Current setting", opt_pad) + "Current action");      
+    CORE.printWrite(globs['logfilename'], globs['log-v'], "# OPTIONS INFO:");
+    CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Option", pad) + CORE.spacedOut("Current setting", opt_pad) + "Current action");
 
-    CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Processes (-p)", pad) + 
-                CORE.spacedOut(str(globs['num-procs']), opt_pad) + 
+    CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Processes (-p)", pad) +
+                CORE.spacedOut(str(globs['num-procs']), opt_pad) +
                 "degenotate will use this many processes.");
     # Reporting the resource options
 
     if globs['overwrite']:
         CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# --overwrite", pad) +
-                    CORE.spacedOut("True", opt_pad) + 
+                    CORE.spacedOut("True", opt_pad) +
                     "degenotate will OVERWRITE the existing files in the specified output directory.");
     # Reporting the overwrite option.
 
     if not globs['quiet']:
-        CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# --quiet", pad) + 
-                    CORE.spacedOut("False", opt_pad) + 
+        CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# --quiet", pad) +
+                    CORE.spacedOut("False", opt_pad) +
                     "Time, memory, and status info will be printed to the screen while degenotate is running.");
     else:
-        CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# --quiet", pad) + 
-                    CORE.spacedOut("True", opt_pad) + 
+        CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# --quiet", pad) +
+                    CORE.spacedOut("True", opt_pad) +
                     "No further information will be printed to the screen while degenotate is running.");
         CORE.printWrite(globs['logfilename'], globs['log-v'], "# " + "-" * 125);
         CORE.printWrite(globs['logfilename'], globs['log-v'], "# Running...");
     # Reporting the quiet option.
 
     # if globs['debug']:
-    #     CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# --debug", pad) + 
-    #                 CORE.spacedOut("True", opt_pad) + 
+    #     CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# --debug", pad) +
+    #                 CORE.spacedOut("True", opt_pad) +
     #                 "Printing out a bit of debug info.");
     # Reporting the debug option.
 
     if globs['norun']:
-        CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# --norun", pad) + 
-                    CORE.spacedOut("True", opt_pad) + 
+        CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# --norun", pad) +
+                    CORE.spacedOut("True", opt_pad) +
                     "ONLY PRINTING RUNTIME INFO.");
         CORE.printWrite(globs['logfilename'], globs['log-v'], "# " + "-" * 125);
     # Reporting the norun option.

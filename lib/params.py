@@ -68,11 +68,17 @@ def init():
         'degeneracy' : {},
         # Degeneracy output
 
+        'nonsyn' : {},
+        #output of syn/nonsyn snp calculations
+
         'annotation' : {},
         # Annotation information
 
         'num-procs' : 1,
         # Number of processes to use
+
+        'codon-methods' : ["degen"],
+        # which codon processing steps to carry out
 
         'info' : False,
         'dryrun' : False,

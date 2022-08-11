@@ -1,5 +1,5 @@
 #############################################################################
-# Functions to compute degeneracy for CDS sequences in degenotate
+# Functions to compute degeneracy and syn/nonsyn subs for CDS sequences in degenotate
 #############################################################################
 
 import os
@@ -9,7 +9,7 @@ import re
 #############################################################################
 
 def readDegen():
-# Read a codon table file into a degeneracy dict
+# Read a codon table file into a degeneracy dict and a codon dict
 # Assumes a plain text, comma-separated file with two columns
 # The first column is the three lettter (DNA) codon sequence
 # The second column is a three digit code for the degeneracy of the first, second, and third positions
@@ -20,14 +20,16 @@ def readDegen():
 #     mutations will be synonymous and 1 will be non-synonymous
 # 4 = four nucleotides at the position code for the same AA, so all 3 possible
 #     mutations are synonymous
+# The third column is the one letter AA code for that codon
 
     DEGEN_DICT = {}
+    CODON_DICT = {}
     with open(os.path.join(os.path.dirname(__file__), "codon_table.csv"), "r") as dd:
         reader = csv.reader(dd)
         DEGEN_DICT = {rows[0]:rows[1] for rows in reader}
+        CODON_DICT = {rows[0]:rows[2] for rows in reader}
 
-    return DEGEN_DICT
-
+    return [ DEGEN_DICT, CODON_DICT ]
 
 #############################################################################
 
@@ -46,11 +48,11 @@ def frameError(seq,frame):
         return True
 
 #############################################################################
+def processCodons(globs):
+# take CDS sequence and split into list of codons, computing degeneracy, ns, or both
+# might need a clearer name?
 
-def calcDegen(globs):
-# Take CDS sequences and return a sequence of degeneracy codes
-
-    DEGEN_DICT = readDegen()
+    DEGEN_DICT, CODON_DICT = readDegen()
 
     for transcript in globs['cds-seqs']:
         #use dict.get() to return value or a default option if key doesn't exist
@@ -60,7 +62,7 @@ def calcDegen(globs):
             frame = globs['annotation'][transcript].get('start-frame', 1)
         else:
             frame = 1
-            
+
         #check frame
         if frameError(globs['cds-seqs'][transcript],frame):
             continue
@@ -69,19 +71,68 @@ def calcDegen(globs):
         #if frame is not 1, need to skip the first frame-1 bases
         fasta = globs['cds-seqs'][transcript][frame:]
 
-        #also add . (degeneracy cannot be called) to frame-1 beginning of degeneracy string
-        globs['annotation'][transcript] = "." * (frame-1) if frame > 1 else ""
-
         #make list of codons
         #TO DO: check to make sure we get only triples out
         codons = re.findall('...', fasta)
 
-        #use list comprehension to make new list of degenercy codes based on codons
-        #TO DO: error checking
-        degen = [DEGEN_DICT[x] for x in codons]
+        if ("degen" in globs['codon-methods']):
+            degen = [DEGEN_DICT[x] for x in codons]
+            globs['degeneracy'][transcript] = "." * (frame-1) if frame > 1 else ""
+            globs['degeneracy'][transcript] = "".join(degen)
 
-        globs['degeneracy'][transcript] = "".join(degen)
+        if ("ns" in globs['codon-methods']):
 
-        return globs
+            #define coordinate shift based on frame
+            coord_shift = frame-1
 
-#############################################################################
+            #process each codon
+            for i,codon in enumerate(codons):
+                #DOUBLE CHECK THIS PLEASE
+                transcript_position = (i*3)+1+coord_shift
+                ref_aa = CODON_DICT[codon]
+                ps = 0
+                pn = 0
+                ds = 0
+                dn = 0
+
+                #assume getVariants returns a data structure of variant codons
+                #this should be a list (empty, 1, or more) for in group codons
+                #but for outgroup codons, it should be a single string with fixed differences
+                poly_codons,div_codon = getVariants(globs,transcript,transcript_position)
+
+                if poly_codons:
+                    #there are variants
+                    for poly_codon in poly_codons:
+
+                        #for in group variants, we treat each as independent
+
+                        poly_aa = CODON_DICT[poly_codon]
+                        ps++ if poly_aa == ref_aa
+                        pn++ if poly_aa != ref_aa
+
+                if div_codon:
+                    #there are fixed differences
+
+                    #get number of differences between the codons
+                    diffs = sum(1 for a, b in zip(codon, div_codon) if a != b)
+
+                    if diffs == 1:
+                        div_aa = CODON_DICT[div_codon]
+                        ds++ if div_aa == ref_aa
+                        dn++ if div_aa != ref_aa
+                    if diffs >= 2:
+                        ds,dn = codonPath(ref_aa,div_aa)
+
+                globs['nonsyn'][transcript][i] = [ps,pn,ds,dn]
+
+####################################
+def getVariants(globs,transcript,transcript_position):
+
+    #TO DO - function to return a list of variant codons based on vcf
+    #should return two lists: one with all ingroup codons, the other with all outgroup codons
+    #because outgroup is assumed to be only fixed differences, should only ever return a single
+    #outgroup codon
+
+def codonPath(start_codon,end_codon):
+
+    #TO DO - function to calculate syn/nonsyn for multi-step paths
