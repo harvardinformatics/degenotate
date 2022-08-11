@@ -157,8 +157,14 @@ def codonPath(start_codon,end_codon,CODON_GRAPH):
     #by default returns the average nonsyn and syn subs over all shortest paths b/w two codons
     dn=0.0
     ds=0.0
+
+    #get all shortest paths using networkx functions
     paths = nx.all_shortest_paths(CODON_GRAPH, source=start_codon, target=end_codon)
+
+    #number of possible shortest paths
     numpaths = len(paths)
+
+    #for each path, calculate the number of syn and nonsyn subs implied
     for path in paths:
         for pairs in pairwise(path):
             aa1 = CODON_DICT[pairs[0]]
@@ -167,8 +173,12 @@ def codonPath(start_codon,end_codon,CODON_GRAPH):
                 ds+=1
             if aa1 != aa2:
                 dn+=1
+
+    #calculate average over all paths
     dn = dn/numpaths
     ds = ds/numpaths
+
+    #return values
     return ds,dn
 
 def codonHamming(codon1,codon2):
