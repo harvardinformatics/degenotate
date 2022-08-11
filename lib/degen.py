@@ -5,6 +5,7 @@
 import os
 import csv
 import re
+from collections import namedtuple
 
 #############################################################################
 
@@ -53,6 +54,7 @@ def processCodons(globs):
 # might need a clearer name?
 
     DEGEN_DICT, CODON_DICT = readDegen()
+    MKTable = namedtuple("MKTable", "pn ps dn ds")
 
     for transcript in globs['cds-seqs']:
         #use dict.get() to return value or a default option if key doesn't exist
@@ -123,7 +125,7 @@ def processCodons(globs):
                     if diffs >= 2:
                         ds,dn = codonPath(ref_aa,div_aa)
 
-                globs['nonsyn'][transcript][i] = [ps,pn,ds,dn]
+                globs['nonsyn'][transcript][i] = MKTable(pn,ps,dn,ds)
 
 ####################################
 def getVariants(globs,transcript,transcript_position):
