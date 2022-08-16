@@ -56,6 +56,8 @@ def optParse(globs):
     globs['call'] = " ".join(sys.argv);
     # Save the program call for later
 
+    ####################
+
     if args.info_flag:
         globs['info'] = True;
         globs['log-v'] = -1;
@@ -69,9 +71,13 @@ def optParse(globs):
     globs['overwrite'] = args.ow_flag;
     # Check run mode options.
 
+    ####################
+
     if (not args.annotation_file and not args.in_seq) or (args.annotation_file and args.in_seq):
         CORE.errorOut("OP1", "One input method must be specified: -a or -s", globs);
     # Check that only one input type is specified
+
+    ####################
 
     if args.annotation_file:
         if not args.genome_file:
@@ -88,6 +94,8 @@ def optParse(globs):
         # Guess whether the input annotation file is GFF or GTF from the file extension
         # TODO: Can probably do this better, or let the user specify an option
 
+    ####################
+
     elif args.in_seq:
         globs['in-seq'] = args.in_seq;
         if os.path.isfile(globs['in-seq']):
@@ -96,9 +104,13 @@ def optParse(globs):
             globs['in-seq-type'] = "directory";
     # Save the input type as a global param
 
+    ####################
+
     globs = CORE.fileCheck(globs);
     # Make sure all the input files actually exist, and get their
     # full paths
+
+    ####################
 
     if not args.out_dest:
         globs['outdir'] = "degenotate-out-" + globs['startdatetime'];
@@ -112,6 +124,11 @@ def optParse(globs):
         os.makedirs(globs['outdir']);
     # Main output dir
 
+    globs['outbed'] = os.path.join(globs['outdir'], globs['outbed']);
+    # Main bed file with degeneracy for all sites
+
+    ####################
+
     globs['run-name'] = os.path.basename(os.path.normpath(globs['outdir']));
     globs['logfilename'] = os.path.join(globs['outdir'], globs['run-name'] + ".log");
     # Log file
@@ -121,6 +138,8 @@ def optParse(globs):
         logfile.write("");
         logfile.close();
     # Prep the logfile to be overwritten if --appendlog isn't specified
+
+    ####################
 
     if args.quiet_flag:
         globs['quiet'] = True;
@@ -169,12 +188,13 @@ def startProg(globs):
 
     if globs['gxf-file']:
         CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Annotation file:", pad) + globs['gxf-file']);
-        CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Annotation file type (guessed from extension):", pad) + globs['gxf-type']);
+        CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Annotation file type:", pad) + globs['gxf-type']);
         CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Genome file:", pad) + globs['fa-file']);
     elif globs['in-seq']:
         CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Sequence " + globs['in-seq-type'] + ":", pad) + globs['in-seq']);
 
     CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Output directory:", pad) + globs['outdir']);
+    CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Per-site degeneracy output:", pad) + globs['outbed']);
     CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Log file:", pad) + os.path.basename(globs['logfilename']));
     # Input/Output
     #######################

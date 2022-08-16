@@ -55,6 +55,7 @@ def init():
         # The type of compression used for input sequence files
 
         'outdir' : '',
+        'outbed' : 'degeneracy-all-sites.bed',
         'run-name' : 'degenotate',
         'logfilename' : 'degenotate.errlog',
         'logdir' : '',
@@ -63,6 +64,7 @@ def init():
 
         'genome-seqs' : {},
         'cds-seqs' : {},
+        'coords' : {},
         # Sequence variables
 
         'degeneracy' : {},
@@ -79,6 +81,8 @@ def init():
 
         'codon-methods' : ["degen"],
         # which codon processing steps to carry out
+
+        'bases' : ['A', 'T', 'C', 'G'],
 
         'info' : False,
         'dryrun' : False,
@@ -113,3 +117,5 @@ def init():
     # Restrict the dict from having keys added to it after this
 
     return globs;
+
+#############################################################################

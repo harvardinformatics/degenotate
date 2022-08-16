@@ -75,10 +75,10 @@ if __name__ == '__main__':
         globs = SEQ.readCDS(globs);
         # Read the individual coding sequences from input
 
-    step = "Caclulating degeneracy per transcript";
-    step_start_time = CORE.report_step(globs, step, False, "In progress...");
+    #step = "Caclulating degeneracy per transcript";
+    #step_start_time = CORE.report_step(globs, step, False, "In progress...");
     globs = degen.processCodons(globs)
-    step_start_time = CORE.report_step(globs, step, step_start_time, "Success");
+    #step_start_time = CORE.report_step(globs, step, step_start_time, "Success");
 
     # globs = OUT.writeDegen(globs);
     ## TODO: Function to write output. NEED TO CREATE OUTPUT LIBRARY

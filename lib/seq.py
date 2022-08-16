@@ -84,7 +84,8 @@ def readGenome(globs):
 
 def extractCDS(globs):
 # This takes the coordiantes read from the input annotation file as well as the sequence read from the
-# input genome fasta file and extracts coding sequences for all transcripts while accounting for strand
+# input genome fasta file and extracts coding sequences and coordinates for the CDS of all transcripts
+# while accounting for strand
 
     step = "Extracting CDS";
     step_start_time = CORE.report_step(globs, step, False, "In progress...");
@@ -97,6 +98,10 @@ def extractCDS(globs):
 
         cur_seq = "";
         # Initialize the sequence string for the current transcript. This will be added to the 'seqs' dict later
+
+        globs['coords'][transcript] = {};
+        cds_coord = 0;
+        # Initialize the coord lookup dict for this transcript and start the coord count at 0
 
         header = globs['annotation'][transcript]['header'];
         strand = globs['annotation'][transcript]['strand'];
@@ -128,20 +133,56 @@ def extractCDS(globs):
             # For each exon starting coordinate, extract the sequence that corresponds to the current header and
             # start and end coordinates
 
+            cur_exon_len = len(cur_exon_seq);
+            # Get the length of the current exon to count up coordinates
+
+            cds_coord_list = list(range(cds_coord, cds_coord+cur_exon_len));
+            # The list of coordinates in the current CDS relative to the first CDS
+
+            genome_coord = start + 1;
+            # The starting genome coordinate for the current CDS
+
+            genome_coord_list = list(range(genome_coord, genome_coord+cur_exon_len));
+            # The list of genome coordinates in the current CDS
+
             if strand == "-": 
                 cur_exon_seq = "".join(complement.get(base, base) for base in reversed(cur_exon_seq));
-            # If the strand is "-", get the reverse complement of the sequence
+                # Reverse complement the sequence of the current CDS
+                
+                genome_coord_list.reverse(); 
+                # Reverse the order of the genome coordinates
+
+                # for i in range(cur_exon_len):
+                #     globs['coords'][transcript][tcoord] = gcoord;
+                #     gcoord -= 1;
+                #     tcoord += 1;                    
+            # If the strand is "-", get the reverse complement of the sequence and reverse the coordinates
 
             cur_seq += cur_exon_seq;
             # Concatenate the current exon sequence onto the overall transcript sequence
 
+            for i in range(len(cds_coord_list)):
+                globs['coords'][transcript][cds_coord_list[i]] = genome_coord_list[i];
+            # Add the pairs of coordinates (CDS:genome) to the coords dict for this transcript
+
+            cds_coord += cur_exon_len;
+            # Increment the CDS coordinate by the length of the current CDS so the next CDS has the correct starting coord
+
+        # End CDS loop
+        ##########
+
         globs['cds-seqs'][transcript] = cur_seq;
         # Save the current transcript sequence to the global seqs dict
 
-        # if strand == "-":
+        # if strand == "+":
+        #     print();
         #     print(transcript);
-        #     print(globs['in-seqs'][transcript]);
+        #     print(globs['cds-seqs'][transcript]);
+        #     print(globs['coords'][transcript]);
         #     sys.exit();
+
+        # End transcript loop
+        ##########
 
     step_start_time = CORE.report_step(globs, step, step_start_time, "Success: " + str(len(globs['cds-seqs'])) + " CDS read");
     # Status update
@@ -211,10 +252,10 @@ def readCDS(globs):
         # Check if we have actually read any sequence
 
         for seq in cur_seqs:
-            if len(cur_seqs[seq]) % 3 != 0:
-                CORE.printWrite(globs['logfilename'], globs['log-v'], "# WARNING: sequence " + seq + " in file " + seq_file + " isn't in frame 1... skipping");
-                globs['warnings'] += 1;
-                continue;
+            # if len(cur_seqs[seq]) % 3 != 0:
+            #     CORE.printWrite(globs['logfilename'], globs['log-v'], "# WARNING: sequence " + seq + " in file " + seq_file + " isn't in frame 1... skipping");
+            #     globs['warnings'] += 1;
+            #     continue;
             # Check that the current sequence is in frame 1
 
             globs['cds-seqs'][seq] = cur_seqs[seq];
