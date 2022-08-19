@@ -317,7 +317,7 @@ def endProg(globs):
         printWrite(globs['logfilename'], globs['log-v'], "# ERROR: PLEASE CHECK THE LOG FILE FOR MORE INFO: " + globs['logfilename'] + "\n#");
 
     if globs['warnings'] != 0:
-        printWrite(globs['logfilename'], globs['log-v'], "\n# degenotate finished with WARNINGS -- check log file for more info");
+        printWrite(globs['logfilename'], globs['log-v'], "\n# degenotate finished with " + str(globs['warnings']) + " WARNINGS -- check log file for more info");
 
     #print("# " + "=" * 125);
     printWrite(globs['logfilename'], globs['log-v'], "# " + "=" * 175);

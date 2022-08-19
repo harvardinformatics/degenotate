@@ -171,7 +171,7 @@ def extractCDS(globs):
         # End CDS loop
         ##########
 
-        globs['cds-seqs'][transcript] = cur_seq;
+        globs['cds-seqs'][transcript] = cur_seq.upper();
         # Save the current transcript sequence to the global seqs dict
 
         # if strand == "+":
@@ -258,7 +258,7 @@ def readCDS(globs):
             #     continue;
             # Check that the current sequence is in frame 1
 
-            globs['cds-seqs'][seq] = cur_seqs[seq];
+            globs['cds-seqs'][seq] = cur_seqs[seq].upper();
             # Add the current sequence to the global sequence dict
 
     if not globs['cds-seqs']:

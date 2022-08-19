@@ -77,33 +77,32 @@ def init():
         # Annotation information
 
         'num-procs' : 1,
-        # Number of processes to use
+        # Number of processes to use; currently multiprocessing not implemented
 
         'codon-methods' : ["degen"],
         # which codon processing steps to carry out
 
         'bases' : ['A', 'T', 'C', 'G'],
+        # List of standard nucleotides
+
+        'leading-bases' : { 1 : 0, 2 : 1, 3 : 2 },
+        # The number of bases to remove from the beginning of a seq
+        # for each frame. frame:num bases
 
         'info' : False,
-        'dryrun' : False,
         'quiet' : False,
         # Other user options
 
         'warnings' : 0,
         'skip-chars' : ["-", "N"],
-        'aln-stats-written' : False,
-        'scf-stats-written' : False,
-        'scf-tree-written' : False,
         'pad' : 82,
         'endprog' : False,
         'exit-code' : 0,
         'log-v' : 1,
-        'stats' : True,
         'progstarttime' : 0,
         'stepstarttime' : 0,
         'pids' : "",
         'psutil' : False,
-        'qstats' : False,
         'norun' : False,
         'debug' : False,
         'nolog' : False,

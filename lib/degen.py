@@ -31,11 +31,11 @@ def readDegen():
 
     DEGEN_DICT = {}
     CODON_DICT = {}
-    with open(os.path.join(os.path.dirname(__file__), "codon_table.csv"), "r") as dd:
+    with open(os.path.join(os.path.dirname(__file__), "codon-table.csv"), "r") as dd:
         reader = csv.reader(dd)
         for row in reader:
-            DEGEN_DICT[row[0]] = row[1];
-            CODON_DICT[row[0]] = row[2];
+            DEGEN_DICT[row[0]] = row[2];
+            CODON_DICT[row[0]] = row[1];
 
     # compute codon graph
     CODON_GRAPH = nx.Graph()
@@ -60,21 +60,11 @@ def getFrame(seq):
 # A function that returns the frame of a coding sequence
     seq_mod = len(seq) % 3;
     if seq_mod == 0:
-        return 1, seq_mod;
-    elif seq_mod == 2:
-        return 2, seq_mod;
-    elif seq_mod == 1:
-        return 3, seq_mod;
-
-#############################################################################
-
-def getSeqMod(frame):
-    if frame == 1:
-        return 0;
-    elif frame == 2:
-        return 2;
-    elif frame == 3:
         return 1;
+    elif seq_mod == 2:
+        return 2;
+    elif seq_mod == 1:
+        return 3;
 
 #############################################################################
 
@@ -171,21 +161,30 @@ def processCodons(globs):
                 # assumes that globs['annotation'][transcript]['start-frame'] won't exist
                 # unless start frame was parsed from GFF
 
-                seq_mod = getSeqMod(frame);
-                # Need to get the seq_mod as the number of dots to add on to the degen string
-
                 #check frame
                 if frameError(globs['cds-seqs'][transcript],frame):
-                    continue
-                ## TODO: ADD ERROR REPORTING FOR FRAME ERRORS
-                ## NOTE: I think we only need to do this when input is a gxf+genome
+                    CORE.printWrite(globs['logfilename'], 3, "# WARNING: transcript " + transcript + " has a different frame specified than implied by its length... skipping");
+                    globs['warnings'] += 1;                    
+                    continue;
+                # Will just throw a warning if the frame and length are inconsistent. Change the second parameter of printWrite to globs['log-v'] to
+                # also print the warning to the screen instead of just writing to log file.
+                ## TODO: Have to account for END PHASE of last exon... only seems to be a problem for Ensembl data with incomplete CDS
+                ## I guess conceivably we could also make sure the phases between exons are consistent but that seems a bit much...
+                ## NOTE: I think we only need to do the frame checking when input is a gxf+genome. When input is CDS sequences they are just
+                ## checked for divisibility by 3 below.
+
             # Get the frame when input is a when input is a gxf+genome
             else:
-                frame, seq_mod = getFrame(globs['cds-seqs'][transcript]);
+                frame = getFrame(globs['cds-seqs'][transcript]);
             # Get the frame when input is a dir/file of individual CDS seqs
 
+            extra_leading_nt = globs['leading-bases'][frame]
+            # Look up the number of leading bases given the current frame
+
             #if frame is not 1, need to skip the first frame-1 bases
-            fasta = globs['cds-seqs'][transcript][frame:]
+            fasta = globs['cds-seqs'][transcript][extra_leading_nt:]
+            ## NOTE: Is it worth figuring out whether the beginning or the end of the CDS is out of frame? This
+            ## assumes they are all the beginning
 
             #make list of codons
             codons = re.findall('...', fasta)
@@ -194,7 +193,7 @@ def processCodons(globs):
                 degen = [ DEGEN_DICT[x] for x in codons ];
                 # Get the string of degeneracy integers for every codon in the current sequence (e.g. 002)
 
-                degen = "." * seq_mod + "".join(degen);
+                degen = "." * extra_leading_nt + "".join(degen);
                 # Convert the degeneracy string to a list, and add on dots for any leading bases that
                 # were removed if the frame is not 1
 
@@ -202,7 +201,7 @@ def processCodons(globs):
                 # Start the CDS coord counter
 
                 if frame != 1:
-                    for out_of_frame_pos in range(seq_mod):
+                    for out_of_frame_pos in range(extra_leading_nt):
                         outline = OUT.compileBedLine(globs, transcript, "", cds_coord, globs['cds-seqs'][transcript][cds_coord], "", "", "", ".", "");
                         bedfile.write("\t".join(outline) + "\n");
                         # Call the output function with blank values since there is no degeneracy at this position
@@ -232,7 +231,7 @@ def processCodons(globs):
                 # End codon loop
                 ##########
 
-                globs['degeneracy'][transcript] = degen;
+                #globs['degeneracy'][transcript] = degen;
                 # Add the degen string to the global dict (not sure we need this anymore?)
 
                 # print();
