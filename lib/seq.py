@@ -187,28 +187,32 @@ def extractCDS(globs):
     step_start_time = CORE.report_step(globs, step, step_start_time, "Success: " + str(len(globs['cds-seqs'])) + " CDS read");
     # Status update
 
-    # ###
-    # step = "Writing separate CDS sequences";
-    # step_start_time = CORE.report_step(globs, step, False, "In progress...");
-    # written = 0;
+    ###
+    if globs['write-cds']:
+        step = "Writing CDS sequences";
+        step_start_time = CORE.report_step(globs, step, False, "In progress...");
+        written = 0;
 
-    # outdir = "test-data/mm10/ensembl/cds/";
-    # if not os.path.isdir(outdir):
-    #     os.system("mkdir " + outdir);
+        #outdir = "test-data/mm10/ensembl/cds/";
+        #if not os.path.isdir(outdir):
+        #    os.system("mkdir " + outdir);
 
-    # for seq in globs['cds-seqs']:
-    #     outfile = os.path.join(outdir, seq + ".fa");
-    #     with open(outfile, "w") as of:
-    #         of.write(">" + seq + "\n");
-    #         of.write(globs['cds-seqs'][seq] + "\n");
-    #     written += 1;
+        #outfilename = "/n/holylfs05/LABS/informatics/Users/gthomas/spiders/genomes/tgiga/tgiga-cds.fa";
 
-    #     if written == 100:
-    #         break;
+        with open(globs['write-cds'], "w") as of:
+            for seq in globs['cds-seqs']:
+                #outfile = os.path.join(outdir, seq + ".fa");
+                #with open(outfile, "w") as of:
+                of.write(">" + seq + "\n");
+                of.write(globs['cds-seqs'][seq] + "\n");
+                written += 1;
 
-    # step_start_time = CORE.report_step(globs, step, step_start_time, "Success: " + str(written) + " sequences written");
-    # # Chunk of code to write out the sequences in a concatenated file to individual files by locus -- for development
-    # ###
+                # if written == 100:
+                #     break;
+
+        step_start_time = CORE.report_step(globs, step, step_start_time, "Success: " + str(written) + " sequences written");
+    # Chunk of code to write out the sequences in a concatenated file to individual files by locus -- for development
+    ###
 
     return globs;
 

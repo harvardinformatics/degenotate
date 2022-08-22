@@ -56,6 +56,7 @@ def init():
 
         'outdir' : '',
         'outbed' : 'degeneracy-all-sites.bed',
+        'write-cds' : False,
         'run-name' : 'degenotate',
         'logfilename' : 'degenotate.errlog',
         'logdir' : '',

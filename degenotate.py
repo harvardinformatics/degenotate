@@ -65,6 +65,10 @@ if __name__ == '__main__':
         globs = SEQ.extractCDS(globs);
         # Extract the coding sequences based on the annotation and the genome sequences
 
+        if globs['write-cds']:
+            CORE.endProg(globs);
+        # If -c is specified, end the program here
+
         step = "Removing genome sequence from memory";
         step_start_time = CORE.report_step(globs, step, False, "In progress...");
         del(globs['genome-seqs']);

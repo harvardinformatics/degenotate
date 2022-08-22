@@ -33,6 +33,7 @@ def optParse(globs):
     parser.add_argument("-o", dest="out_dest", help="Desired output directory. This will be created for you if it doesn't exist. Default: degenotate-[date]-[time]", default=False);
     # Output
 
+    parser.add_argument("-c", dest="write_cds", help="If a file is provided, the program will extract CDS sequences from the genome and write them to the file and exit.", default=False);
     parser.add_argument("-p", dest="num_procs", help="The total number of processes that degenotate can use. Default: 1.", type=int, default=1);
     # User params
 
@@ -111,13 +112,23 @@ def optParse(globs):
 
     ####################
 
+    if args.write_cds:
+        globs['write-cds'] = os.path.abspath(args.write_cds);
+        if os.path.isfile(globs['write-cds']):
+            if not globs['gxf-file']:
+                CORE.errorOut("OP4", "Extracting CDS sequences can only be done with an annotation file (-a) and a genome file (-g).", globs);    
+            if not globs['overwrite']:
+                CORE.errorOut("OP5", "File specified with -c to write CDS to already exists and --overwrite was not set. Please move the current file or specify to --overwrite it.", globs);    
+
+    ####################
+
     if not args.out_dest:
         globs['outdir'] = "degenotate-out-" + globs['startdatetime'];
     else:
         globs['outdir'] = args.out_dest;
 
     if not globs['overwrite'] and os.path.exists(globs['outdir']):
-        CORE.errorOut("OP4", "Output directory already exists: " + globs['outdir'] + ". Specify new directory name OR set --overwrite to overwrite all files in that directory.", globs);
+        CORE.errorOut("OP6", "Output directory already exists: " + globs['outdir'] + ". Specify new directory name OR set --overwrite to overwrite all files in that directory.", globs);
 
     if not os.path.isdir(globs['outdir']) and not globs['norun'] and not globs['info']:
         os.makedirs(globs['outdir']);
@@ -193,7 +204,11 @@ def startProg(globs):
         CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Sequence " + globs['in-seq-type'] + ":", pad) + globs['in-seq']);
 
     CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Output directory:", pad) + globs['outdir']);
-    CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Per-site degeneracy output:", pad) + globs['outbed']);
+    if globs['write-cds']:
+        CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# CDS sequence output:", pad) + globs['write-cds']);
+    else:
+        CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Per-site degeneracy output:", pad) + globs['outbed']);
+        
     CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Log file:", pad) + os.path.basename(globs['logfilename']));
     # Input/Output
     #######################
@@ -202,9 +217,9 @@ def startProg(globs):
     CORE.printWrite(globs['logfilename'], globs['log-v'], "# OPTIONS INFO:");
     CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Option", pad) + CORE.spacedOut("Current setting", opt_pad) + "Current action");
 
-    CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Processes (-p)", pad) +
-                CORE.spacedOut(str(globs['num-procs']), opt_pad) +
-                "degenotate will use this many processes.");
+    # CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Processes (-p)", pad) +
+    #             CORE.spacedOut(str(globs['num-procs']), opt_pad) +
+    #             "degenotate will use this many processes.");
     # Reporting the resource options
 
     if globs['overwrite']:
