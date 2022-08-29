@@ -10,6 +10,7 @@ from collections import namedtuple
 from itertools import pairwise
 #use networkx to turn codon table into a graph to allow easy computation of paths
 import networkx as nx
+import lib.vcf as VCF
 import lib.output as OUT
 import lib.core as CORE
 
@@ -252,12 +253,23 @@ def processCodons(globs):
             if ("ns" in globs['codon-methods']):
 
                 #define coordinate shift based on frame
-                coord_shift = frame-1
+                #coord_shift = frame-1
 
                 #process each codon
-                for i,codon in enumerate(codons):
-                    #DOUBLE CHECK THIS PLEASE
-                    transcript_position = (i*3)+1+coord_shift
+                # for i,codon in enumerate(codons):
+                #     #DOUBLE CHECK THIS PLEASE
+                #     transcript_position = (i*3)+1+coord_shift
+
+                
+
+                #define coordinate shift based on frame
+                transcript_position = extra_leading_nt;
+
+                #process each codon
+                # NOTE GT: I think this will work since I now define the number of extra leading NTs above and in
+                # globs['leading-bases'][frame]. We can just start the transcript at that position and
+                # increment by 3 each time. Probably needs debuging.
+                for codon in codons:
                     ref_aa = CODON_DICT[codon]
                     ps = 0.0
                     pn = 0.0
@@ -267,7 +279,8 @@ def processCodons(globs):
                     #assume getVariants returns a data structure of variant codons
                     #this should be a list (empty, 1, or more) for in group codons
                     #but for outgroup codons, it should be a single string with fixed differences
-                    poly_codons,div_codon = getVariants(globs,transcript,transcript_position)
+                    ## NOTE GT: Check vcf.py ... needs testing with a vcf file that has a corresponding genome
+                    poly_codons,div_codon = VCF.getVariants(globs,transcript,transcript_position)
 
                     if poly_codons:
                         #there are variants
@@ -297,7 +310,10 @@ def processCodons(globs):
                         if diffs >= 2:
                             ds,dn = codonPath(ref_aa,div_aa)
 
-                    globs['nonsyn'][transcript][i] = MKTable(pn,ps,dn,ds)
+                    globs['nonsyn'][transcript][transcript_position] = MKTable(pn,ps,dn,ds)
+                    # NOTE GT: do we need to add placeholders for the extra leading bases to the nonsyn dict?
+                    # e.g. globs['nonsyn'][transcript] could be a list with the index being the position... not
+                    # sure what is easiest here.
                 # End codon loop
                 ##########
 
@@ -306,7 +322,7 @@ def processCodons(globs):
 
             counter += 1;
             if counter % 100 == 0:
-                cur_scf_time = CORE.report_step(globs, step, step_start_time, "Processed " + str(counter) + " / " + str(num_transcripts) + " transcripts...", full_update=True);
+                cur_step_time = CORE.report_step(globs, step, step_start_time, "Processed " + str(counter) + " / " + str(num_transcripts) + " transcripts...", full_update=True);
             # A counter and a status update every 100 loci
 
         # End transcript loop

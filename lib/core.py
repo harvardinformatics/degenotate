@@ -28,7 +28,7 @@ def errorOut(errnum, errmsg, globs):
 
 def fileCheck(globs):
 # Checks file options.
-    files = ['gxf-file', 'fa-file', 'in-seq'];
+    files = ['gxf-file', 'fa-file', 'in-seq', 'vcf-file'];
     for f in files:
         if globs[f]:
             if not os.path.isfile(globs[f]) and not os.path.isdir(globs[f]):

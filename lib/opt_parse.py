@@ -28,6 +28,9 @@ def optParse(globs):
     parser.add_argument("-g", dest="genome_file", help="A FASTA file containing a genome. -a must also be specified. Only one of -a/-g OR -s is REQUIRED.", default=False);
 
     parser.add_argument("-s", dest="in_seq", help="Either a directory containing individual, in-frame coding sequence files or a single file containing multipl in-frame coding sequences on which to calculate degeneracy. Only one of -a/-g OR -s is REQUIRED.", default=False);
+    
+    parser.add_argument("-v", dest="vcf_file", help="Optional VCF file with in and outgroups for MK test.", default=False);
+    parser.add_argument("-u", dest="vcf_outgroups", help="A comma separated list of sample IDs in the VCF file that make up the outgroup (e.g. 'sample1,sample2') or a file with one sample per line.", default=False);
     # Input
 
     parser.add_argument("-o", dest="out_dest", help="Desired output directory. This will be created for you if it doesn't exist. Default: degenotate-[date]-[time]", default=False);
@@ -106,6 +109,25 @@ def optParse(globs):
 
     ####################
 
+    if args.vcf_file:
+        globs['vcf-file'] = args.vcf_file;
+        globs['codon-methds'].append("ns");
+
+        if not args.vcf_outgroups:
+            CORE.errorOut("OP4", "Outgroup samples must be specified (-u) with a vcf file (-v)", globs);
+        else:
+            globs['vcf-outgroups'] = args.vcf_outgroups;
+            while ", " in globs['vcf-outgroups']:
+                globs['vcf-outgroups'] = globs['vcf-outgroups'].replace(", ", ",");
+            globs['vcf-outgroups'] = globs['vcf-outgroups'].split(",");
+
+    elif args.vcf_outgroups:
+        CORE.printWrite(globs['logfilename'], globs['log-v'], "# WARNING: VCF outgroups (-u) were provided without a VCF file (-v). They will be ignored.");
+        globs['warnings'] += 1;
+    # Check for a VCF file
+
+    ####################
+
     globs = CORE.fileCheck(globs);
     # Make sure all the input files actually exist, and get their
     # full paths
@@ -116,9 +138,9 @@ def optParse(globs):
         globs['write-cds'] = os.path.abspath(args.write_cds);
         if os.path.isfile(globs['write-cds']):
             if not globs['gxf-file']:
-                CORE.errorOut("OP4", "Extracting CDS sequences can only be done with an annotation file (-a) and a genome file (-g).", globs);    
+                CORE.errorOut("OP5", "Extracting CDS sequences can only be done with an annotation file (-a) and a genome file (-g).", globs);    
             if not globs['overwrite']:
-                CORE.errorOut("OP5", "File specified with -c to write CDS to already exists and --overwrite was not set. Please move the current file or specify to --overwrite it.", globs);    
+                CORE.errorOut("OP6", "File specified with -c to write CDS to already exists and --overwrite was not set. Please move the current file or specify to --overwrite it.", globs);    
 
     ####################
 
@@ -128,7 +150,7 @@ def optParse(globs):
         globs['outdir'] = args.out_dest;
 
     if not globs['overwrite'] and os.path.exists(globs['outdir']):
-        CORE.errorOut("OP6", "Output directory already exists: " + globs['outdir'] + ". Specify new directory name OR set --overwrite to overwrite all files in that directory.", globs);
+        CORE.errorOut("OP7", "Output directory already exists: " + globs['outdir'] + ". Specify new directory name OR set --overwrite to overwrite all files in that directory.", globs);
 
     if not os.path.isdir(globs['outdir']) and not globs['norun'] and not globs['info']:
         os.makedirs(globs['outdir']);
@@ -203,6 +225,9 @@ def startProg(globs):
     elif globs['in-seq']:
         CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Sequence " + globs['in-seq-type'] + ":", pad) + globs['in-seq']);
 
+    if globs['vcf-file']:
+        CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# VCF file:", pad) + globs['vcf-file']);
+
     CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Output directory:", pad) + globs['outdir']);
     if globs['write-cds']:
         CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# CDS sequence output:", pad) + globs['write-cds']);
@@ -221,6 +246,11 @@ def startProg(globs):
     #             CORE.spacedOut(str(globs['num-procs']), opt_pad) +
     #             "degenotate will use this many processes.");
     # Reporting the resource options
+
+    if globs['vcf-file']:
+         CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# -u", pad) +
+                    CORE.spacedOut(",".join(globs['vcf-outgroups']), opt_pad) +
+                    "These samples will be used as outgroups in the VCF file and all others as ingroups.");       
 
     if globs['overwrite']:
         CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# --overwrite", pad) +

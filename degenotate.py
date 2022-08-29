@@ -13,6 +13,7 @@ import lib.core as CORE
 import lib.params as params
 import lib.opt_parse as OP
 import lib.gxf as gxf
+import lib.vcf as vcf
 import lib.seq as SEQ
 import lib.degen as degen
 # import lib.output as OUT
@@ -28,7 +29,7 @@ if __name__ == '__main__':
 
     print("\n" + " ".join(sys.argv) + "\n");
 
-    if any(v in sys.argv for v in ["--version", "-version", "--v", "-v"]):
+    if any(v in sys.argv for v in ["--version", "-version", "--v"]):
         print("# degenotate version " + globs['version'] + " released on " + globs['releasedate'])
         sys.exit(0);
     # The version option to simply print the version and exit.
@@ -74,6 +75,9 @@ if __name__ == '__main__':
         del(globs['genome-seqs']);
         step_start_time = CORE.report_step(globs, step, step_start_time, "Success");
         # Free up the memory from the whole genome sequence since we don't need it anymore
+
+        if globs['vcf-file']:
+            globs = vcf.read(globs);
 
     else:
         globs = SEQ.readCDS(globs);

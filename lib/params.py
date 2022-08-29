@@ -50,8 +50,15 @@ def init():
         'in-seq-type' : False,
         # Input by a directory with many fasta files or a single multi-fasta
 
+        'vcf-file' : False,
+        'vcf' : False,
+        'vcf-ingroups' : [],
+        'vcf-outgroups' : False,
+        # Input VCF file
+
         'gxf-compression' : 'none',
         'seq-compression' : 'none',
+        'vcf-compression' : 'none',
         # The type of compression used for input sequence files
 
         'outdir' : '',
