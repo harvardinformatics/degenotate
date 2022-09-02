@@ -31,6 +31,7 @@ def optParse(globs):
     
     parser.add_argument("-v", dest="vcf_file", help="Optional VCF file with in and outgroups for MK test.", default=False);
     parser.add_argument("-u", dest="vcf_outgroups", help="A comma separated list of sample IDs in the VCF file that make up the outgroup (e.g. 'sample1,sample2') or a file with one sample per line.", default=False);
+    parser.add_argument("-e", dest="vcf_exclude", help="A comma separated list of sample IDs in the VCF file to exclude (e.g. 'sample1,sample2') or a file with one sample per line.", default=False);
     # Input
 
     parser.add_argument("-o", dest="out_dest", help="Desired output directory. This will be created for you if it doesn't exist. Default: degenotate-[date]-[time]", default=False);
@@ -111,18 +112,55 @@ def optParse(globs):
 
     if args.vcf_file:
         globs['vcf-file'] = args.vcf_file;
-        globs['codon-methds'].append("ns");
+        #globs['codon-methds'].append("ns");
+        # If a VCF file is supplied, add the ns method to the list of methods to apply to the input
 
         if not args.vcf_outgroups:
             CORE.errorOut("OP4", "Outgroup samples must be specified (-u) with a vcf file (-v)", globs);
+        # If a VCF file is supplied, outgroup samples must be specified
+
         else:
             globs['vcf-outgroups'] = args.vcf_outgroups;
-            while ", " in globs['vcf-outgroups']:
-                globs['vcf-outgroups'] = globs['vcf-outgroups'].replace(", ", ",");
-            globs['vcf-outgroups'] = globs['vcf-outgroups'].split(",");
+            if os.path.isfile(globs['vcf-outgroups']):
+                outgroups = [ line.strip() for line in open(globs['vcf-outgroups']) if line.strip() and line[0] != "#" ];
+                if not outgroups:
+                    CORE.errorOut("OP5", "Did not read any outgroup samples from the file provided with -u.", globs);
+                globs['vcf-outgroups'] = outgroups;
+            # If a file is given as -u, read the outgroup samples from it
 
-    elif args.vcf_outgroups:
-        CORE.printWrite(globs['logfilename'], globs['log-v'], "# WARNING: VCF outgroups (-u) were provided without a VCF file (-v). They will be ignored.");
+            else:
+                while ", " in globs['vcf-outgroups']:
+                    globs['vcf-outgroups'] = globs['vcf-outgroups'].replace(", ", ",");
+                globs['vcf-outgroups'] = globs['vcf-outgroups'].split(",");
+            # If outgroups are supplied directly in the command line as a comma separated list, split
+            # them here
+        # Parse the outgroup samples
+
+        ##########
+
+        if args.vcf_exclude:
+            globs['vcf-exclude'] = args.vcf_exclude;
+            if os.path.isfile(globs['vcf-exclude']):
+                exclude = [ line.strip() for line in open(globs['vcf-exclude']) if line.strip() and line[0] != "#" ];
+                if not exclude:
+                    CORE.errorOut("OP6", "Did not read any samples from the file provided with -e.", globs);
+                globs['vcf-exclude'] = exclude;
+            # If a file is given as -e, read the samples to exclude from the VCF from it
+
+            else:
+                while ", " in globs['vcf-exclude']:
+                    globs['vcf-exclude'] = globs['vcf-exclude'].replace(", ", ",");
+                globs['vcf-exclude'] = globs['vcf-exclude'].split(",");
+            # If samples to exclude are supplied directly in the command line as a comma separated list, split
+            # them here
+
+            globs['vcf-outgroups'] = [ outgroup for outgroup in globs['vcf-outgroups'] if outgroup not in globs['vcf-exclude'] ];
+            if not globs['vcf-outgroups']:
+                CORE.errorOut("OP7", "No outgroup samples left after excluding samples specified by -e.", globs);
+        # Parse the samples to exclude
+
+    elif args.vcf_outgroups or args.exclude:
+        CORE.printWrite(globs['logfilename'], globs['log-v'], "# WARNING: VCF outgroups (-u) or samples to exclude (-e) were provided without a VCF file (-v). They will be ignored.");
         globs['warnings'] += 1;
     # Check for a VCF file
 
@@ -138,9 +176,9 @@ def optParse(globs):
         globs['write-cds'] = os.path.abspath(args.write_cds);
         if os.path.isfile(globs['write-cds']):
             if not globs['gxf-file']:
-                CORE.errorOut("OP5", "Extracting CDS sequences can only be done with an annotation file (-a) and a genome file (-g).", globs);    
+                CORE.errorOut("OP8", "Extracting CDS sequences can only be done with an annotation file (-a) and a genome file (-g).", globs);    
             if not globs['overwrite']:
-                CORE.errorOut("OP6", "File specified with -c to write CDS to already exists and --overwrite was not set. Please move the current file or specify to --overwrite it.", globs);    
+                CORE.errorOut("OP9", "File specified with -c to write CDS to already exists and --overwrite was not set. Please move the current file or specify to --overwrite it.", globs);    
 
     ####################
 
@@ -150,7 +188,7 @@ def optParse(globs):
         globs['outdir'] = args.out_dest;
 
     if not globs['overwrite'] and os.path.exists(globs['outdir']):
-        CORE.errorOut("OP7", "Output directory already exists: " + globs['outdir'] + ". Specify new directory name OR set --overwrite to overwrite all files in that directory.", globs);
+        CORE.errorOut("OP10", "Output directory already exists: " + globs['outdir'] + ". Specify new directory name OR set --overwrite to overwrite all files in that directory.", globs);
 
     if not os.path.isdir(globs['outdir']) and not globs['norun'] and not globs['info']:
         os.makedirs(globs['outdir']);
@@ -248,9 +286,14 @@ def startProg(globs):
     # Reporting the resource options
 
     if globs['vcf-file']:
-         CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# -u", pad) +
+        CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# -u", pad) +
                     CORE.spacedOut(",".join(globs['vcf-outgroups']), opt_pad) +
-                    "These samples will be used as outgroups in the VCF file and all others as ingroups.");       
+                    " These samples will be used as outgroups in the VCF file and all others as ingroups.");       
+
+        if globs['vcf-exclude']:
+            CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# -i", pad) +
+                    CORE.spacedOut(",".join(globs['vcf-exclude']), opt_pad) +
+                    " These samples will be excluded in the VCF file.");  
 
     if globs['overwrite']:
         CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# --overwrite", pad) +

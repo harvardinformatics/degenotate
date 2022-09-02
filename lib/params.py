@@ -54,6 +54,7 @@ def init():
         'vcf' : False,
         'vcf-ingroups' : [],
         'vcf-outgroups' : False,
+        'vcf-exclude' : [],
         # Input VCF file
 
         'gxf-compression' : 'none',

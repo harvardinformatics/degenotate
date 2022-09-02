@@ -280,7 +280,7 @@ def processCodons(globs):
                     #this should be a list (empty, 1, or more) for in group codons
                     #but for outgroup codons, it should be a single string with fixed differences
                     ## NOTE GT: Check vcf.py ... needs testing with a vcf file that has a corresponding genome
-                    poly_codons,div_codon = VCF.getVariants(globs,transcript,transcript_position)
+                    poly_codons,div_codon = VCF.getVariants(globs, transcript, transcript_position, list(codon));
 
                     if poly_codons:
                         #there are variants
