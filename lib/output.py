@@ -63,3 +63,31 @@ def compileBedLine(globs, transcript, transcript_region, cds_coord, base, codon,
     return outline;
 
 #############################################################################
+
+def writeMK(globs):
+
+# A function to write out MK tables for each transcript
+    
+    with open(globs['outmk'], "w") as mkfile:
+        cols = ['transcript', 'pN', 'pS', 'dN', 'dS']
+        mkfile.write("\t".join(cols) + "\n")
+        for transcript in globs['cds-seqs']:
+            pn = 0.0
+            ps = 0.0
+            dn = 0.0
+            ds = 0.0
+        
+            if transcript in globs['nonsyn']:
+                for pos in globs['nonsyn'][transcript]:
+                   pn += globs['nonsyn'][transcript][pos].pn
+                   ps += globs['nonsyn'][transcript][pos].ps
+                   dn += globs['nonsyn'][transcript][pos].dn
+                   ds += globs['nonsyn'][transcript][pos].ds
+                   
+            outline = [transcript,str(pn),str(ps),str(dn),str(ds)]
+            mkfile.write("\t".join(outline) + "\n")
+        
+        
+    #globs['nonsyn'][transcript][transcript_position] = MKTable(pn,ps,dn,ds)
+    
+#############################################################################

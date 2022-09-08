@@ -16,7 +16,7 @@ import lib.gxf as gxf
 import lib.vcf as vcf
 import lib.seq as SEQ
 import lib.degen as degen
-# import lib.output as OUT
+import lib.output as OUT
 ## TODO: Commented libaries need to be created
 
 #############################################################################
@@ -88,8 +88,8 @@ if __name__ == '__main__':
     globs = degen.processCodons(globs)
     #step_start_time = CORE.report_step(globs, step, step_start_time, "Success");
 
-    # globs = OUT.writeDegen(globs);
-    ## TODO: Function to write output. NEED TO CREATE OUTPUT LIBRARY
+    if ("ns" in globs['codon-methods']):
+        OUT.writeMK(globs);
 
     CORE.endProg(globs);
 

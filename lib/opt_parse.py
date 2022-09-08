@@ -196,6 +196,8 @@ def optParse(globs):
 
     globs['outbed'] = os.path.join(globs['outdir'], globs['outbed']);
     # Main bed file with degeneracy for all sites
+    globs['outmk'] = os.path.join(globs['outdir'], globs['outmk']);
+    # MK table output
 
     ####################
 

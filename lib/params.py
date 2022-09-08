@@ -64,6 +64,7 @@ def init():
 
         'outdir' : '',
         'outbed' : 'degeneracy-all-sites.bed',
+        'outmk'  : 'mk.tsv',
         'write-cds' : False,
         'run-name' : 'degenotate',
         'logfilename' : 'degenotate.errlog',
