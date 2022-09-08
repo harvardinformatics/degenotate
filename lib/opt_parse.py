@@ -112,7 +112,7 @@ def optParse(globs):
 
     if args.vcf_file:
         globs['vcf-file'] = args.vcf_file;
-        #globs['codon-methds'].append("ns");
+        globs['codon-methods'].append("ns");
         # If a VCF file is supplied, add the ns method to the list of methods to apply to the input
 
         if not args.vcf_outgroups:

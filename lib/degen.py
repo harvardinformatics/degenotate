@@ -6,8 +6,8 @@ import sys
 import os
 import csv
 import re
+import itertools
 from collections import namedtuple
-from itertools import pairwise
 #use networkx to turn codon table into a graph to allow easy computation of paths
 import networkx as nx
 import lib.vcf as VCF
@@ -93,7 +93,7 @@ def frameError(seq,frame):
 
 #############################################################################
 
-def codonPath(start_codon,end_codon,CODON_GRAPH):
+def codonPath(start_codon,end_codon,CODON_GRAPH,CODON_DICT):
 
     #function to calculate syn/nonsyn for multi-step paths
     #by default returns the average nonsyn and syn subs over all shortest paths b/w two codons
@@ -104,17 +104,18 @@ def codonPath(start_codon,end_codon,CODON_GRAPH):
     paths = nx.all_shortest_paths(CODON_GRAPH, source=start_codon, target=end_codon)
 
     #number of possible shortest paths
-    numpaths = len(paths)
+    numpaths = 0
 
     #for each path, calculate the number of syn and nonsyn subs implied
     for path in paths:
-        for pairs in pairwise(path):
+        for pairs in itertools.pairwise(path):
             aa1 = CODON_DICT[pairs[0]]
             aa2 = CODON_DICT[pairs[1]]
             if aa1 == aa2:
                 ds+=1
             if aa1 != aa2:
                 dn+=1
+        numpaths += 1
 
     #calculate average over all paths
     dn = dn/numpaths
@@ -281,6 +282,7 @@ def processCodons(globs):
                     #but for outgroup codons, it should be a single string with fixed differences
                     ## NOTE GT: Check vcf.py ... needs testing with a vcf file that has a corresponding genome
                     poly_codons,div_codon = VCF.getVariants(globs, transcript, transcript_position, list(codon));
+                    #print(transcript,transcript_position,codon,poly_codons,div_codon, sep=":")
 
                     if poly_codons:
                         #there are variants
@@ -308,12 +310,16 @@ def processCodons(globs):
                                 dn += 1;
 
                         if diffs >= 2:
-                            ds,dn = codonPath(ref_aa,div_aa)
+                            ds,dn = codonPath(codon,div_codon,CODON_GRAPH,CODON_DICT)
 
-                    globs['nonsyn'][transcript][transcript_position] = MKTable(pn,ps,dn,ds)
+                    try:
+                    	globs['nonsyn'][transcript][transcript_position] = MKTable(pn,ps,dn,ds)
+                    except KeyError:
+                    	globs['nonsyn'].update({transcript: {transcript_position : MKTable(pn,ps,dn,ds)}})
                     # NOTE GT: do we need to add placeholders for the extra leading bases to the nonsyn dict?
                     # e.g. globs['nonsyn'][transcript] could be a list with the index being the position... not
                     # sure what is easiest here.
+                    transcript_position += 3
                 # End codon loop
                 ##########
 

@@ -40,7 +40,7 @@ def readFasta(filename, seq_compression):
         # The header object is an iterator. This gets the string.
 
         curkey = header[1:];
-        #curkey = header[1:header.index(" ")];
+        curkey = header[1:header.index(" ")];
         # This removes the ">" character from the header string to act as the key in seqdict
         # TODO: Need to decide if splitting the input sequence header on " " is good for most cases, or if we should
         #       add this as a user option?
