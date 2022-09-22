@@ -163,8 +163,8 @@ def getVariants(globs, transcript, transcript_position, ref_codon):
             # Sites contain fixed differences only if all the alleles in the outgroup do not
             # exist in the ingroup 
                 if len(out_allele_counts) == 1:
-                    fixed_diff_codon[codon_pos] = alt_nts[out_allele_counts.keys()[0]-1];
-                # If there is only one allele in the outrgoup (the site is not polymorphic in the outgroup)
+                    fixed_diff_codon[codon_pos] = alt_nts[list(out_allele_counts)[0]-1];
+                # If there is only one allele in the outgroup (the site is not polymorphic in the outgroup)
                 # add that allele to the fixed_diff_codon by looking it up in the alt_nts list
                 
                 else:
