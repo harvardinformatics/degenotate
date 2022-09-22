@@ -192,7 +192,7 @@ def processCodons(globs):
             codons = re.findall('...', fasta)
 
             if ("degen" in globs['codon-methods']):
-                degen = [ DEGEN_DICT[x] for x in codons ];
+                degen = [ DEGEN_DICT[x] if "N" not in x else "..." for x in codons ];
                 # Get the string of degeneracy integers for every codon in the current sequence (e.g. 002)
 
                 degen = "." * extra_leading_nt + "".join(degen);
@@ -215,7 +215,10 @@ def processCodons(globs):
                 ##########
 
                 for codon in codons:
-                    aa = CODON_DICT[codon];
+                    try:
+                        aa = CODON_DICT[codon];
+                    except KeyError:
+                        aa = "."
                     # Look up the AA of the current codon
 
                     for codon_pos in [0,1,2]:
@@ -271,7 +274,11 @@ def processCodons(globs):
                 # globs['leading-bases'][frame]. We can just start the transcript at that position and
                 # increment by 3 each time. Probably needs debuging.
                 for codon in codons:
-                    ref_aa = CODON_DICT[codon]
+                    try: 
+                        ref_aa = CODON_DICT[codon]
+                    except KeyError:
+                        continue;
+
                     ps = 0.0
                     pn = 0.0
                     ds = 0.0
@@ -290,7 +297,11 @@ def processCodons(globs):
 
                             #for in group variants, we treat each as independent
 
-                            poly_aa = CODON_DICT[poly_codon]
+                            try:
+                                poly_aa = CODON_DICT[poly_codon]
+                            except KeyError:
+                                continue;
+                            
                             if poly_aa == ref_aa:
                                 ps += 1;
                             if poly_aa != ref_aa:
@@ -303,7 +314,11 @@ def processCodons(globs):
                         diffs = codonHamming(div_codon,codon)
 
                         if diffs == 1:
-                            div_aa = CODON_DICT[div_codon]
+                            try:
+                                div_aa = CODON_DICT[div_codon]
+                            except KeyError:
+                                continue;
+                                
                             if div_aa == ref_aa:
                                 ds += 1;
                             if div_aa != ref_aa:
