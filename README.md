@@ -89,7 +89,7 @@ This is the main output file for degenotate. It contains one line for every codi
 
 | Scaffold | Start pos | End pos | Transcript ID | Degeneracy code | Reference nucleotide | Reference amino acid | Mutation summary |
 | -------- | --------- | ------- | ------------- | --------------- | -------------------- | -------------------- | ---------------- |
-| The assembly scaffold or chromosome | The start position of the site | The end position of the site | The transcript ID | See above | The nucleotide at this site as read from the genome | The amino acid translated from the codon in that this site is in in the current transcript | See below |
+| The assembly scaffold or chromosome | The start position of the site | The end position of the site | The transcript ID | [See above](#how-degenotate-classifies-degeneracy) | The nucleotide at this site as read from the genome | The amino acid translated from the codon in that this site is in in the current transcript | [See below](#mutation-summary-column) |
 
 #### Mutation summary column
 
