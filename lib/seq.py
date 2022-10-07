@@ -11,7 +11,7 @@ from itertools import groupby
 
 ############################################################################# 
 
-def readFasta(filename, seq_compression):
+def readFasta(filename, seq_compression, seq_delim):
 # Read a FASTA formatted sequence file
 # Great iterator and groupby code from: https://www.biostars.org/p/710/ 
 
@@ -40,10 +40,10 @@ def readFasta(filename, seq_compression):
         # The header object is an iterator. This gets the string.
 
         curkey = header[1:];
-        curkey = header[1:header.index(" ")];
+        if seq_delim:
+            curkey = curkey[:curkey.index(seq_delim)];            
         # This removes the ">" character from the header string to act as the key in seqdict
-        # TODO: Need to decide if splitting the input sequence header on " " is good for most cases, or if we should
-        #       add this as a user option?
+        # and splits the header based on user input from the -d option
 
         seq = "".join(readstr(s) for s in fa_iter.__next__());
         # The current header should correspond to the current iterator in fa_iter. This gets all those
@@ -72,7 +72,7 @@ def readGenome(globs):
 
     step = "Reading genome FASTA file";
     step_start_time = CORE.report_step(globs, step, False, "In progress...");
-    globs['genome-seqs'] = readFasta(globs['fa-file'], globs['seq-compression']);
+    globs['genome-seqs'] = readFasta(globs['fa-file'], globs['seq-compression'], globs['seq-delim']);
     step_start_time = CORE.report_step(globs, step, step_start_time, "Success: " + str(len(globs['genome-seqs'])) + " seqs read");
     # Read the input sequence file
 
@@ -245,7 +245,7 @@ def readCDS(globs):
             seq_file_path = seq_file;
         # For multiple input sequence files (directory), the path will be that directory and the current file
 
-        cur_seqs = readFasta(seq_file_path, CORE.detectCompression(seq_file_path));
+        cur_seqs = readFasta(seq_file_path, CORE.detectCompression(seq_file_path), False);
         # Read sequences in current file
         # Not sure if it is necessary to do the compression detections for each file... seems to take a while
 

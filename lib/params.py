@@ -27,7 +27,7 @@ def init():
     globs_init = {
         'version' : 'Beta 1.0',
         'releasedate' : "October 2021",
-        'authors' : "Timothy Sackton, Gregg Thomas, Sara Wuitchik",
+        'authors' : "Timothy Sackton, Gregg Thomas",
         'doi' : '',
         'http' : '',
         'github' : '',
@@ -48,6 +48,7 @@ def init():
 
         'in-seq' : False,
         'in-seq-type' : False,
+        'seq-delim' : False,
         # Input by a directory with many fasta files or a single multi-fasta
 
         'vcf-file' : False,
@@ -64,6 +65,7 @@ def init():
 
         'outdir' : '',
         'outbed' : 'degeneracy-all-sites.bed',
+        'out-transcript' : 'transcript-counts.tsv',
         'outmk'  : 'mk.tsv',
         'write-cds' : False,
         'run-name' : 'degenotate',
@@ -71,6 +73,9 @@ def init():
         'logdir' : '',
         'overwrite' : False,
         # I/O options
+
+        'shortest-paths' : False,
+        # Dependency functions
 
         'genome-seqs' : {},
         'cds-seqs' : {},

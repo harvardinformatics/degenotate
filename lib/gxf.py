@@ -68,11 +68,12 @@ def readFeatures(globs, file_reader, line_reader, feature_list, id_format, paren
                 # Unpack and parse the gene ID
 
                 if feature_list[0] == "transcript":
-                    globs['annotation'][feature_id] = { 'header' : seq_header, 'start' : start, 'end' : end, 'strand' : strand, 'exons' : {}, "gene-id" : parent_id };
+                    globs['annotation'][feature_id] = { 'header' : seq_header, 'start' : start, 'end' : end, 'len' : end-start, 'strand' : strand, 'exons' : {}, "gene-id" : parent_id,
+                                                        0 : 0, 2 : 0, 3 : 0, 4 : 0 };
                     # Add the ID and related info to the annotation dict. This includes an empty dict for exons to be stored in a similar way
+                    # The last 4 entries are counts for number of sites with each degeneracy to summarize transcripts
 
                 elif feature_list[0] == "CDS":
-
                     try: 
                         num_exons = len(globs['annotation'][parent_id]['exons']);
                     except KeyError:
@@ -83,12 +84,11 @@ def readFeatures(globs, file_reader, line_reader, feature_list, id_format, paren
                     # Because exon IDs are not always included for CDS, or they only represent the CDS as a whole (e.g. protein ID from Ensembl), we 
                     # count the number of exons in the transcript as the ID
 
-                    globs['annotation'][parent_id]['exons'][exon_id] = { 'header' : seq_header, 'start' : start, 'end' : end, 'strand' : strand };
+                    globs['annotation'][parent_id]['exons'][exon_id] = { 'header' : seq_header, 'start' : start, 'end' : end, 'len' : end-start, 'strand' : strand };
                 # Add the ID and related info to the annotation dict.                   
 
                 num_features += 1;
                 # Add to the number of transcripts read
-
 
     return globs['annotation'], num_features;
 

@@ -6,7 +6,6 @@ import sys
 import os
 import random
 from collections import defaultdict
-from pysam import VariantFile
 import lib.core as CORE
 
 #############################################################################
@@ -14,12 +13,20 @@ import lib.core as CORE
 def read(globs):
 # Reads a VCF file into a VariantFile object with pysam and stores object in globs
 
+    try:
+        from pysam import VariantFile
+    except:
+        print();
+        CORE.errorOut("VCF1", "Missing pysam dependency. Please install and try again: https://anaconda.org/bioconda/pysam", globs);
+
     globs['vcf'] = VariantFile(globs['vcf-file']);
     # Read the VCF
 
-    # x = globs['vcf'].fetch("NC_046340.1", 71, 73);
+    #print();
 
-    # print(x);
+    #x = globs['vcf'].fetch("NC_046340.1", 71, 73);
+
+    #print(x);
     # print(list(x));
 
     # for i in [72,73,74]:
@@ -41,7 +48,7 @@ def read(globs):
     #             print("AAHJ")
     #         #print(rec.info);
 
-    # sys.exit();
+    #sys.exit();
     # for record in globs['vcf'].fetch():
     #     print(record.ref);
     #     print(record.alts);
@@ -86,13 +93,10 @@ def getVariants(globs, transcript, transcript_position, ref_codon):
     # Pysam coordinates are 0 based, so subtract 1
     ## TODO: Make sure this is consistent with our other data structures!!
 
-    #poly_codons = { sample : "" for sample in globs['vcf-ingroups'] };
     polymorphic_codons = [];
     fixed_diff_codon = ref_codon;
     # A list of polymorphic codons from the ingroups and a single codon string
     # for fixed differences in the outgroups
-
-    #for rec in bcf_in.fetch('chr1', 100000, 200000):
     
     records = globs['vcf'].fetch(genome_region, genome_start_pos, genome_start_pos+3)
     #get records for the current codon
@@ -109,7 +113,7 @@ def getVariants(globs, transcript, transcript_position, ref_codon):
     
         for rec in records:
             codon_pos = rec.start - genome_start_pos
-#            print(rec.start, genome_start_pos, codon_pos) 
+            #print(rec.start, genome_start_pos, codon_pos) 
             #get codon position of this record
         
             ref_nt = rec.ref;
