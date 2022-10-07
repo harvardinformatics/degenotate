@@ -15,6 +15,8 @@ If given a corresponding VCF file with specified outgroup samples, degenotate ca
 
 The program also offers coding sequence extraction from the input genome and (coming soon) extraction of sequences by degeneracy (e.g. extract only the 4-fold degenerate sites).
 
+*Warning:* This is an early alpha release at the moment, and there may still be uncaught bugs in the calculations. Please report possible errors, and be cautious about using the results of this software for publications just yet.
+
 ## Installation
 
 ### Install
