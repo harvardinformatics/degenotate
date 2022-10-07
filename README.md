@@ -1,3 +1,4 @@
+
 # degenotate
 
 ## Annotate degeneracy of sites in coding regions of a genome
@@ -145,4 +146,3 @@ When provided with a multi-sample VCF file and outgroup samples, degenotate coun
 | `--info` |  Print some meta information about the program and exit. No other options required. |
 | `--version` | Simply print the version and exit. Can also be called as `-version`, or `--v`. |
 | `--quiet` | Set this flag to prevent degenotate from reporting detailed information about each step. |
-
