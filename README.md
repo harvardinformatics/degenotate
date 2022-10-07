@@ -22,16 +22,16 @@ Simply download the program by cloning this repo and run it as `python degenotat
 
 ### Dependencies
 
+degenotate is a standalone program for its core function of annotating degeneracy on a site-by-site basis.
+
 **The main dependency is Python 3+**
 
-For the VCF functionality, **Python version must be 3.10+** for the `itertools.pairwise()` function.
-
-Otherwise, degenotate is mostly stand-alone, with only a couple of package dependencies necessary for VCF input.
+The VCF functionality (`-v`) specifically requires **Python version 3.10+** for the `itertools.pairwise()` function, as well as a couple of external packages.
 
 1. [pysam](https://pysam.readthedocs.io/en/latest/api.html) is used for efficent reading of VCF files for MK test site counts. pysam can be easily [installed with conda](https://anaconda.org/bioconda/pysam), but if you don't use the VCF options the program should run fine without it.
 2. [NetworkX](https://networkx.org/) is used to easily trace the effect of mutations on different codons. NetworkX can also be [installed with conda](https://anaconda.org/conda-forge/networkx). Again if you don't use the VCF options the program should run without it.
 
-We also facilitate the installation of dependencies by providing a pre-made conda environment, `environment.yml`. To create this environment, run:
+We facilitate the installation of these dependencies by providing a pre-made conda environment, `environment.yml`. To create this environment, run:
 
 ```bash
 conda env create -f environment.yml
