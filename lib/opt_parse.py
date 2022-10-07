@@ -29,7 +29,7 @@ def optParse(globs):
 
     parser.add_argument("-s", dest="in_seq", help="Either a directory containing individual, in-frame coding sequence files or a single file containing multipl in-frame coding sequences on which to calculate degeneracy. Only one of -a/-g OR -s is REQUIRED.", default=False);
     
-    parser.add_argument("-v", dest="vcf_file", help="Optional VCF file with in and outgroups for MK test.", default=False);
+    parser.add_argument("-v", dest="vcf_file", help="Optional VCF file with in and outgroups to output polymorphic and fixed differences for MK tests.", default=False);
     parser.add_argument("-u", dest="vcf_outgroups", help="A comma separated list of sample IDs in the VCF file that make up the outgroup (e.g. 'sample1,sample2') or a file with one sample per line.", default=False);
     parser.add_argument("-e", dest="vcf_exclude", help="A comma separated list of sample IDs in the VCF file to exclude (e.g. 'sample1,sample2') or a file with one sample per line.", default=False);
     # Input
@@ -37,8 +37,9 @@ def optParse(globs):
     parser.add_argument("-o", dest="out_dest", help="Desired output directory. This will be created for you if it doesn't exist. Default: degenotate-[date]-[time]", default=False);
     # Output
 
+    parser.add_argument("-d", dest="seq_delim", help="degenotate assumes the chromosome IDs in the GFF file exactly match the sequence headers in the FASTA file. If this is not the case, use this to specify a character at which the FASTA headers will be trimmed.", default=False);
     parser.add_argument("-c", dest="write_cds", help="If a file is provided, the program will extract CDS sequences from the genome and write them to the file and exit.", default=False);
-    parser.add_argument("-p", dest="num_procs", help="The total number of processes that degenotate can use. Default: 1.", type=int, default=1);
+    #parser.add_argument("-p", dest="num_procs", help="The total number of processes that degenotate can use. Default: 1.", type=int, default=1);
     # User params
 
     parser.add_argument("--overwrite", dest="ow_flag", help="Set this to overwrite existing files.", action="store_true", default=False);
@@ -97,6 +98,13 @@ def optParse(globs):
             CORE.errorOut("OP3", "Cannot guess annotation file type from extension. Make sure it ends with '.gff' or '.gtf'.", globs);
         # Guess whether the input annotation file is GFF or GTF from the file extension
         # TODO: Can probably do this better, or let the user specify an option
+
+        if args.seq_delim:
+            if args.seq_delim == 'space':
+                globs['seq-delim'] = " ";
+            else:
+                globs['seq-delim'] = args.seq_delim;
+    # The special case of the -delim option for a space character.
 
     ####################
 
@@ -159,7 +167,7 @@ def optParse(globs):
                 CORE.errorOut("OP7", "No outgroup samples left after excluding samples specified by -e.", globs);
         # Parse the samples to exclude
 
-    elif args.vcf_outgroups or args.exclude:
+    elif args.vcf_outgroups or args.vcf_exclude:
         CORE.printWrite(globs['logfilename'], globs['log-v'], "# WARNING: VCF outgroups (-u) or samples to exclude (-e) were provided without a VCF file (-v). They will be ignored.");
         globs['warnings'] += 1;
     # Check for a VCF file
@@ -196,6 +204,14 @@ def optParse(globs):
 
     globs['outbed'] = os.path.join(globs['outdir'], globs['outbed']);
     # Main bed file with degeneracy for all sites
+
+    globs['out-transcript'] = os.path.join(globs['outdir'], globs['out-transcript']);
+    if not globs['write-cds']:
+        with open(globs['out-transcript'], "w") as transcriptfile:
+            cols = ["transcript", "gene", "transcript length", "0-fold", "2-fold", "3-fold", "4-fold"];
+            transcriptfile.write("\t".join(cols) + "\n");
+    # Transcript summary output and column headers
+
     globs['outmk'] = os.path.join(globs['outdir'], globs['outmk']);
     # MK table output
 
@@ -273,6 +289,10 @@ def startProg(globs):
         CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# CDS sequence output:", pad) + globs['write-cds']);
     else:
         CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Per-site degeneracy output:", pad) + globs['outbed']);
+        CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Transcript count output:", pad) + globs['out-transcript']);
+
+        if "ns" in globs['codon-methods']:
+            CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# MK test count output:", pad) + globs['outmk']);
         
     CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Log file:", pad) + os.path.basename(globs['logfilename']));
     # Input/Output
@@ -296,6 +316,16 @@ def startProg(globs):
             CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# -i", pad) +
                     CORE.spacedOut(",".join(globs['vcf-exclude']), opt_pad) +
                     " These samples will be excluded in the VCF file.");  
+
+    if globs['seq-delim']:
+        if globs['seq-delim'] == " ":
+            delim_str = "\" \"";
+        else:
+            delim_str = globs['seq-delim'];
+        CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# -d", pad) +
+                    CORE.spacedOut(delim_str, opt_pad) +
+                    "degenotate will split FASTA headers at this character.");
+    # Reporting the delim option.
 
     if globs['overwrite']:
         CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# --overwrite", pad) +

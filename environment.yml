@@ -1,0 +1,42 @@
+name: degen-test3
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - _libgcc_mutex=0.1=conda_forge
+  - _openmp_mutex=4.5=2_gnu
+  - bzip2=1.0.8=h7f98852_4
+  - c-ares=1.18.1=h7f98852_0
+  - ca-certificates=2022.9.24=ha878542_0
+  - keyutils=1.6.1=h166bdaf_0
+  - krb5=1.19.3=h3790be6_0
+  - ld_impl_linux-64=2.36.1=hea4e1c9_2
+  - libcurl=7.85.0=h7bff187_0
+  - libdeflate=1.13=h166bdaf_0
+  - libedit=3.1.20191231=he28a2e2_2
+  - libev=4.33=h516909a_1
+  - libffi=3.4.2=h7f98852_5
+  - libgcc-ng=12.1.0=h8d9b700_16
+  - libgomp=12.1.0=h8d9b700_16
+  - libnghttp2=1.47.0=hdcd2b5c_1
+  - libnsl=2.0.0=h7f98852_0
+  - libsqlite=3.39.4=h753d276_0
+  - libssh2=1.10.0=haa6b8db_3
+  - libstdcxx-ng=12.1.0=ha89aaad_16
+  - libuuid=2.32.1=h7f98852_1000
+  - libzlib=1.2.12=h166bdaf_4
+  - ncurses=6.3=h27087fc_1
+  - networkx=2.8.7=pyhd8ed1ab_0
+  - openssl=1.1.1q=h166bdaf_0
+  - pip=22.2.2=pyhd8ed1ab_0
+  - pysam=0.19.1=py310hff46b53_1
+  - python=3.10.6=h582c2e5_0_cpython
+  - python_abi=3.10=2_cp310
+  - readline=8.1.2=h0f457ee_0
+  - setuptools=65.4.1=pyhd8ed1ab_0
+  - tk=8.6.12=h27826a3_0
+  - tzdata=2022d=h191b570_0
+  - wheel=0.37.1=pyhd8ed1ab_0
+  - xz=5.2.6=h166bdaf_0
+  - zlib=1.2.12=h166bdaf_4

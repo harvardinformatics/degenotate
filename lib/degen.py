@@ -8,15 +8,13 @@ import csv
 import re
 import itertools
 from collections import namedtuple
-#use networkx to turn codon table into a graph to allow easy computation of paths
-import networkx as nx
 import lib.vcf as VCF
 import lib.output as OUT
 import lib.core as CORE
 
 #############################################################################
 
-def readDegen():
+def readDegen(globs):
 # Read a codon table file into a degeneracy dict and a codon dict
 # Assumes a plain text, comma-separated file with two columns
 # The first column is the three lettter (DNA) codon sequence
@@ -30,6 +28,16 @@ def readDegen():
 #     mutations are synonymous
 # The third column is the one letter AA code for that codon
 
+    if "ns" in globs['codon-methods']:
+        try:
+            import networkx as nx
+            # use networkx to turn codon table into a graph to allow easy computation of paths
+
+            globs['shortest-paths'] = nx.all_shortest_paths;
+        except:
+            CORE.errorOut("DEGEN1", "Missing networkx dependency. Please install and try again: https://anaconda.org/conda-forge/networkx", globs);
+    # Check for the networkx module
+
     DEGEN_DICT = {}
     CODON_DICT = {}
     with open(os.path.join(os.path.dirname(__file__), "codon-table.csv"), "r") as dd:
@@ -38,22 +46,25 @@ def readDegen():
             DEGEN_DICT[row[0]] = row[2];
             CODON_DICT[row[0]] = row[1];
 
-    # compute codon graph
-    CODON_GRAPH = nx.Graph()
+    if "ns" in globs['codon-methods']:
+        # compute codon graph
+        CODON_GRAPH = nx.Graph()
 
-    # add a node for every codon
-    CODON_GRAPH.add_nodes_from([CODON_DICT.keys])
+        # add a node for every codon
+        CODON_GRAPH.add_nodes_from(list(CODON_DICT.keys()))
+    else:
+        CODON_GRAPH = False;
 
     # add an edge between all codons that are 1 mutation apart
     for codon1 in CODON_DICT.keys():
         for codon2 in CODON_DICT.keys():
             ed = codonHamming(codon1,codon2)
-            if ed == 1:
+            if ed == 1 and "ns" in globs['codon-methods']:
                 CODON_GRAPH.add_edge(codon1,codon2)
             else:
                 continue
 
-    return [ DEGEN_DICT, CODON_DICT, CODON_GRAPH ]
+    return [ DEGEN_DICT, CODON_DICT, CODON_GRAPH, globs ]
 
 #############################################################################
 
@@ -93,7 +104,7 @@ def frameError(seq,frame):
 
 #############################################################################
 
-def codonPath(start_codon,end_codon,CODON_GRAPH,CODON_DICT):
+def codonPath(start_codon, end_codon, CODON_GRAPH, CODON_DICT, nx_shortest_paths):
 
     #function to calculate syn/nonsyn for multi-step paths
     #by default returns the average nonsyn and syn subs over all shortest paths b/w two codons
@@ -101,7 +112,7 @@ def codonPath(start_codon,end_codon,CODON_GRAPH,CODON_DICT):
     ds=0.0
 
     #get all shortest paths using networkx functions
-    paths = nx.all_shortest_paths(CODON_GRAPH, source=start_codon, target=end_codon)
+    paths = nx_shortest_paths(CODON_GRAPH, source=start_codon, target=end_codon)
 
     #number of possible shortest paths
     numpaths = 0
@@ -135,7 +146,7 @@ def processCodons(globs):
 # take CDS sequence and split into list of codons, computing degeneracy, ns, or both
 # might need a clearer name?
 
-    DEGEN_DICT, CODON_DICT, CODON_GRAPH = readDegen()
+    DEGEN_DICT, CODON_DICT, CODON_GRAPH, globs = readDegen(globs)
     MKTable = namedtuple("MKTable", "pn ps dn ds")
 
     ####################
@@ -148,7 +159,7 @@ def processCodons(globs):
 
     ####################
 
-    with open(globs['outbed'], "w") as bedfile:
+    with open(globs['outbed'], "w") as bedfile, open(globs['out-transcript'], "a") as transcriptfile:
         counter = 0;
         for transcript in globs['cds-seqs']:
             if globs['gxf-file']:
@@ -192,7 +203,7 @@ def processCodons(globs):
             codons = re.findall('...', fasta)
 
             if ("degen" in globs['codon-methods']):
-                degen = [ DEGEN_DICT[x] for x in codons ];
+                degen = [ DEGEN_DICT[x] if "N" not in x else "..." for x in codons ];
                 # Get the string of degeneracy integers for every codon in the current sequence (e.g. 002)
 
                 degen = "." * extra_leading_nt + "".join(degen);
@@ -215,7 +226,10 @@ def processCodons(globs):
                 ##########
 
                 for codon in codons:
-                    aa = CODON_DICT[codon];
+                    try:
+                        aa = CODON_DICT[codon];
+                    except KeyError:
+                        aa = "."
                     # Look up the AA of the current codon
 
                     for codon_pos in [0,1,2]:
@@ -225,6 +239,9 @@ def processCodons(globs):
                         outline = OUT.compileBedLine(globs, transcript, transcript_region, cds_coord, base, codon, codon_pos, aa, degen[cds_coord], CODON_DICT);
                         bedfile.write("\t".join(outline) + "\n");
                         # Write the output from the current position to the bed file
+
+                        globs['annotation'][transcript][int(degen[cds_coord])] += 1;
+                        # Increment the count for the current degeneracy for the transcript summary
 
                         cds_coord += 1;
                         # Increment the position in the CDS
@@ -248,20 +265,16 @@ def processCodons(globs):
 
             ## Out of frame test seq when using -s test-data/mm10/ensembl/cds/ as input: transcript:ENSMUST00000237320
 
+            t_outline = [transcript, globs['annotation'][transcript]['gene-id'], str(globs['annotation'][transcript]['len']),
+                            str(globs['annotation'][transcript][0]), str(globs['annotation'][transcript][2]), 
+                            str(globs['annotation'][transcript][3]), str(globs['annotation'][transcript][4]) ]
+            transcriptfile.write("\t".join(t_outline) + "\n");
+            # Compile and write the transcript summary line to the transcript outfile
+
             # End degen method block
             ####################
 
             if ("ns" in globs['codon-methods']):
-
-                #define coordinate shift based on frame
-                #coord_shift = frame-1
-
-                #process each codon
-                # for i,codon in enumerate(codons):
-                #     #DOUBLE CHECK THIS PLEASE
-                #     transcript_position = (i*3)+1+coord_shift
-
-                
 
                 #define coordinate shift based on frame
                 transcript_position = extra_leading_nt;
@@ -271,7 +284,11 @@ def processCodons(globs):
                 # globs['leading-bases'][frame]. We can just start the transcript at that position and
                 # increment by 3 each time. Probably needs debuging.
                 for codon in codons:
-                    ref_aa = CODON_DICT[codon]
+                    try: 
+                        ref_aa = CODON_DICT[codon]
+                    except KeyError:
+                        continue;
+
                     ps = 0.0
                     pn = 0.0
                     ds = 0.0
@@ -280,7 +297,6 @@ def processCodons(globs):
                     #assume getVariants returns a data structure of variant codons
                     #this should be a list (empty, 1, or more) for in group codons
                     #but for outgroup codons, it should be a single string with fixed differences
-                    ## NOTE GT: Check vcf.py ... needs testing with a vcf file that has a corresponding genome
                     poly_codons,div_codon = VCF.getVariants(globs, transcript, transcript_position, list(codon));
                     #print(transcript,transcript_position,codon,poly_codons,div_codon, sep=":")
 
@@ -290,7 +306,11 @@ def processCodons(globs):
 
                             #for in group variants, we treat each as independent
 
-                            poly_aa = CODON_DICT[poly_codon]
+                            try:
+                                poly_aa = CODON_DICT[poly_codon]
+                            except KeyError:
+                                continue;
+                            
                             if poly_aa == ref_aa:
                                 ps += 1;
                             if poly_aa != ref_aa:
@@ -303,14 +323,18 @@ def processCodons(globs):
                         diffs = codonHamming(div_codon,codon)
 
                         if diffs == 1:
-                            div_aa = CODON_DICT[div_codon]
+                            try:
+                                div_aa = CODON_DICT[div_codon]
+                            except KeyError:
+                                continue;
+                                
                             if div_aa == ref_aa:
                                 ds += 1;
                             if div_aa != ref_aa:
                                 dn += 1;
 
                         if diffs >= 2:
-                            ds,dn = codonPath(codon,div_codon,CODON_GRAPH,CODON_DICT)
+                            ds,dn = codonPath(codon, div_codon, CODON_GRAPH, CODON_DICT, globs['shortest-paths'])
 
                     try:
                     	globs['nonsyn'][transcript][transcript_position] = MKTable(pn,ps,dn,ds)
