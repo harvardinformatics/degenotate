@@ -208,7 +208,7 @@ def optParse(globs):
     globs['out-transcript'] = os.path.join(globs['outdir'], globs['out-transcript']);
     if not globs['write-cds']:
         with open(globs['out-transcript'], "w") as transcriptfile:
-            cols = ["transcript", "gene", "transcript length", "0-fold", "2-fold", "3-fold", "4-fold"];
+            cols = ["transcript", "gene", "cds-length", "mrna-length", "is-longest", "0-fold", "2-fold", "3-fold", "4-fold"];
             transcriptfile.write("\t".join(cols) + "\n");
     # Transcript summary output and column headers
 

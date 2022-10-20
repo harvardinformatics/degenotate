@@ -68,10 +68,15 @@ def readFeatures(globs, file_reader, line_reader, feature_list, id_format, paren
                 # Unpack and parse the gene ID
 
                 if feature_list[0] == "transcript":
-                    globs['annotation'][feature_id] = { 'header' : seq_header, 'start' : start, 'end' : end, 'len' : end-start, 'strand' : strand, 'exons' : {}, "gene-id" : parent_id,
+                    globs['annotation'][feature_id] = { 'header' : seq_header, 'start' : start, 'end' : end, 'len' : end-start, 'longest' : "no", 'cdslen': 0, 'strand' : strand, 'exons' : {}, "gene-id" : parent_id,
                                                         0 : 0, 2 : 0, 3 : 0, 4 : 0 };
                     # Add the ID and related info to the annotation dict. This includes an empty dict for exons to be stored in a similar way
                     # The last 4 entries are counts for number of sites with each degeneracy to summarize transcripts
+                    try: 
+                        globs['genekey'][parent_id].append(feature_id);
+                    except KeyError:
+                        globs['genekey'][parent_id] = [feature_id];
+                    # Make a dict of that includes all the transcript ids associated with a geneid
 
                 elif feature_list[0] == "CDS":
                     try: 
@@ -85,12 +90,42 @@ def readFeatures(globs, file_reader, line_reader, feature_list, id_format, paren
                     # count the number of exons in the transcript as the ID
 
                     globs['annotation'][parent_id]['exons'][exon_id] = { 'header' : seq_header, 'start' : start, 'end' : end, 'len' : end-start, 'strand' : strand };
+                    globs['annotation'][parent_id]['cdslen'] += end-start;
                 # Add the ID and related info to the annotation dict.                   
 
                 num_features += 1;
                 # Add to the number of transcripts read
 
-    return globs['annotation'], num_features;
+    return globs, num_features;
+
+#############################################################################
+
+def getLongest(globs):
+
+    # Get the longest transcript for each gene. 
+    # First look at CDS length; if there are multiple transcript with same CDS length look at mRNA length;
+    # If there are multiple transcripts with the same CDS and mRNA length take the first alphabetically
+
+    for gene_feature in globs['genekey']:
+        longest_transcript = "";
+        longest_cds = 0;
+        longest_mrna = 0;
+        for transcript_feature in sorted(globs['genekey'][gene_feature]):
+            cds_len = globs['annotation'][transcript_feature]['cdslen']
+            mrna_len = globs['annotation'][transcript_feature]['len']
+            if cds_len > longest_cds:
+                longest_cds = cds_len;
+                longest_mrna = mrna_len;
+                longest_transcript = transcript_feature;
+            elif cds_len == longest_cds and mrna_len > longest_mrna:
+                longest_cds = cds_len;
+                longest_mrna = mrna_len;
+                longest_transcript = transcript_feature;
+            else:
+                continue;
+        globs['annotation'][longest_transcript]['longest'] = "yes";
+    
+    return globs
 
 #############################################################################
 
@@ -135,7 +170,7 @@ def read(globs):
 
     step = "Reading transcripts";
     step_start_time = CORE.report_step(globs, step, False, "In progress...");
-    globs['annotation'], num_transcripts = readFeatures(globs, reader, readline, ["transcript", "mRNA", "V_gene_segment", "C_gene_segment"], transcript_id_format, transcript_parent_format, field_splitter);
+    globs, num_transcripts = readFeatures(globs, reader, readline, ["transcript", "mRNA", "V_gene_segment", "C_gene_segment"], transcript_id_format, transcript_parent_format, field_splitter);
     step_start_time = CORE.report_step(globs, step, step_start_time, "Success: " + str(num_transcripts) + " transcripts read");
 
     # Read transcripts
@@ -143,7 +178,8 @@ def read(globs):
 
     step = "Reading coding exons";
     step_start_time = CORE.report_step(globs, step, False, "In progress...");
-    globs['annotation'], num_cds_exons = readFeatures(globs, reader, readline, ["CDS"], exon_id_format, exon_parent_format, field_splitter);
+    globs, num_cds_exons = readFeatures(globs, reader, readline, ["CDS"], exon_id_format, exon_parent_format, field_splitter);
+    globs = getLongest(globs);
     step_start_time = CORE.report_step(globs, step, step_start_time, "Success: " + str(num_cds_exons) + " coding exons read");
 
     # Read coding exons
