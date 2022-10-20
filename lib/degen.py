@@ -265,7 +265,7 @@ def processCodons(globs):
 
             ## Out of frame test seq when using -s test-data/mm10/ensembl/cds/ as input: transcript:ENSMUST00000237320
 
-            t_outline = [transcript, globs['annotation'][transcript]['gene-id'], str(globs['annotation'][transcript]['cdslen'], str(globs['anotation'][transcript]['longest']),
+            t_outline = [transcript, globs['annotation'][transcript]['gene-id'], str(globs['annotation'][transcript]['cdslen']),  str(globs['annotation'][transcript]['len']), str(globs['annotation'][transcript]['longest']),
                             str(globs['annotation'][transcript][0]), str(globs['annotation'][transcript][2]), 
                             str(globs['annotation'][transcript][3]), str(globs['annotation'][transcript][4]) ]
             transcriptfile.write("\t".join(t_outline) + "\n");

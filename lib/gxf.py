@@ -110,9 +110,9 @@ def getLongest(globs):
         longest_transcript = "";
         longest_cds = 0
         longest_mrna = 0
-        for transcript_feature in sorted(globs['genekey'][gene_feature].keys()):
-            cds_len = globs['genekey'][gene_feature][transcript_feature]['cdslen']
-            mrna_len = globs['genekey'][gene_feature][transcript_feature]['len']
+        for transcript_feature in sorted(globs['genekey'][gene_feature]):
+            cds_len = globs['annotation'][transcript_feature]['cdslen']
+            mrna_len = globs['annotation'][transcript_feature]['len']
             if cds_len > longest_cds:
                 longest_cds = cds_len;
                 longest_mrna = mrna_len;
@@ -122,7 +122,7 @@ def getLongest(globs):
                 longest_mrna = mrna_len;
                 longest_transcript = transcript_feature;
             else:
-                continue()
+                continue;
         globs['annotation'][longest_transcript]['longest'] = "yes";
     
     return globs
@@ -171,7 +171,6 @@ def read(globs):
     step = "Reading transcripts";
     step_start_time = CORE.report_step(globs, step, False, "In progress...");
     globs, num_transcripts = readFeatures(globs, reader, readline, ["transcript", "mRNA", "V_gene_segment", "C_gene_segment"], transcript_id_format, transcript_parent_format, field_splitter);
-    globs = getLongest(globs);
     step_start_time = CORE.report_step(globs, step, step_start_time, "Success: " + str(num_transcripts) + " transcripts read");
 
     # Read transcripts
@@ -180,6 +179,7 @@ def read(globs):
     step = "Reading coding exons";
     step_start_time = CORE.report_step(globs, step, False, "In progress...");
     globs, num_cds_exons = readFeatures(globs, reader, readline, ["CDS"], exon_id_format, exon_parent_format, field_splitter);
+    globs = getLongest(globs);
     step_start_time = CORE.report_step(globs, step, step_start_time, "Success: " + str(num_cds_exons) + " coding exons read");
 
     # Read coding exons
