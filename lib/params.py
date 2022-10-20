@@ -89,6 +89,7 @@ def init():
         #output of syn/nonsyn snp calculations
 
         'annotation' : {},
+        'genekey' : [],
         # Annotation information
 
         'num-procs' : 1,
