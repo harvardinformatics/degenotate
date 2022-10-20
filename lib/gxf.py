@@ -75,7 +75,7 @@ def readFeatures(globs, file_reader, line_reader, feature_list, id_format, paren
                     try: 
                         globs['genekey'][parent_id].append(feature_id);
                     except KeyError:
-                        globs['genekey'] = {parent_id : [feature_id]};
+                        globs['genekey'][parent_id] = [feature_id];
                     # Make a dict of that includes all the transcript ids associated with a geneid
 
                 elif feature_list[0] == "CDS":
@@ -108,8 +108,8 @@ def getLongest(globs):
 
     for gene_feature in globs['genekey']:
         longest_transcript = "";
-        longest_cds = 0
-        longest_mrna = 0
+        longest_cds = 0;
+        longest_mrna = 0;
         for transcript_feature in sorted(globs['genekey'][gene_feature]):
             cds_len = globs['annotation'][transcript_feature]['cdslen']
             mrna_len = globs['annotation'][transcript_feature]['len']
