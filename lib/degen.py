@@ -217,7 +217,7 @@ def processCodons(globs):
 
                 if frame != 1:
                     for out_of_frame_pos in range(extra_leading_nt):
-                        outline = OUT.compileBedLine(globs, transcript, "", cds_coord, globs['cds-seqs'][transcript][cds_coord], "", "", "", ".", "");
+                        outline = OUT.compileBedLine(globs, transcript, transcript_region, cds_coord, globs['cds-seqs'][transcript][cds_coord], "", "", ".", ".", "");
                         bedfile.write("\t".join(outline) + "\n");
                         # Call the output function with blank values since there is no degeneracy at this position
                         # and write the output to the bed file 
@@ -256,7 +256,7 @@ def processCodons(globs):
 
                 if extra_trailing_nt != 0:
                     for out_of_frame_pos in range(extra_trailing_nt):
-                        outline = OUT.compileBedLine(globs, transcript, "", cds_coord, globs['cds-seqs'][transcript][cds_coord], "", "", "", ".", "");
+                        outline = OUT.compileBedLine(globs, transcript, transcript_region, cds_coord, globs['cds-seqs'][transcript][cds_coord], "", "", ".", ".", "");
                         bedfile.write("\t".join(outline) + "\n");
                         # Call the output function with blank values since there is no degeneracy at this position
                         # and write the output to the bed file 
