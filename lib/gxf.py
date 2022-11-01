@@ -93,10 +93,10 @@ def readFeatures(globs, file_reader, line_reader, feature_list, id_format, paren
                     globs['annotation'][parent_id]['cdslen'] += end-start;
 
                     if strand == "+" and num_exons == 0:
-                        globs['annotation'][transcript]['start-frame'] = frame;
+                        globs['annotation'][parent_id]['start-frame'] = frame;
                     
                     if strand == "-":
-                        globs['annotation'][transcript]['start-frame'] = frame;
+                        globs['annotation'][parent_id]['start-frame'] = frame;
                     
                     #If on the positive strand, the starting frame is always the frame of the first exon we encounter
                     #If on the negative strand, the starting frame is awlays the frame of the last exon we encounter, so we just update it each time we see a new exon
