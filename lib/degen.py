@@ -242,7 +242,7 @@ def processCodons(globs):
                         bedfile.write("\t".join(outline) + "\n");
                         # Write the output from the current position to the bed file
 
-                        if degen[cds_coords] != ".":
+                        if degen[cds_coord] != ".":
                             globs['annotation'][transcript][int(degen[cds_coord])] += 1;
                         # Increment the count for the current degeneracy for the transcript summary
                         # Skip positions with unknown degeneracy ('.')
