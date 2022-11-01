@@ -15,6 +15,7 @@ def checkIDs(l, info, id_list, step, globs):
 
     if len(id_list) != 1:
         print("\n\n");
+        print(len(id_list));
         print(id_list);
         print(info);
         print(l);
@@ -64,11 +65,10 @@ def readFeatures(globs, file_reader, line_reader, feature_list, id_format, paren
                 parent_id = parent_id[0].replace(parent_id_format, "").replace("\"", "");
                 # Unpack and parse the gene ID
 
-                if feature_list[0] == "transcript" or feature_list[0] == "mRNA":
+                if feature_list[0] == "transcript":
 
                     checkIDs(line, feature_info, feature_id, feature_list[0] +" id parsing", globs);
                     # A quick check to make sure we have read only one ID
-
 
                     globs['annotation'][feature_id] = { 'header' : seq_header, 'start' : start, 'end' : end, 'len' : end-start, 'longest' : "no", 'cdslen': 0, 'strand' : strand, 
                                                         'exons' : {}, "gene-id" : parent_id, 'start-frame' : "",
