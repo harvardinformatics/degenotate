@@ -162,6 +162,9 @@ def processCodons(globs):
     with open(globs['outbed'], "w") as bedfile, open(globs['out-transcript'], "a") as transcriptfile:
         counter = 0;
         for transcript in globs['cds-seqs']:
+            
+            extra_trailing_nt = 0;
+
             if globs['gxf-file']:
                 transcript_region = globs['annotation'][transcript]['header'];
             else:
@@ -176,19 +179,18 @@ def processCodons(globs):
 
                 #check frame
                 if frameError(globs['cds-seqs'][transcript],frame):
-                    CORE.printWrite(globs['logfilename'], 3, "# WARNING: transcript " + transcript + " has a different frame specified than implied by its length... skipping");
-                    globs['warnings'] += 1;                    
-                    continue;
-                # Will just throw a warning if the frame and length are inconsistent. Change the second parameter of printWrite to globs['log-v'] to
-                # also print the warning to the screen instead of just writing to log file.
-                ## TODO: Have to account for END PHASE of last exon... only seems to be a problem for Ensembl data with incomplete CDS
-                ## I guess conceivably we could also make sure the phases between exons are consistent but that seems a bit much...
-                ## NOTE: I think we only need to do the frame checking when input is a gxf+genome. When input is CDS sequences they are just
-                ## checked for divisibility by 3 below.
+                    extra_trailing_nt = len(globs['cds-seqs'][transcript]) % 3
+
+                # If frameError, that implies that the last codon is partial, so we need to trim 
 
             # Get the frame when input is a when input is a gxf+genome
             else:
                 frame = getFrame(globs['cds-seqs'][transcript]);
+                if frame != 1:
+                    CORE.printWrite(globs['logfilename'], 3, "# WARNING: transcript " + transcript + " is partial with unknown frame....skipping");
+                    globs['warnings'] += 1;                    
+                    continue;
+                    ## TODO: Add warning that transcript is skipped 
             # Get the frame when input is a dir/file of individual CDS seqs
 
             extra_leading_nt = globs['leading-bases'][frame]
@@ -196,9 +198,8 @@ def processCodons(globs):
 
             #if frame is not 1, need to skip the first frame-1 bases
             fasta = globs['cds-seqs'][transcript][extra_leading_nt:]
-            ## NOTE: Is it worth figuring out whether the beginning or the end of the CDS is out of frame? This
-            ## assumes they are all the beginning
-
+            fasta = fasta[:-extra_trailing_nt]
+ 
             #make list of codons
             codons = re.findall('...', fasta)
 
