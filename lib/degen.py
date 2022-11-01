@@ -72,11 +72,11 @@ def getFrame(seq):
 # A function that returns the frame of a coding sequence
     seq_mod = len(seq) % 3;
     if seq_mod == 0:
-        return 1;
+        return 0;
     elif seq_mod == 2:
-        return 2;
+        return 1;
     elif seq_mod == 1:
-        return 3;
+        return 2;
 
 #############################################################################
 
@@ -84,11 +84,11 @@ def frameError(seq,frame):
 # Check that the sequence is the correct multiple of three for the starting frame
 
     seq_mod = len(seq) % 3
-    if frame == 1 and seq_mod == 0:
+    if frame == 0 and seq_mod == 0:
         return False
-    elif frame == 2 and seq_mod == 2:
+    elif frame == 1 and seq_mod == 2:
         return False
-    elif frame == 3 and seq_mod == 1:
+    elif frame == 2 and seq_mod == 1:
         return False
     else:
         return True
