@@ -1,4 +1,4 @@
-name: degen-test3
+name: degenotate
 channels:
   - conda-forge
   - bioconda
