@@ -162,6 +162,9 @@ def processCodons(globs):
     with open(globs['outbed'], "w") as bedfile, open(globs['out-transcript'], "a") as transcriptfile:
         counter = 0;
         for transcript in globs['cds-seqs']:
+            
+            extra_trailing_nt = 0;
+
             if globs['gxf-file']:
                 transcript_region = globs['annotation'][transcript]['header'];
             else:
@@ -176,19 +179,18 @@ def processCodons(globs):
 
                 #check frame
                 if frameError(globs['cds-seqs'][transcript],frame):
-                    CORE.printWrite(globs['logfilename'], 3, "# WARNING: transcript " + transcript + " has a different frame specified than implied by its length... skipping");
-                    globs['warnings'] += 1;                    
-                    continue;
-                # Will just throw a warning if the frame and length are inconsistent. Change the second parameter of printWrite to globs['log-v'] to
-                # also print the warning to the screen instead of just writing to log file.
-                ## TODO: Have to account for END PHASE of last exon... only seems to be a problem for Ensembl data with incomplete CDS
-                ## I guess conceivably we could also make sure the phases between exons are consistent but that seems a bit much...
-                ## NOTE: I think we only need to do the frame checking when input is a gxf+genome. When input is CDS sequences they are just
-                ## checked for divisibility by 3 below.
+                    extra_trailing_nt = len(globs['cds-seqs'][transcript]) % 3
+
+                # If frameError, that implies that the last codon is partial, so we need to trim 
 
             # Get the frame when input is a when input is a gxf+genome
             else:
                 frame = getFrame(globs['cds-seqs'][transcript]);
+                if frame != 1:
+                    CORE.printWrite(globs['logfilename'], 3, "# WARNING: transcript " + transcript + " is partial with unknown frame....skipping");
+                    globs['warnings'] += 1;                    
+                    continue;
+                    ## TODO: Add warning that transcript is skipped 
             # Get the frame when input is a dir/file of individual CDS seqs
 
             extra_leading_nt = globs['leading-bases'][frame]
@@ -196,9 +198,9 @@ def processCodons(globs):
 
             #if frame is not 1, need to skip the first frame-1 bases
             fasta = globs['cds-seqs'][transcript][extra_leading_nt:]
-            ## NOTE: Is it worth figuring out whether the beginning or the end of the CDS is out of frame? This
-            ## assumes they are all the beginning
-
+            if extra_trailing_nt > 0:
+                fasta = fasta[:-extra_trailing_nt]
+ 
             #make list of codons
             codons = re.findall('...', fasta)
 
@@ -215,7 +217,7 @@ def processCodons(globs):
 
                 if frame != 1:
                     for out_of_frame_pos in range(extra_leading_nt):
-                        outline = OUT.compileBedLine(globs, transcript, "", cds_coord, globs['cds-seqs'][transcript][cds_coord], "", "", "", ".", "");
+                        outline = OUT.compileBedLine(globs, transcript, transcript_region, cds_coord, globs['cds-seqs'][transcript][cds_coord], "", "", ".", ".", "");
                         bedfile.write("\t".join(outline) + "\n");
                         # Call the output function with blank values since there is no degeneracy at this position
                         # and write the output to the bed file 
@@ -240,14 +242,28 @@ def processCodons(globs):
                         bedfile.write("\t".join(outline) + "\n");
                         # Write the output from the current position to the bed file
 
-                        globs['annotation'][transcript][int(degen[cds_coord])] += 1;
+                        if degen[cds_coord] != ".":
+                            globs['annotation'][transcript][int(degen[cds_coord])] += 1;
                         # Increment the count for the current degeneracy for the transcript summary
+                        # Skip positions with unknown degeneracy ('.')
 
                         cds_coord += 1;
                         # Increment the position in the CDS
                     # End base loop
                     ##########
                 # End codon loop
+                ##########
+
+                if extra_trailing_nt != 0:
+                    for out_of_frame_pos in range(extra_trailing_nt):
+                        outline = OUT.compileBedLine(globs, transcript, transcript_region, cds_coord, globs['cds-seqs'][transcript][cds_coord], "", "", ".", ".", "");
+                        bedfile.write("\t".join(outline) + "\n");
+                        # Call the output function with blank values since there is no degeneracy at this position
+                        # and write the output to the bed file 
+
+                        cds_coord += 1;
+                        # Increment the position in the CDS
+                # If the CDS has extra trailing bases, the bed output needs to be filled in for the leading bases that were removed
                 ##########
 
                 #globs['degeneracy'][transcript] = degen;
