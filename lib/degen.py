@@ -198,7 +198,8 @@ def processCodons(globs):
 
             #if frame is not 1, need to skip the first frame-1 bases
             fasta = globs['cds-seqs'][transcript][extra_leading_nt:]
-            fasta = fasta[:-extra_trailing_nt]
+            if extra_trailing_nt > 0:
+                fasta = fasta[:-extra_trailing_nt]
  
             #make list of codons
             codons = re.findall('...', fasta)
@@ -225,6 +226,8 @@ def processCodons(globs):
                         # Increment the position in the CDS
                 # If the CDS is not in frame 1, the bed output needs to be filled in for the leading bases that were removed
                 ##########
+
+                ## TODO: Add parsing for extra trailing nt like for above
 
                 for codon in codons:
                     try:
