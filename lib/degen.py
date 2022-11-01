@@ -227,8 +227,6 @@ def processCodons(globs):
                 # If the CDS is not in frame 1, the bed output needs to be filled in for the leading bases that were removed
                 ##########
 
-                ## TODO: Add parsing for extra trailing nt like for above
-
                 for codon in codons:
                     try:
                         aa = CODON_DICT[codon];
@@ -244,14 +242,28 @@ def processCodons(globs):
                         bedfile.write("\t".join(outline) + "\n");
                         # Write the output from the current position to the bed file
 
-                        globs['annotation'][transcript][int(degen[cds_coord])] += 1;
+                        if degen[cds_coords] != ".":
+                            globs['annotation'][transcript][int(degen[cds_coord])] += 1;
                         # Increment the count for the current degeneracy for the transcript summary
+                        # Skip positions with unknown degeneracy ('.')
 
                         cds_coord += 1;
                         # Increment the position in the CDS
                     # End base loop
                     ##########
                 # End codon loop
+                ##########
+
+                if extra_trailing_nt != 0:
+                    for out_of_frame_pos in range(extra_trailing_nt):
+                        outline = OUT.compileBedLine(globs, transcript, "", cds_coord, globs['cds-seqs'][transcript][cds_coord], "", "", "", ".", "");
+                        bedfile.write("\t".join(outline) + "\n");
+                        # Call the output function with blank values since there is no degeneracy at this position
+                        # and write the output to the bed file 
+
+                        cds_coord += 1;
+                        # Increment the position in the CDS
+                # If the CDS has extra trailing bases, the bed output needs to be filled in for the leading bases that were removed
                 ##########
 
                 #globs['degeneracy'][transcript] = degen;
