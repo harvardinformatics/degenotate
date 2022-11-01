@@ -88,7 +88,7 @@ def readFeatures(globs, file_reader, line_reader, feature_list, id_format, paren
                         continue;
                     #if we find a CDS without an associated transcript, skip it
 
-                    exon_id = "exon-" + str(num_exons+1);q
+                    exon_id = "exon-" + str(num_exons+1);
                     # Because exon IDs are not always included for CDS, or they only represent the CDS as a whole (e.g. protein ID from Ensembl), we 
                     # count the number of exons in the transcript as the ID
 
