@@ -68,7 +68,7 @@ def readFeatures(globs, file_reader, line_reader, feature_list, id_format, paren
                     # Unpack and parse the ID
 
                     globs['annotation'][feature_id] = { 'header' : seq_header, 'start' : start, 'end' : end, 'len' : end-start, 'longest' : "no", 'cdslen': 0, 'strand' : strand, 
-                                                        'exons' : {}, "gene-id" : parent_id, 'start-frame' : "",
+                                                        'exons' : {}, "gene-id" : parent_id, 'start-frame' : None,
                                                         0 : 0, 2 : 0, 3 : 0, 4 : 0 };
                     # Add the ID and related info to the annotation dict. This includes an empty dict for exons to be stored in a similar way
                     # The last 4 entries are counts for number of sites with each degeneracy to summarize transcripts
