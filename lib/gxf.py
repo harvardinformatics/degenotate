@@ -64,7 +64,7 @@ def readFeatures(globs, file_reader, line_reader, feature_list, id_format, paren
                 parent_id = parent_id[0].replace(parent_id_format, "").replace("\"", "");
                 # Unpack and parse the gene ID
 
-                if feature_list[0] == "transcript":
+                if feature_list[0] == "transcript" or feature_list[0] == "mRNA":
 
                     checkIDs(line, feature_info, feature_id, feature_list[0] +" id parsing", globs);
                     # A quick check to make sure we have read only one ID
