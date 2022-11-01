@@ -46,15 +46,6 @@ def readFeatures(globs, file_reader, line_reader, feature_list, id_format, paren
 
             if feature_type in feature_list:
             # Skipping any 'unconfirmed_transcript'
-                feature_id = [ info_field for info_field in feature_info if info_field.startswith(id_format) ];
-                # Get the feature ID as a list of fields with the "ID=" prefix
-
-                # print(feature_info);
-                # print(feature_id);
-                # sys.exit();
-
-                feature_id = feature_id[0].replace(id_format, "").replace("\"", "");
-                # Unpack and parse the ID
 
                 parent_id = [ info_field for info_field in feature_info if info_field.startswith(parent_id_format) ];
                 # Get the gene ID associated with the transcript as a list of fields with the "Parent=" prefix
@@ -67,8 +58,14 @@ def readFeatures(globs, file_reader, line_reader, feature_list, id_format, paren
 
                 if feature_list[0] == "transcript":
 
+                    feature_id = [ info_field for info_field in feature_info if info_field.startswith(id_format) ];
+                    # Get the feature ID as a list of fields with the "ID=" prefix
+                
                     checkIDs(line, feature_info, feature_id, feature_list[0] +" id parsing", globs);
                     # A quick check to make sure we have read only one ID
+
+                    feature_id = feature_id[0].replace(id_format, "").replace("\"", "");
+                    # Unpack and parse the ID
 
                     globs['annotation'][feature_id] = { 'header' : seq_header, 'start' : start, 'end' : end, 'len' : end-start, 'longest' : "no", 'cdslen': 0, 'strand' : strand, 
                                                         'exons' : {}, "gene-id" : parent_id, 'start-frame' : "",
