@@ -96,6 +96,10 @@ def extractCDS(globs):
 
     for transcript in globs['annotation']:
 
+        if len(globs['annotation'][transcript]['exons']) == 0:
+            continue;
+            #no exons means this transcript does not have a CDS, so we skip it
+
         cur_seq = "";
         # Initialize the sequence string for the current transcript. This will be added to the 'seqs' dict later
 
