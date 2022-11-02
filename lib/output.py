@@ -45,9 +45,14 @@ def compileBedLine(globs, transcript, transcript_region, cds_coord, base, codon,
             new_codon = list(codon);
             new_codon[codon_pos] = new_base;
             new_codon = "".join(new_codon);
-            new_aa = cdict[new_codon];
-            # Replace the reference base with the new base at the current codon
-            # position and look up the new AA
+
+            try:
+                new_aa = cdict[new_codon];
+                # Replace the reference base with the new base at the current codon
+                # position and look up the new AA
+            except KeyError:
+                print("Error: ", new_codon, base_degen, codon, transcript)
+                continue
 
             if aa != new_aa:
                 subs.append(new_base + ":" + new_aa);
