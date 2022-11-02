@@ -193,7 +193,7 @@ def processCodons(globs):
                     ## TODO: Add warning that transcript is skipped 
             # Get the frame when input is a dir/file of individual CDS seqs
 
-            extra_leading_nt = globs['leading-bases'][frame]
+            extra_leading_nt = globs['leading-bases'][int(frame)]
             # Look up the number of leading bases given the current frame
 
             #if frame is not 1, need to skip the first frame-1 bases
