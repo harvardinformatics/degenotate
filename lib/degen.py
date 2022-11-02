@@ -162,8 +162,6 @@ def processCodons(globs):
     with open(globs['outbed'], "w") as bedfile, open(globs['out-transcript'], "a") as transcriptfile:
         counter = 0;
         for transcript in globs['cds-seqs']:
-            
-            extra_trailing_nt = 0;
 
             if globs['gxf-file']:
                 transcript_region = globs['annotation'][transcript]['header'];
@@ -172,32 +170,31 @@ def processCodons(globs):
             # Get the genome region if the input was a gxf file+genome
 
             if globs['gxf-file']:
-                frame = globs['annotation'][transcript].get('start-frame', 1);
+                frame = globs['annotation'][transcript].get('start-frame', 0);
                 # use dict.get() to return value or a default option if key doesn't exist
                 # assumes that globs['annotation'][transcript]['start-frame'] won't exist
                 # unless start frame was parsed from GFF
 
-                #check frame
-                if frameError(globs['cds-seqs'][transcript],frame):
-                    extra_trailing_nt = len(globs['cds-seqs'][transcript]) % 3
-
-                # If frameError, that implies that the last codon is partial, so we need to trim 
-
             # Get the frame when input is a when input is a gxf+genome
             else:
                 frame = getFrame(globs['cds-seqs'][transcript]);
-                if frame != 1:
+                if frame != 0:
                     CORE.printWrite(globs['logfilename'], 3, "# WARNING: transcript " + transcript + " is partial with unknown frame....skipping");
                     globs['warnings'] += 1;                    
                     continue;
                     ## TODO: Add warning that transcript is skipped 
             # Get the frame when input is a dir/file of individual CDS seqs
+            # In this case we just check to make sure the sequence is a multiple of 3
 
             extra_leading_nt = globs['leading-bases'][int(frame)]
             # Look up the number of leading bases given the current frame
 
             #if frame is not 1, need to skip the first frame-1 bases
             fasta = globs['cds-seqs'][transcript][extra_leading_nt:]
+
+            #now check to see if there are still trailing bases
+            extra_trailing_nt = len(fasta) % 3
+
             if extra_trailing_nt > 0:
                 fasta = fasta[:-extra_trailing_nt]
  
