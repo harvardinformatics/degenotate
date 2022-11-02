@@ -212,7 +212,7 @@ def processCodons(globs):
                 cds_coord = 0;
                 # Start the CDS coord counter
 
-                if frame != 1:
+                if frame != 0:
                     for out_of_frame_pos in range(extra_leading_nt):
                         outline = OUT.compileBedLine(globs, transcript, transcript_region, cds_coord, globs['cds-seqs'][transcript][cds_coord], "", "", ".", ".", "");
                         bedfile.write("\t".join(outline) + "\n");
