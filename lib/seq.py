@@ -131,7 +131,10 @@ def extractCDS(globs):
             sorted_starts = sorted(list(exon_coords.keys()));
             globs['annotation'][transcript]['coding-start'] = int(sorted_starts[0])+1
             #convert back to genome coords from python string coords
-            globs['annotation'][transcript]['start-frame'] = int(exon_phase[int(sorted_starts[0])+1])
+            try: 
+                globs['annotation'][transcript]['start-frame'] = int(exon_phase[int(sorted_starts[0])+1])
+            except KeyError:
+                print(transcript, exon_phase, sorted_starts)
 
         elif strand == "-":
             sorted_starts = sorted(list(exon_coords.keys()), reverse=True);
