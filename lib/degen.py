@@ -170,10 +170,12 @@ def processCodons(globs):
             # Get the genome region if the input was a gxf file+genome
 
             if globs['gxf-file']:
-                frame = globs['annotation'][transcript].get('start-frame', 0);
-                # use dict.get() to return value or a default option if key doesn't exist
-                # assumes that globs['annotation'][transcript]['start-frame'] won't exist
-                # unless start frame was parsed from GFF
+                frame = globs['annotation'][transcript]['start-frame']
+
+                if frame in None:
+                    CORE.printWrite(globs['logfilename'], 3, "# WARNING: transcript " + transcript + " has an unknown frame....skipping");
+                    globs['warnings'] += 1;                    
+                    continue;
 
             # Get the frame when input is a when input is a gxf+genome
             else:
@@ -186,7 +188,7 @@ def processCodons(globs):
             # Get the frame when input is a dir/file of individual CDS seqs
             # In this case we just check to make sure the sequence is a multiple of 3
 
-            extra_leading_nt = globs['leading-bases'][int(frame)]
+            extra_leading_nt = globs['leading-bases'][frame]
             # Look up the number of leading bases given the current frame
 
             #if frame is not 1, need to skip the first frame-1 bases
