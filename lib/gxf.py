@@ -41,7 +41,7 @@ def readFeatures(globs, file_reader, line_reader, feature_list, id_format, paren
             # Header/comment lines should be skipped. Note that this must come after the check for "##FASTA" above, or else
             # the file will keep being read into the sequences and error out.
 
-            feature_type, seq_header, start, end, strand, frame, feature_info = line[2], line[0], int(line[3]), int(line[4]), line[6], int(line[7]), line[8].split(info_field_splitter);
+            feature_type, seq_header, start, end, strand, frame, feature_info = line[2], line[0], int(line[3]), int(line[4]), line[6], line[7], line[8].split(info_field_splitter);
             # Unpack the pertinent information from the current line into more readable variables.
 
             if feature_type in feature_list:
@@ -93,10 +93,10 @@ def readFeatures(globs, file_reader, line_reader, feature_list, id_format, paren
                     globs['annotation'][parent_id]['cdslen'] += end-start;
 
                     if strand == "+" and num_exons == 0:
-                        globs['annotation'][parent_id]['start-frame'] = frame;
+                        globs['annotation'][parent_id]['start-frame'] = int(frame);
                     
                     if strand == "-":
-                        globs['annotation'][parent_id]['start-frame'] = frame;
+                        globs['annotation'][parent_id]['start-frame'] = int(frame);
                     
                     #If on the positive strand, the starting frame is always the frame of the first exon we encounter
                     #If on the negative strand, the starting frame is awlays the frame of the last exon we encounter, so we just update it each time we see a new exon
