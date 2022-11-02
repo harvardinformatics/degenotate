@@ -41,7 +41,7 @@ def readFeatures(globs, file_reader, line_reader, feature_list, id_format, paren
             # Header/comment lines should be skipped. Note that this must come after the check for "##FASTA" above, or else
             # the file will keep being read into the sequences and error out.
 
-            feature_type, seq_header, start, end, strand, frame, feature_info = line[2], line[0], int(line[3]), int(line[4]), line[6], line[7], line[8].split(info_field_splitter);
+            feature_type, seq_header, start, end, strand, phase, feature_info = line[2], line[0], int(line[3]), int(line[4]), line[6], line[7], line[8].split(info_field_splitter);
             # Unpack the pertinent information from the current line into more readable variables.
 
             if feature_type in feature_list:
@@ -68,7 +68,7 @@ def readFeatures(globs, file_reader, line_reader, feature_list, id_format, paren
                     # Unpack and parse the ID
 
                     globs['annotation'][feature_id] = { 'header' : seq_header, 'start' : start, 'end' : end, 'len' : end-start, 'longest' : "no", 'cdslen': 0, 'strand' : strand, 
-                                                        'exons' : {}, "gene-id" : parent_id, 'start-frame' : None,
+                                                        'exons' : {}, "gene-id" : parent_id, 'start-frame' : None, 'coding-start' : None,
                                                         0 : 0, 2 : 0, 3 : 0, 4 : 0 };
                     # Add the ID and related info to the annotation dict. This includes an empty dict for exons to be stored in a similar way
                     # The last 4 entries are counts for number of sites with each degeneracy to summarize transcripts
@@ -89,17 +89,9 @@ def readFeatures(globs, file_reader, line_reader, feature_list, id_format, paren
                     # Because exon IDs are not always included for CDS, or they only represent the CDS as a whole (e.g. protein ID from Ensembl), we 
                     # count the number of exons in the transcript as the ID
 
-                    globs['annotation'][parent_id]['exons'][exon_id] = { 'header' : seq_header, 'start' : start, 'end' : end, 'len' : end-start, 'strand' : strand };
+                    globs['annotation'][parent_id]['exons'][exon_id] = { 'header' : seq_header, 'start' : start, 'end' : end, 'len' : end-start, 'strand' : strand, 'phase' :  phase};
                     globs['annotation'][parent_id]['cdslen'] += end-start;
 
-                    if strand == "+" and num_exons == 0:
-                        globs['annotation'][parent_id]['start-frame'] = int(frame);
-                    
-                    if strand == "-":
-                        globs['annotation'][parent_id]['start-frame'] = int(frame);
-                    
-                    #If on the positive strand, the starting frame is always the frame of the first exon we encounter
-                    #If on the negative strand, the starting frame is awlays the frame of the last exon we encounter, so we just update it each time we see a new exon
                 # Add the ID and related info to the annotation dict.                   
 
                 num_features += 1;

@@ -123,13 +123,22 @@ def extractCDS(globs):
         # Add check to make sure exons all have same strand as transcript?
 
         exon_coords = { exons[exon]['start']-1 : exons[exon]['end'] for exon in exons };
+        exon_phase = { exons[exon]['start'] : exons[exon]['phase'] for exon in exons };
         # Get the coordinates of all the exons in this transcript
         # Subtract 1 from the starting coord because GXF are 1-based and python strings are 0-based
 
         if strand == "+":
             sorted_starts = sorted(list(exon_coords.keys()));
+            globs['annotation'][transcript]['coding-start'] = int(sorted_starts[0])+1
+            #convert back to genome coords from python string coords
+            globs['annotation'][transcript]['start-frame'] = int(exon_phase[int(sorted_starts[0])+1])
+
         elif strand == "-":
             sorted_starts = sorted(list(exon_coords.keys()), reverse=True);
+            globs['annotation'][transcript]['coding-start'] = int(exon_coords[sorted_starts[0]])
+            #the end position of the last exon is the coding start, where last exon = first sorted starts because sorted starts is reversed
+            globs['annotation'][transcript]['start-frame'] = int(exon_phase[int(exon_coords[sorted_starts[0]])])
+            
         # Make sure the exons are sorted correctly, reversing the order if the strand is "-"
 
         for start in sorted_starts:
