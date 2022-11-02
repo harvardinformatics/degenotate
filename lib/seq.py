@@ -140,7 +140,10 @@ def extractCDS(globs):
             sorted_starts = sorted(list(exon_coords.keys()), reverse=True);
             globs['annotation'][transcript]['coding-start'] = int(exon_coords[sorted_starts[0]])
             #the end position of the last exon is the coding start, where last exon = first sorted starts because sorted starts is reversed
-            globs['annotation'][transcript]['start-frame'] = int(exon_phase[exon_coords[sorted_starts[0]+1]])
+            try:
+                globs['annotation'][transcript]['start-frame'] = int(exon_phase[exon_coords[sorted_starts[0]+1]])
+            except KeyError:
+                print(transcript, exon_phase, sorted_starts)
             
         # Make sure the exons are sorted correctly, reversing the order if the strand is "-"
 
