@@ -172,7 +172,7 @@ def processCodons(globs):
             if globs['gxf-file']:
                 frame = globs['annotation'][transcript]['start-frame']
 
-                if frame in None:
+                if frame is None:
                     CORE.printWrite(globs['logfilename'], 3, "# WARNING: transcript " + transcript + " has an unknown frame....skipping");
                     globs['warnings'] += 1;                    
                     continue;
