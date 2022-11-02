@@ -188,7 +188,7 @@ def processCodons(globs):
             # Get the frame when input is a dir/file of individual CDS seqs
             # In this case we just check to make sure the sequence is a multiple of 3
 
-            extra_leading_nt = globs['leading-bases'][frame]
+            extra_leading_nt = frame
             # Look up the number of leading bases given the current frame
 
             #if frame is not 1, need to skip the first frame-1 bases
