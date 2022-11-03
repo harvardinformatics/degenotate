@@ -202,9 +202,10 @@ def processCodons(globs):
  
             #make list of codons
             codons = re.findall('...', fasta)
+            nt = {'A', 'T', 'G', 'C'}
 
             if ("degen" in globs['codon-methods']):
-                degen = [ DEGEN_DICT[x] if "N" not in x else "..." for x in codons ];
+                degen = [ DEGEN_DICT[x] if len(set(x) - nt) == 0 else "..." for x in codons ];
                 # Get the string of degeneracy integers for every codon in the current sequence (e.g. 002)
 
                 degen = "." * extra_leading_nt + "".join(degen);
