@@ -96,6 +96,10 @@ def extractCDS(globs):
 
     for transcript in globs['annotation']:
 
+        if len(globs['annotation'][transcript]['exons']) == 0:
+            continue;
+            #no exons means this transcript does not have a CDS, so we skip it
+
         cur_seq = "";
         # Initialize the sequence string for the current transcript. This will be added to the 'seqs' dict later
 
@@ -119,13 +123,26 @@ def extractCDS(globs):
         # Add check to make sure exons all have same strand as transcript?
 
         exon_coords = { exons[exon]['start']-1 : exons[exon]['end'] for exon in exons };
+        exon_phase = { exons[exon]['start'] : exons[exon]['phase'] for exon in exons };
         # Get the coordinates of all the exons in this transcript
         # Subtract 1 from the starting coord because GXF are 1-based and python strings are 0-based
 
         if strand == "+":
             sorted_starts = sorted(list(exon_coords.keys()));
+
         elif strand == "-":
             sorted_starts = sorted(list(exon_coords.keys()), reverse=True);
+         
+        first_exon_genome_start = sorted_starts[0] + 1;
+        first_exon_genome_end = exon_coords[sorted_starts[0]]
+
+        if strand == "+":
+            globs['annotation'][transcript]['coding-start'] = first_exon_genome_start
+        elif strand == "-":
+            globs['annotation'][transcript]['coding-start'] = first_exon_genome_end
+        
+        globs['annotation'][transcript]['start-frame'] = int(exon_phase[first_exon_genome_start])
+
         # Make sure the exons are sorted correctly, reversing the order if the strand is "-"
 
         for start in sorted_starts:

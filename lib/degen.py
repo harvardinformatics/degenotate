@@ -72,11 +72,11 @@ def getFrame(seq):
 # A function that returns the frame of a coding sequence
     seq_mod = len(seq) % 3;
     if seq_mod == 0:
-        return 1;
+        return 0;
     elif seq_mod == 2:
-        return 2;
+        return 1;
     elif seq_mod == 1:
-        return 3;
+        return 2;
 
 #############################################################################
 
@@ -84,11 +84,11 @@ def frameError(seq,frame):
 # Check that the sequence is the correct multiple of three for the starting frame
 
     seq_mod = len(seq) % 3
-    if frame == 1 and seq_mod == 0:
+    if frame == 0 and seq_mod == 0:
         return False
-    elif frame == 2 and seq_mod == 2:
+    elif frame == 1 and seq_mod == 2:
         return False
-    elif frame == 3 and seq_mod == 1:
+    elif frame == 2 and seq_mod == 1:
         return False
     else:
         return True
@@ -162,8 +162,6 @@ def processCodons(globs):
     with open(globs['outbed'], "w") as bedfile, open(globs['out-transcript'], "a") as transcriptfile:
         counter = 0;
         for transcript in globs['cds-seqs']:
-            
-            extra_trailing_nt = 0;
 
             if globs['gxf-file']:
                 transcript_region = globs['annotation'][transcript]['header'];
@@ -172,40 +170,42 @@ def processCodons(globs):
             # Get the genome region if the input was a gxf file+genome
 
             if globs['gxf-file']:
-                frame = globs['annotation'][transcript].get('start-frame', 1);
-                # use dict.get() to return value or a default option if key doesn't exist
-                # assumes that globs['annotation'][transcript]['start-frame'] won't exist
-                # unless start frame was parsed from GFF
+                frame = globs['annotation'][transcript]['start-frame']
 
-                #check frame
-                if frameError(globs['cds-seqs'][transcript],frame):
-                    extra_trailing_nt = len(globs['cds-seqs'][transcript]) % 3
-
-                # If frameError, that implies that the last codon is partial, so we need to trim 
+                if frame is None:
+                    CORE.printWrite(globs['logfilename'], 3, "# WARNING: transcript " + transcript + " has an unknown frame....skipping");
+                    globs['warnings'] += 1;                    
+                    continue;
 
             # Get the frame when input is a when input is a gxf+genome
             else:
                 frame = getFrame(globs['cds-seqs'][transcript]);
-                if frame != 1:
+                if frame != 0:
                     CORE.printWrite(globs['logfilename'], 3, "# WARNING: transcript " + transcript + " is partial with unknown frame....skipping");
                     globs['warnings'] += 1;                    
                     continue;
                     ## TODO: Add warning that transcript is skipped 
             # Get the frame when input is a dir/file of individual CDS seqs
+            # In this case we just check to make sure the sequence is a multiple of 3
 
-            extra_leading_nt = globs['leading-bases'][frame]
+            extra_leading_nt = frame
             # Look up the number of leading bases given the current frame
 
             #if frame is not 1, need to skip the first frame-1 bases
             fasta = globs['cds-seqs'][transcript][extra_leading_nt:]
+
+            #now check to see if there are still trailing bases
+            extra_trailing_nt = len(fasta) % 3
+
             if extra_trailing_nt > 0:
                 fasta = fasta[:-extra_trailing_nt]
  
             #make list of codons
             codons = re.findall('...', fasta)
+            nt = {'A', 'T', 'G', 'C'}
 
             if ("degen" in globs['codon-methods']):
-                degen = [ DEGEN_DICT[x] if "N" not in x else "..." for x in codons ];
+                degen = [ DEGEN_DICT[x] if len(set(x) - nt) == 0 else "..." for x in codons ];
                 # Get the string of degeneracy integers for every codon in the current sequence (e.g. 002)
 
                 degen = "." * extra_leading_nt + "".join(degen);
@@ -215,7 +215,7 @@ def processCodons(globs):
                 cds_coord = 0;
                 # Start the CDS coord counter
 
-                if frame != 1:
+                if frame != 0:
                     for out_of_frame_pos in range(extra_leading_nt):
                         outline = OUT.compileBedLine(globs, transcript, transcript_region, cds_coord, globs['cds-seqs'][transcript][cds_coord], "", "", ".", ".", "");
                         bedfile.write("\t".join(outline) + "\n");

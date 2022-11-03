@@ -15,6 +15,7 @@ def checkIDs(l, info, id_list, step, globs):
 
     if len(id_list) != 1:
         print("\n\n");
+        print(len(id_list));
         print(id_list);
         print(info);
         print(l);
@@ -40,23 +41,11 @@ def readFeatures(globs, file_reader, line_reader, feature_list, id_format, paren
             # Header/comment lines should be skipped. Note that this must come after the check for "##FASTA" above, or else
             # the file will keep being read into the sequences and error out.
 
-            feature_type, seq_header, start, end, strand, feature_info = line[2], line[0], int(line[3]), int(line[4]), line[6], line[8].split(info_field_splitter);
+            feature_type, seq_header, start, end, strand, phase, feature_info = line[2], line[0], int(line[3]), int(line[4]), line[6], line[7], line[8].split(info_field_splitter);
             # Unpack the pertinent information from the current line into more readable variables.
 
             if feature_type in feature_list:
             # Skipping any 'unconfirmed_transcript'
-                feature_id = [ info_field for info_field in feature_info if info_field.startswith(id_format) ];
-                # Get the feature ID as a list of fields with the "ID=" prefix
-
-                # print(feature_info);
-                # print(feature_id);
-                # sys.exit();
-
-                checkIDs(line, feature_info, feature_id, feature_list[0] +" id parsing", globs);
-                # A quick check to make sure we have read only one ID
-
-                feature_id = feature_id[0].replace(id_format, "").replace("\"", "");
-                # Unpack and parse the ID
 
                 parent_id = [ info_field for info_field in feature_info if info_field.startswith(parent_id_format) ];
                 # Get the gene ID associated with the transcript as a list of fields with the "Parent=" prefix
@@ -68,7 +57,18 @@ def readFeatures(globs, file_reader, line_reader, feature_list, id_format, paren
                 # Unpack and parse the gene ID
 
                 if feature_list[0] == "transcript":
-                    globs['annotation'][feature_id] = { 'header' : seq_header, 'start' : start, 'end' : end, 'len' : end-start, 'longest' : "no", 'cdslen': 0, 'strand' : strand, 'exons' : {}, "gene-id" : parent_id,
+
+                    feature_id = [ info_field for info_field in feature_info if info_field.startswith(id_format) ];
+                    # Get the feature ID as a list of fields with the "ID=" prefix
+                
+                    checkIDs(line, feature_info, feature_id, feature_list[0] +" id parsing", globs);
+                    # A quick check to make sure we have read only one ID
+
+                    feature_id = feature_id[0].replace(id_format, "").replace("\"", "");
+                    # Unpack and parse the ID
+
+                    globs['annotation'][feature_id] = { 'header' : seq_header, 'start' : start, 'end' : end, 'len' : end-start, 'longest' : "no", 'cdslen': 0, 'strand' : strand, 
+                                                        'exons' : {}, "gene-id" : parent_id, 'start-frame' : None, 'coding-start' : None,
                                                         0 : 0, 2 : 0, 3 : 0, 4 : 0 };
                     # Add the ID and related info to the annotation dict. This includes an empty dict for exons to be stored in a similar way
                     # The last 4 entries are counts for number of sites with each degeneracy to summarize transcripts
@@ -89,8 +89,9 @@ def readFeatures(globs, file_reader, line_reader, feature_list, id_format, paren
                     # Because exon IDs are not always included for CDS, or they only represent the CDS as a whole (e.g. protein ID from Ensembl), we 
                     # count the number of exons in the transcript as the ID
 
-                    globs['annotation'][parent_id]['exons'][exon_id] = { 'header' : seq_header, 'start' : start, 'end' : end, 'len' : end-start, 'strand' : strand };
+                    globs['annotation'][parent_id]['exons'][exon_id] = { 'header' : seq_header, 'start' : start, 'end' : end, 'len' : end-start, 'strand' : strand, 'phase' :  phase};
                     globs['annotation'][parent_id]['cdslen'] += end-start;
+
                 # Add the ID and related info to the annotation dict.                   
 
                 num_features += 1;

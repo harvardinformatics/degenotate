@@ -101,10 +101,6 @@ def init():
         'bases' : ['A', 'T', 'C', 'G'],
         # List of standard nucleotides
 
-        'leading-bases' : { 1 : 0, 2 : 1, 3 : 2 },
-        # The number of bases to remove from the beginning of a seq
-        # for each frame. frame:num bases
-
         'info' : False,
         'quiet' : False,
         # Other user options
