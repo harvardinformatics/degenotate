@@ -7,6 +7,10 @@
 
 ### Gregg Thomas and Timothy Sackton
 
+## Warning! Warning! ##
+
+**We have discovered some bugs in the calculation of pN, pS, dN, and dS, triggered if you are using degenotate to compute MK tables from a vcf file. The calculation of the degeneracy bed file and the transcript summary are unaffected. However, please do not use degenotate to compute MK tables until we can implement a fix.**
+
 ## About
 
 degenotate takes as input either a genome FASTA file and a corresponding annotation file (GFF or GTF) OR file or directory of files that contain coding sequences in FASTA format and outputs a bed-like file that contains the degeneracy score (0-, 2-, 3-, or 4-fold) of every coding site.
