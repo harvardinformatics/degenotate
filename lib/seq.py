@@ -41,7 +41,7 @@ def readFasta(filename, seq_compression, seq_delim):
 
         curkey = header[1:];
         if seq_delim:
-            curkey = curkey[:curkey.index(seq_delim)];            
+            curkey = curkey.split(seq_delim)[0];         
         # This removes the ">" character from the header string to act as the key in seqdict
         # and splits the header based on user input from the -d option
 
@@ -82,6 +82,25 @@ def readGenome(globs):
 
 #############################################################################
 
+def checkHeaders(globs):
+    step = "Checking headers";
+    step_start_time = CORE.report_step(globs, step, False, "In progress...");
+    # Status update
+
+    annotation_headers = set([ globs['annotation'][t]['header'] for t in globs['annotation'] ]);
+    # Extract unique headers from annotation file
+
+    for header in annotation_headers:
+        if header not in globs['genome-seqs']:
+            print();
+            CORE.errorOut("SEQ1", "Region in annotation file not found in genome file: " + header + ". Reminder: you can use -d to trim FASTA headers at a given character.", globs);
+    # Check each header in the annotation file against those in the FASTA file and print an error if one isn't found
+
+    step_start_time = CORE.report_step(globs, step, step_start_time, "Success");
+    # Status update
+
+#############################################################################
+
 def extractCDS(globs):
 # This takes the coordiantes read from the input annotation file as well as the sequence read from the
 # input genome fasta file and extracts coding sequences and coordinates for the CDS of all transcripts
@@ -89,6 +108,7 @@ def extractCDS(globs):
 
     step = "Extracting CDS";
     step_start_time = CORE.report_step(globs, step, False, "In progress...");
+    # Status update
 
     complement = { 'A' : 'T', 'C' : 'G', 'G' : 'C', 'T' : 'A', 'N' : 'N',
                    'a' : 't', 'c' : 'g', 'g' : 'c', 't' : 'a', 'n' : 'n'  };
@@ -104,6 +124,7 @@ def extractCDS(globs):
         # Initialize the sequence string for the current transcript. This will be added to the 'seqs' dict later
 
         globs['coords'][transcript] = {};
+        globs['coords-rev'][transcript] = {};
         cds_coord = 0;
         # Initialize the coord lookup dict for this transcript and start the coord count at 0
 
@@ -119,7 +140,7 @@ def extractCDS(globs):
             print(transcript, strand);
             print(exons);
             print("\n\n");
-            CORE.errorOut("SEQ1", "Some exons have differing strands", globs);
+            CORE.errorOut("SEQ2", "Some exons have differing strands", globs);
         # Add check to make sure exons all have same strand as transcript?
 
         exon_coords = { exons[exon]['start']-1 : exons[exon]['end'] for exon in exons };
@@ -180,6 +201,7 @@ def extractCDS(globs):
 
             for i in range(len(cds_coord_list)):
                 globs['coords'][transcript][cds_coord_list[i]] = genome_coord_list[i];
+                globs['coords-rev'][transcript][genome_coord_list[i]] = cds_coord_list[i];
             # Add the pairs of coordinates (CDS:genome) to the coords dict for this transcript
 
             cds_coord += cur_exon_len;

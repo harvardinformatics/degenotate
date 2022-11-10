@@ -154,7 +154,7 @@ def processCodons(globs):
     num_transcripts = len(globs['cds-seqs']);
 
     step = "Caclulating degeneracy per transcript";
-    step_start_time = CORE.report_step(globs, step, False, "Processed 0 / " + str(num_transcripts) + " alns...", full_update=True);
+    step_start_time = CORE.report_step(globs, step, False, "Processed 0 / " + str(num_transcripts) + " transcripts...", full_update=True);
     # Status update
 
     ####################
@@ -291,15 +291,19 @@ def processCodons(globs):
             ####################
 
             if ("ns" in globs['codon-methods']):
-
                 #define coordinate shift based on frame
                 transcript_position = extra_leading_nt;
+
+                mk_codons = VCF.getVariantsTranscript(globs, transcript, transcript_position, codons, extra_leading_nt, extra_trailing_nt)
 
                 #process each codon
                 # NOTE GT: I think this will work since I now define the number of extra leading NTs above and in
                 # globs['leading-bases'][frame]. We can just start the transcript at that position and
-                # increment by 3 each time. Probably needs debuging.
-                for codon in codons:
+                # increment by 3 each time. Probably needs debugging.
+                for codon_index in range(len(codons)):
+                    codon = codons[codon_index];
+                    mk_alleles = mk_codons[codon_index];
+
                     try: 
                         ref_aa = CODON_DICT[codon]
                     except KeyError:
@@ -316,9 +320,9 @@ def processCodons(globs):
                     poly_codons,div_codon = VCF.getVariants(globs, transcript, transcript_position, list(codon));
                     #print(transcript,transcript_position,codon,poly_codons,div_codon, sep=":")
 
-                    if poly_codons:
+                    if mk_alleles['poly']:
                         #there are variants
-                        for poly_codon in poly_codons:
+                        for poly_codon in mk_alleles['poly']:
 
                             #for in group variants, we treat each as independent
 
@@ -332,15 +336,15 @@ def processCodons(globs):
                             if poly_aa != ref_aa:
                                 pn += 1;
 
-                    if div_codon:
+                    if mk_alleles['fixed-flag']:
                         #there are fixed differences
 
                         #get number of differences between the codons
-                        diffs = codonHamming(div_codon,codon)
+                        diffs = codonHamming(mk_alleles['fixed'], codon)
 
                         if diffs == 1:
                             try:
-                                div_aa = CODON_DICT[div_codon]
+                                div_aa = CODON_DICT[mk_alleles['fixed']]
                             except KeyError:
                                 continue;
                                 
@@ -350,7 +354,7 @@ def processCodons(globs):
                                 dn += 1;
 
                         if diffs >= 2:
-                            ds,dn = codonPath(codon, div_codon, CODON_GRAPH, CODON_DICT, globs['shortest-paths'])
+                            ds,dn = codonPath(codon, mk_alleles['fixed'], CODON_GRAPH, CODON_DICT, globs['shortest-paths'])
 
                     try:
                         globs['nonsyn'][transcript][transcript_position] = MKTable(pn,ps,dn,ds)

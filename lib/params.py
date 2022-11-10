@@ -80,6 +80,7 @@ def init():
         'genome-seqs' : {},
         'cds-seqs' : {},
         'coords' : {},
+        'coords-rev' : {},
         # Sequence variables
 
         'degeneracy' : {},

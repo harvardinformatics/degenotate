@@ -63,6 +63,9 @@ if __name__ == '__main__':
         globs = SEQ.readGenome(globs);
         # Read the full sequence from the input genome
 
+        SEQ.checkHeaders(globs);
+        # Check to make sure the annotation and FASTA headers match
+
         globs = SEQ.extractCDS(globs);
         # Extract the coding sequences based on the annotation and the genome sequences
 
