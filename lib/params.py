@@ -52,6 +52,7 @@ def init():
         # Input by a directory with many fasta files or a single multi-fasta
 
         'vcf-file' : False,
+        'vcf-index-file' : False,
         'vcf' : False,
         'vcf-ingroups' : [],
         'vcf-outgroups' : False,

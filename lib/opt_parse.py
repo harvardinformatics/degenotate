@@ -123,6 +123,9 @@ def optParse(globs):
         globs['codon-methods'].append("ns");
         # If a VCF file is supplied, add the ns method to the list of methods to apply to the input
 
+        globs['vcf-index-file'] = globs['vcf-file'] + ".tbi";
+        # Default VCF index file name from tabix, will check for it below in fileCheck
+
         if not args.vcf_outgroups:
             CORE.errorOut("OP4", "Outgroup samples must be specified (-u) with a vcf file (-v)", globs);
         # If a VCF file is supplied, outgroup samples must be specified

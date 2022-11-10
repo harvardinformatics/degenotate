@@ -28,11 +28,14 @@ def errorOut(errnum, errmsg, globs):
 
 def fileCheck(globs):
 # Checks file options.
-    files = ['gxf-file', 'fa-file', 'in-seq', 'vcf-file'];
+    files = ['gxf-file', 'fa-file', 'in-seq', 'vcf-file', 'vcf-index-file'];
     for f in files:
         if globs[f]:
             if not os.path.isfile(globs[f]) and not os.path.isdir(globs[f]):
-                errorOut("CORE1", "File/path not found: " + globs[f], globs);
+                if f == 'vcf-index-file':
+                    errorOut("CORE1", "Did not find index for input vcf file: " + globs[f] + ". Please index your file with tabix (http://www.htslib.org/doc/tabix.html)", globs);
+                else:
+                    errorOut("CORE1", "File/path not found: " + globs[f], globs);
             globs[f] = os.path.abspath(globs[f]);
     return globs;
 
