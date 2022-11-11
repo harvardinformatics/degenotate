@@ -146,7 +146,7 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
             ref_codon = codons[rec_codon_pos];
             # Look up the codon at the record's codon position
         
-            ref_nt = rec.ref;
+            #ref_nt = rec.ref;
             alt_nts = rec.alts;
             # Look up the alleles at the current position
 

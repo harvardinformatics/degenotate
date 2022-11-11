@@ -4,6 +4,7 @@
 
 import sys
 import os
+import textwrap
 import lib.core as CORE
 
 #############################################################################
@@ -70,15 +71,49 @@ def compileBedLine(globs, transcript, transcript_region, cds_coord, base, codon,
 #############################################################################
 
 def writeBed(line_list, bed_stream, strand):
+# Writes bet output per site in a transcript
+
     if strand == "-":
         line_list.reverse();
+    # Reverse the order of the transcript if it is on the - strand to preserve
+    # ascending ordering for bed file
 
     for line in line_list:
         bed_stream.write("\t".join(line) + "\n");
 
 #############################################################################
 
+def initializeTranscriptSummary(summary_stream):
+# Writes the headers for the transcript summary file
+
+    cols = ["transcript", "gene", "cds-length", "mrna-length", "is-longest", "0-fold", "2-fold", "3-fold", "4-fold"];
+    summary_stream.write("\t".join(cols) + "\n");
+
+#############################################################################
+
+def writeTranscriptSummary(globs, transcript, sum_dict, summary_stream):
+# Writes the summary output for a transcript including counts of sites per fold
+
+    outline = [ transcript, globs['annotation'][transcript]['gene-id'], str(globs['annotation'][transcript]['cdslen']),  
+                str(globs['annotation'][transcript]['len']), str(globs['annotation'][transcript]['longest']) ];
+    outline += [ str(sum_dict[fold]) for fold in sum_dict ];
+    summary_stream.write("\t".join(outline) + "\n");
+    # Compile and write the transcript summary line to the transcript outfile 
+
+#############################################################################
+
+def writeSeq(header, seq, seq_stream, linelen=60):
+# A function to write sequences in FASTA format when -x is specified
+
+    seq_stream.write(header + "\n");
+    seq_stream.write(textwrap.fill(seq, linelen) + "\n");
+
+
+#############################################################################
+
 def initializeMKFile(mkfilename):
+# Opens the MK output file and writes the headers
+
     mkfile = open(mkfilename, "w");
     cols = ['transcript', 'pN', 'pS', 'dN', 'dS'];
     mkfile.write("\t".join(cols) + "\n");

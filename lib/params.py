@@ -68,6 +68,7 @@ def init():
         'outbed' : 'degeneracy-all-sites.bed',
         'out-transcript' : 'transcript-counts.tsv',
         'outmk'  : 'mk.tsv',
+        'outseq' : False,
         'write-cds' : False,
         'run-name' : 'degenotate',
         'logfilename' : 'degenotate.errlog',
@@ -77,6 +78,9 @@ def init():
 
         'shortest-paths' : False,
         # Dependency functions
+
+        'extract-fold' : [],
+        # Site types to extract with -x
 
         'genome-seqs' : {},
         'cds-seqs' : {},
