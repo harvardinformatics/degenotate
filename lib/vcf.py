@@ -111,11 +111,11 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
     strand = globs['annotation'][transcript]['strand'];
     # Need to get strand, to convert leading/trailing bases into start/end padding
 
-    if strand eq "+":
+    if strand == "+":
         start_pad = extra_leading_nt;
         end_pad = extra_trailing_nt;
     
-    if strand eq "-":
+    if strand == "-":
         start_pad = extra_trailing_nt;
         end_pad = extra_leading_nt;
 
