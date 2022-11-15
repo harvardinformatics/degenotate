@@ -164,9 +164,11 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
 
             try: 
                 ref_codon = codons[rec_codon_pos];
-            except:
-                print(transcript,rec_pos,rec_transcript_pos,start_pad,end_pad,adj_rec_pos,rec_codon_pos,codon_pos,len(codons),sep=":")
-                print(codons)
+            except KeyError:
+                continue
+                # a KeyError here should mean that we are in a last partial codon and we should just ignore this variant
+                # however we should probably add some code to formally confirm this before just skipping
+
             # Look up the codon at the record's codon position
         
             #ref_nt = rec.ref;
