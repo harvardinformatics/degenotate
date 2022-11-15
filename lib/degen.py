@@ -347,7 +347,7 @@ def processCodons(globs):
                                 pn += 1;
                             # If the SNP doesn't change the AA from the reference, increment ps, otherwise pn
 
-                            print(transcript, codon_index, codon, poly_codon, ref_aa, poly_aa, sep=":")
+                            # print(transcript, codon_index, codon, poly_codon, ref_aa, poly_aa, sep=":")
 
                         # End polymorphic codon loop
                         ##########
