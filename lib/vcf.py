@@ -152,7 +152,7 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
             # Look up the position of the record relative to the start of
             # the transcript
 
-            adj_rec_pos = rec_transcript_pos - extra_leading_nt;
+            adj_rec_pos = rec_transcript_pos - start_pad;
             # Adjust the transcript position based on the number of extra leading nts
 
             rec_codon_pos = math.floor(adj_rec_pos / 3);
