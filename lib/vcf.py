@@ -108,7 +108,7 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
     # The fixed flag is swapped to True if any fixed differences have actually been found, else
     # the codon is still the ref and shouldn't be counted
 
-    adj_ts_start = globs['annotation'][transcript]['start'] + extra_leading_nt - 1;
+    adj_ts_start = globs['annotation'][transcript]['start'] + extra_leading_nt;
     adj_ts_end = globs['annotation'][transcript]['end'] - extra_trailing_nt;
     # Adjust the genomic start and end coordinates for this transcript based on 
     # the extra out of frame nts in the transcript
@@ -119,7 +119,7 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
     empty = next(transcript_records, None) is None
     # Check if records returns anything
     if empty:
-    # No record at this position, which means no variation at this codon_pos
+    # No record at this position, which means no variation at this transcript
         return mk_codons;
     else:
     # one or more records at this position    
@@ -140,7 +140,7 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
             # Look up the codon position of the adjusted record position
             # This is also the key for mk_codons
 
-            codon_pos = rec_codon_pos % 3;
+            codon_pos = (adj_rec_pos+1) % 3;
             # The position of the record within the codon, either 0, 1, or 2
 
             ref_codon = codons[rec_codon_pos];
@@ -175,7 +175,7 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
                 # Convert the ref_codon to a list so we can change nts by index
 
                 polymorphic_codon[codon_pos] = alt_nts[int(allele)-1];
-                mk_codons[codon_pos]['poly'].append(polymorphic_codon);
+                mk_codons[rec_codon_pos]['poly'].append(polymorphic_codon);
                 # Add the polymorphic codon to the list of polymorphic codons
             ## End ingroup allele loop
 

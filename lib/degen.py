@@ -346,6 +346,9 @@ def processCodons(globs):
                             if poly_aa != ref_aa:
                                 pn += 1;
                             # If the SNP doesn't change the AA from the reference, increment ps, otherwise pn
+
+                            print(transcript, codon_index, codon, poly_codon, ref_aa, poly_aa, sep=":")
+
                         # End polymorphic codon loop
                         ##########
                     # End polymorphism block
