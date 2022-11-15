@@ -218,7 +218,7 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
 
                 mk_codons[rec_codon_pos]['fixed-flag'] = True;
 
-                print("FIXED DIFFERENCE", transcript, rec_codon_pos, ref_codon, sep = ":")
+                print("FIXED DIFFERENCE", transcript, rec_codon_pos, ref_codon, alt_nts, sep = ":")
 
                 if len(out_allele_counts) == 1:
                     mk_codons[rec_codon_pos]['fixed'][codon_pos] = alt_nts[list(out_allele_counts)[0]-1];
