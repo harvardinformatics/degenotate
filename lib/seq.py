@@ -143,33 +143,32 @@ def extractCDS(globs):
             CORE.errorOut("SEQ2", "Some exons have differing strands", globs);
         # Add check to make sure exons all have same strand as transcript?
 
-        exon_coords = { exons[exon]['start']-1 : exons[exon]['end'] for exon in exons };
+        exon_coords = { exons[exon]['start'] : exons[exon]['end'] for exon in exons };
         exon_phase = { exons[exon]['start'] : exons[exon]['phase'] for exon in exons };
         # Get the coordinates of all the exons in this transcript
-        # Subtract 1 from the starting coord because GXF are 1-based and python strings are 0-based
 
         if strand == "+":
             sorted_starts = sorted(list(exon_coords.keys()));
-
         elif strand == "-":
             sorted_starts = sorted(list(exon_coords.keys()), reverse=True);
+        # Sort the start coordinates based on strand
          
-        first_exon_genome_start = sorted_starts[0] + 1;
-        first_exon_genome_end = exon_coords[sorted_starts[0]]
-
+        first_exon_genome_start = sorted_starts[0];
+        first_exon_genome_end = exon_coords[sorted_starts[0]];
+        
         if strand == "+":
             globs['annotation'][transcript]['coding-start'] = first_exon_genome_start
         elif strand == "-":
             globs['annotation'][transcript]['coding-start'] = first_exon_genome_end
         
         globs['annotation'][transcript]['start-frame'] = int(exon_phase[first_exon_genome_start])
+        # Get the start and end coordinates of the first exon and the phase
 
-        # Make sure the exons are sorted correctly, reversing the order if the strand is "-"
-
-        for start in sorted_starts:
-            cur_exon_seq = globs['genome-seqs'][header][start:exon_coords[start]];
+        for genome_coord_start in sorted_starts:
+            cur_exon_seq = globs['genome-seqs'][header][genome_coord_start-1:exon_coords[genome_coord_start]];
             # For each exon starting coordinate, extract the sequence that corresponds to the current header and
             # start and end coordinates
+            # Subtract 1 here since GXF coordinates are 1-based and Python strings (like our genome) are 0-based
 
             cur_exon_len = len(cur_exon_seq);
             # Get the length of the current exon to count up coordinates
@@ -177,10 +176,7 @@ def extractCDS(globs):
             cds_coord_list = list(range(cds_coord, cds_coord+cur_exon_len));
             # The list of coordinates in the current CDS relative to the first CDS
 
-            genome_coord = start + 1;
-            # The starting genome coordinate for the current CDS
-
-            genome_coord_list = list(range(genome_coord, genome_coord+cur_exon_len));
+            genome_coord_list = list(range(genome_coord_start, genome_coord_start+cur_exon_len));
             # The list of genome coordinates in the current CDS
 
             if strand == "-": 
@@ -188,12 +184,7 @@ def extractCDS(globs):
                 # Reverse complement the sequence of the current CDS
                 
                 genome_coord_list.reverse(); 
-                # Reverse the order of the genome coordinates
-
-                # for i in range(cur_exon_len):
-                #     globs['coords'][transcript][tcoord] = gcoord;
-                #     gcoord -= 1;
-                #     tcoord += 1;                    
+                # Reverse the order of the genome coordinates             
             # If the strand is "-", get the reverse complement of the sequence and reverse the coordinates
 
             cur_seq += cur_exon_seq;

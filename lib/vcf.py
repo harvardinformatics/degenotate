@@ -141,6 +141,7 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
         for rec in transcript_records:
 
             rec_pos = rec.start + 1
+            # Adjust 0-based pysam coordinate to 1-based gff coordinate here
 
             if rec_pos not in globs['coords-rev'][transcript]:
                 continue;

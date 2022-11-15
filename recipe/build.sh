@@ -1,7 +1,5 @@
 #!/bin/bash
 
-make install CXX=${CXX}
-cp src/PhyloAcc-interface/phyloacc.py ${PREFIX}/bin/.
-cp src/PhyloAcc-interface/phyloacc_post.py ${PREFIX}/bin/.
+cp degenotate.py ${PREFIX}/bin/.
 mkdir -p ${SP_DIR}
-cp -R src/PhyloAcc-interface/phyloacc_lib ${SP_DIR}/.
+cp -R degenotate_lib ${SP_DIR}/.

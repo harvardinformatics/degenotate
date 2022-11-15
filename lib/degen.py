@@ -426,6 +426,10 @@ def processCodons(globs):
     # Close bed file
     ##########
 
+    if globs['outseq']:
+        seq_stream.close();
+    # Close the sequence file if it is open
+
     if "ns" in globs['codon-methods']:
         mk_stream.close();
     # Close the MK file if necessary
