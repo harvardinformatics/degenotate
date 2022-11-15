@@ -7,7 +7,7 @@ import os
 import math
 import random
 from collections import defaultdict
-import lib.core as CORE
+import degenotate_lib.core as CORE
 
 #############################################################################
 
