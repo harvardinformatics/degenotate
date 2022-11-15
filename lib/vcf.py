@@ -124,12 +124,15 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
     else:
     # one or more records at this position    
         for rec in transcript_records:
-            if rec.start not in globs['coords-rev'][transcript]:
+
+            rec_pos = rec.start + 1
+
+            if rec_pos not in globs['coords-rev'][transcript]:
                 continue;
             # Skip any SNPs within the range of the transcript start and end,
             # but not in the CDS
 
-            rec_transcript_pos = globs['coords-rev'][transcript][rec.start];
+            rec_transcript_pos = globs['coords-rev'][transcript][rec_pos];
             # Look up the position of the record relative to the start of
             # the transcript
 
@@ -140,7 +143,7 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
             # Look up the codon position of the adjusted record position
             # This is also the key for mk_codons
 
-            codon_pos = (adj_rec_pos+1) % 3;
+            codon_pos = (adj_rec_pos) % 3;
             # The position of the record within the codon, either 0, 1, or 2
 
             ref_codon = codons[rec_codon_pos];
