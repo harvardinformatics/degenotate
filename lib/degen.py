@@ -217,6 +217,8 @@ def processCodons(globs):
  
             #make list of codons
             codons = re.findall('...', fasta)
+            print(fasta)
+            print(len(fasta))
             nt = {'A', 'T', 'G', 'C'}
 
             if ("degen" in globs['codon-methods']):
