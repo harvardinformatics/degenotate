@@ -108,8 +108,23 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
     # The fixed flag is swapped to True if any fixed differences have actually been found, else
     # the codon is still the ref and shouldn't be counted
 
-    adj_ts_start = globs['annotation'][transcript]['start'] + extra_leading_nt;
-    adj_ts_end = globs['annotation'][transcript]['end'] - extra_trailing_nt;
+    strand = globs['annotation'][transcript]['strand'];
+    # Need to get strand, to convert leading/trailing bases into start/end padding
+
+    if strand eq "+":
+        start_pad = extra_leading_nt;
+        end_pad = extra_trailing_nt;
+    
+    if strand eq "-":
+        start_pad = extra_trailing_nt;
+        end_pad = extra_leading_nt;
+
+    # Extra leading nt and trailing nt are defined (leading, trailing) based on transcript orientation
+    # So in genomic coordinates, trailing nt on the minus strand is actually a shift of the start, and leading nt is a shift of the end
+    # This is because for the transcript feature, start < end
+    
+    adj_ts_start = globs['annotation'][transcript]['start'] + start_pad;
+    adj_ts_end = globs['annotation'][transcript]['end'] - end_pad;
     # Adjust the genomic start and end coordinates for this transcript based on 
     # the extra out of frame nts in the transcript
 
