@@ -164,8 +164,9 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
 
             try: 
                 ref_codon = codons[rec_codon_pos];
-            except IndexError:
+            except:
                 print(transcript,rec_pos,rec_transcript_pos,adj_rec_pos,rec_codon_pos,codon_pos, sep=":")
+                print(codons)
             # Look up the codon at the record's codon position
         
             #ref_nt = rec.ref;
