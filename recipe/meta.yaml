@@ -1,6 +1,6 @@
 {% set name = "degenotate" %}
-{% set version = "1.0.0-beta" %}
-{% set sha256 = "a6ffd28bcabf420d61abe0b01bc5905329d4cb1a2da4eafa73cde477f2f12a23" %}
+{% set version = "1.0.1-beta" %}
+{% set sha256 = "d2c2b893d0512e64f27e9f1aa2925630e5d13b920c5306d093c46695809e004d" %}
 
 package:
   name: {{ name|lower }}
@@ -12,7 +12,7 @@ source:
 
 build:
   number: 0
-  skip: True # [py < 38]
+  noarch: python
 
 requirements:
   host:
