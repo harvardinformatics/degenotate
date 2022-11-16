@@ -117,7 +117,7 @@ Default name: `[output directory]/transcript-counts.tsv`
 In addition to the information for every coding site, degenotate also outputs summaries by transcript. The columns in this file are:
 
 | transcript | gene | cds_length | mrna_length | is_longest | f0 | f2 | f3 | f4 |
-| ---------- | ---- | ----------------- | ------ | ------ | ------ | ------ |
+| ---------- | ---- | ----------------- | ------ | ------ | ------ | ------ |------ | ------ |
 | Transcript ID | Gene ID | Length of coding sequence | Length of transcript | Indicator of longest transcript per gene | Count of 0-fold degenerate sites | Count of 2-fold degenerate sites | Count of 3-fold degenerate sites | Count of 4-fold degenerate sites | 
 
 ### MK site counts (tab delimited)
@@ -133,7 +133,7 @@ When provided with a multi-sample VCF file and outgroup samples, degenotate coun
 ## Options
 
 | Option | Description | 
-| ------ | ----------- |
+| :-------------------- | -------- |
 | `-h`, `--help` | Show this help message and exit |
 | `-a` | A GFF or GTF file that contains the coordinates of transcripts in the provided genome file (`-g`). Only one of -`a`/`-g` OR `-s` is REQUIRED. |
 | `-g` | A FASTA file containing a genome. `-a` must also be specified. Only one of `-a`/`-g` OR `-s` is REQUIRED. |
