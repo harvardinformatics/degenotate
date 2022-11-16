@@ -86,7 +86,7 @@ def writeBed(line_list, bed_stream, strand):
 def initializeTranscriptSummary(summary_stream):
 # Writes the headers for the transcript summary file
 
-    cols = ["transcript", "gene", "cds-length", "mrna-length", "is-longest", "0-fold", "2-fold", "3-fold", "4-fold"];
+    cols = ["transcript", "gene", "cds_length", "mrna_length", "is_longest", "f0", "f2", "f3", "f4"];
     summary_stream.write("\t".join(cols) + "\n");
 
 #############################################################################
