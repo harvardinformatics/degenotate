@@ -7,19 +7,15 @@
 
 ### Gregg Thomas and Timothy Sackton
 
-## Warning! Warning! ##
-
-**We have discovered some bugs in the calculation of pN, pS, dN, and dS, triggered if you are using degenotate to compute MK tables from a vcf file. The calculation of the degeneracy bed file and the transcript summary are unaffected. However, please do not use degenotate to compute MK tables until we can implement a fix.**
-
 ## About
 
 degenotate takes as input either a genome FASTA file and a corresponding annotation file (GFF or GTF) OR file or directory of files that contain coding sequences in FASTA format and outputs a bed-like file that contains the degeneracy score (0-, 2-, 3-, or 4-fold) of every coding site.
 
 If given a corresponding VCF file with specified outgroup samples, degenotate can also count synonymous and non-synonymous polymorphisms and fixed differences for use in [MK tests](https://en.wikipedia.org/wiki/McDonald%E2%80%93Kreitman_test).
 
-The program also offers coding sequence extraction from the input genome and (coming soon) extraction of sequences by degeneracy (e.g. extract only the 4-fold degenerate sites).
+The program also offers coding sequence extraction from the input genome and extraction of sequences by degeneracy (e.g. extract only the 4-fold degenerate sites).
 
-**Warning: This is an early alpha release at the moment, and there may still be uncaught bugs in the calculations. Please report possible errors, and be cautious about using the results of this software for publications just yet.**
+**Warning: This is an early beta release. While we have done extensive testing, we are not certain our tests have hit all possible edge cases, especially those involving partial transcripts. We welcome bug reports and feature suggestions and are actively working to do more validation and testing.**
 
 ## Installation
 
@@ -120,9 +116,9 @@ Default name: `[output directory]/transcript-counts.tsv`
 
 In addition to the information for every coding site, degenotate also outputs summaries by transcript. The columns in this file are:
 
-| transcript | gene | transcript length | 0-fold | 2-fold | 3-fold | 4-fold |
+| transcript | gene | cds_length | mrna_length | is_longest | f0 | f2 | f3 | f4 |
 | ---------- | ---- | ----------------- | ------ | ------ | ------ | ------ |
-| Transcript ID | Gene ID | Length of transcript | Count of 0-fold degenerate sites | Count of 2-fold degenerate sites | Count of 3-fold degenerate sites | Count of 4-fold degenerate sites | 
+| Transcript ID | Gene ID | Length of coding sequence | Length of transcript | Indicator of longest transcript per gene | Count of 0-fold degenerate sites | Count of 2-fold degenerate sites | Count of 3-fold degenerate sites | Count of 4-fold degenerate sites | 
 
 ### MK site counts (tab delimited)
 
@@ -138,6 +134,7 @@ When provided with a multi-sample VCF file and outgroup samples, degenotate coun
 
 | Option | Description | 
 | ------ | ----------- |
+| `-h`, `--help` | Show this help message and exit |
 | `-a` | A GFF or GTF file that contains the coordinates of transcripts in the provided genome file (`-g`). Only one of -`a`/`-g` OR `-s` is REQUIRED. |
 | `-g` | A FASTA file containing a genome. `-a` must also be specified. Only one of `-a`/`-g` OR `-s` is REQUIRED. |
 | `-s` | Either a directory containing individual, in-frame coding sequence files or a single file containing multipl in-frame coding sequences on which to calculate degeneracy. Only one of `-a`/`-g` OR `-s` is REQUIRED. |
@@ -147,8 +144,21 @@ When provided with a multi-sample VCF file and outgroup samples, degenotate coun
 | `-o` |  Desired output directory. This will be created for you if it doesn't exist. Default: `degenotate-[date]-[time]` |
 | `-d` | degenotate assumes the chromosome IDs in the GFF file exactly match the sequence headers in the FASTA file. If this is not the case, use this to specify a character at which the FASTA headers will be trimmed. |
 | `-c` | If a file is provided, the program will extract CDS sequences from the genome and write them to the file and exit. |
+| `-x` | Extract sites of a certain degeneracy. For instance, to extract 4-fold degenerate sites enter '4'. To extract 2- and 4-fold degenerate sites enter '24' and so on. | 
 | `--overwrite` | Set this to overwrite existing files. |
 | `--appendlog` | Set this to keep the old log file even if `--overwrite` is specified. New log information will instead be appended to the previous log file. |
 | `--info` |  Print some meta information about the program and exit. No other options required. |
 | `--version` | Simply print the version and exit. Can also be called as `-version`, or `--v`. |
 | `--quiet` | Set this flag to prevent degenotate from reporting detailed information about each step. |
+
+## Assumptions
+
+To compute MK tables of synonymous and nonsynonymous polymorphism and divergence requires making certain assumptions. Here are the assumptions built into degenotate. 
+
+- Codons with multiple polymorphisms: If a codon has more than one variant segregating within a population (either because multiple positions at the codon have segregating sites, or because one position has a multi-allelic SNP), we treat each segregating variant as independent.
+- Codons with multiple fixed differences: If there are multiple fixed differences in a single codon in the outgroup, we compute all possible mutational pathways between the ingroup codon and the outgroup codon, and take the average number of nonsynonymous and synonymous changes across these paths, weighted equally. This means we can have fractional numbers of synonymous and nonsynonymous divergence. 
+- Defining fixed differences: We consider a site to be a fixed difference only if all the alleles in the outgroup do not exist in the ingroup. This means, for example, that a polymorphic site in the outgroup can still contain a fixed difference as long as both the alleles are different from any ingroup allele. In this case, we use the highest frequency outgroup allele.
+- Defining polymorphic sites: We consider polymorphic sites to be any site where at least one ingroup individual has a non-reference allele. In most cases this is intuitive, however there are two edge cases worth pointing out. First, if all ingroup individuals are homozygous alternate, we will count that position as a polymorphism. This has implications if the reference genome is from a different population or species than your ingroup sequence. Second, we consider sites with shared polymorphism between the ingroup and the outgroup to be polymorphic, since we do not consider outgroup sequence at all when defining polymorphisms.
+- Site frequency: We do not filter any site based on frequency. For now, if you want to exclude singletons or other low-frequency sites from MK calculations, you need to remove these sites from your VCF before running degenotate. 
+
+**Any of these assumptions may change in future releases.** 
