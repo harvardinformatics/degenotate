@@ -7,8 +7,7 @@ import os
 import random
 import sys
 from collections import defaultdict
-
-import lib.core as CORE
+import degenotate_lib.core as CORE
 
 #############################################################################
 

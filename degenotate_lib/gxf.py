@@ -5,7 +5,7 @@
 import sys
 import os
 import gzip
-import lib.core as CORE
+import degenotate_lib.core as CORE
 
 #############################################################################
 

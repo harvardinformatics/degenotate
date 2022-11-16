@@ -9,15 +9,14 @@
 
 import sys
 import os
-import lib.core as CORE
-import lib.params as params
-import lib.opt_parse as OP
-import lib.gxf as gxf
-import lib.vcf as vcf
-import lib.seq as SEQ
-import lib.degen as degen
-import lib.output as OUT
-## TODO: Commented libaries need to be created
+import degenotate_lib.core as CORE
+import degenotate_lib.params as params
+import degenotate_lib.opt_parse as OP
+import degenotate_lib.gxf as gxf
+import degenotate_lib.vcf as vcf
+import degenotate_lib.seq as SEQ
+import degenotate_lib.degen as degen
+import degenotate_lib.output as OUT
 
 #############################################################################
 

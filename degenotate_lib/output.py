@@ -5,7 +5,6 @@
 import sys
 import os
 import textwrap
-import lib.core as CORE
 
 #############################################################################
 
