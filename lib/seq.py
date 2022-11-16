@@ -6,7 +6,7 @@ import sys
 import os
 import gzip
 import lib.core as CORE
-import multiprocessing as mp
+import lib.output as OUT
 from itertools import groupby
 
 ############################################################################# 
@@ -41,7 +41,7 @@ def readFasta(filename, seq_compression, seq_delim):
 
         curkey = header[1:];
         if seq_delim:
-            curkey = curkey[:curkey.index(seq_delim)];            
+            curkey = curkey.split(seq_delim)[0];         
         # This removes the ">" character from the header string to act as the key in seqdict
         # and splits the header based on user input from the -d option
 
@@ -82,6 +82,25 @@ def readGenome(globs):
 
 #############################################################################
 
+def checkHeaders(globs):
+    step = "Checking headers";
+    step_start_time = CORE.report_step(globs, step, False, "In progress...");
+    # Status update
+
+    annotation_headers = set([ globs['annotation'][t]['header'] for t in globs['annotation'] ]);
+    # Extract unique headers from annotation file
+
+    for header in annotation_headers:
+        if header not in globs['genome-seqs']:
+            print();
+            CORE.errorOut("SEQ1", "Region in annotation file not found in genome file: " + header + ". Reminder: you can use -d to trim FASTA headers at a given character.", globs);
+    # Check each header in the annotation file against those in the FASTA file and print an error if one isn't found
+
+    step_start_time = CORE.report_step(globs, step, step_start_time, "Success");
+    # Status update
+
+#############################################################################
+
 def extractCDS(globs):
 # This takes the coordiantes read from the input annotation file as well as the sequence read from the
 # input genome fasta file and extracts coding sequences and coordinates for the CDS of all transcripts
@@ -89,6 +108,7 @@ def extractCDS(globs):
 
     step = "Extracting CDS";
     step_start_time = CORE.report_step(globs, step, False, "In progress...");
+    # Status update
 
     complement = { 'A' : 'T', 'C' : 'G', 'G' : 'C', 'T' : 'A', 'N' : 'N',
                    'a' : 't', 'c' : 'g', 'g' : 'c', 't' : 'a', 'n' : 'n'  };
@@ -104,6 +124,7 @@ def extractCDS(globs):
         # Initialize the sequence string for the current transcript. This will be added to the 'seqs' dict later
 
         globs['coords'][transcript] = {};
+        globs['coords-rev'][transcript] = {};
         cds_coord = 0;
         # Initialize the coord lookup dict for this transcript and start the coord count at 0
 
@@ -119,36 +140,35 @@ def extractCDS(globs):
             print(transcript, strand);
             print(exons);
             print("\n\n");
-            CORE.errorOut("SEQ1", "Some exons have differing strands", globs);
+            CORE.errorOut("SEQ2", "Some exons have differing strands", globs);
         # Add check to make sure exons all have same strand as transcript?
 
-        exon_coords = { exons[exon]['start']-1 : exons[exon]['end'] for exon in exons };
+        exon_coords = { exons[exon]['start'] : exons[exon]['end'] for exon in exons };
         exon_phase = { exons[exon]['start'] : exons[exon]['phase'] for exon in exons };
         # Get the coordinates of all the exons in this transcript
-        # Subtract 1 from the starting coord because GXF are 1-based and python strings are 0-based
 
         if strand == "+":
             sorted_starts = sorted(list(exon_coords.keys()));
-
         elif strand == "-":
             sorted_starts = sorted(list(exon_coords.keys()), reverse=True);
+        # Sort the start coordinates based on strand
          
-        first_exon_genome_start = sorted_starts[0] + 1;
-        first_exon_genome_end = exon_coords[sorted_starts[0]]
-
+        first_exon_genome_start = sorted_starts[0];
+        first_exon_genome_end = exon_coords[sorted_starts[0]];
+        
         if strand == "+":
             globs['annotation'][transcript]['coding-start'] = first_exon_genome_start
         elif strand == "-":
             globs['annotation'][transcript]['coding-start'] = first_exon_genome_end
         
         globs['annotation'][transcript]['start-frame'] = int(exon_phase[first_exon_genome_start])
+        # Get the start and end coordinates of the first exon and the phase
 
-        # Make sure the exons are sorted correctly, reversing the order if the strand is "-"
-
-        for start in sorted_starts:
-            cur_exon_seq = globs['genome-seqs'][header][start:exon_coords[start]];
+        for genome_coord_start in sorted_starts:
+            cur_exon_seq = globs['genome-seqs'][header][genome_coord_start-1:exon_coords[genome_coord_start]];
             # For each exon starting coordinate, extract the sequence that corresponds to the current header and
             # start and end coordinates
+            # Subtract 1 here since GXF coordinates are 1-based and Python strings (like our genome) are 0-based
 
             cur_exon_len = len(cur_exon_seq);
             # Get the length of the current exon to count up coordinates
@@ -156,10 +176,7 @@ def extractCDS(globs):
             cds_coord_list = list(range(cds_coord, cds_coord+cur_exon_len));
             # The list of coordinates in the current CDS relative to the first CDS
 
-            genome_coord = start + 1;
-            # The starting genome coordinate for the current CDS
-
-            genome_coord_list = list(range(genome_coord, genome_coord+cur_exon_len));
+            genome_coord_list = list(range(genome_coord_start, genome_coord_start+cur_exon_len));
             # The list of genome coordinates in the current CDS
 
             if strand == "-": 
@@ -167,12 +184,7 @@ def extractCDS(globs):
                 # Reverse complement the sequence of the current CDS
                 
                 genome_coord_list.reverse(); 
-                # Reverse the order of the genome coordinates
-
-                # for i in range(cur_exon_len):
-                #     globs['coords'][transcript][tcoord] = gcoord;
-                #     gcoord -= 1;
-                #     tcoord += 1;                    
+                # Reverse the order of the genome coordinates             
             # If the strand is "-", get the reverse complement of the sequence and reverse the coordinates
 
             cur_seq += cur_exon_seq;
@@ -180,6 +192,7 @@ def extractCDS(globs):
 
             for i in range(len(cds_coord_list)):
                 globs['coords'][transcript][cds_coord_list[i]] = genome_coord_list[i];
+                globs['coords-rev'][transcript][genome_coord_list[i]] = cds_coord_list[i];
             # Add the pairs of coordinates (CDS:genome) to the coords dict for this transcript
 
             cds_coord += cur_exon_len;
@@ -204,32 +217,21 @@ def extractCDS(globs):
     step_start_time = CORE.report_step(globs, step, step_start_time, "Success: " + str(len(globs['cds-seqs'])) + " CDS read");
     # Status update
 
-    ###
+    ##########
     if globs['write-cds']:
         step = "Writing CDS sequences";
         step_start_time = CORE.report_step(globs, step, False, "In progress...");
         written = 0;
 
-        #outdir = "test-data/mm10/ensembl/cds/";
-        #if not os.path.isdir(outdir):
-        #    os.system("mkdir " + outdir);
-
-        #outfilename = "/n/holylfs05/LABS/informatics/Users/gthomas/spiders/genomes/tgiga/tgiga-cds.fa";
-
-        with open(globs['write-cds'], "w") as of:
-            for seq in globs['cds-seqs']:
-                #outfile = os.path.join(outdir, seq + ".fa");
-                #with open(outfile, "w") as of:
-                of.write(">" + seq + "\n");
-                of.write(globs['cds-seqs'][seq] + "\n");
-                written += 1;
-
-                # if written == 100:
-                #     break;
+        seq_stream = open(globs['write-cds'], "w");
+        for header in globs['cds-seqs']:
+            OUT.writeSeq(">" + header, globs['cds-seqs'][header], seq_stream);
+            written += 1;
+        seq_stream.close();
 
         step_start_time = CORE.report_step(globs, step, step_start_time, "Success: " + str(written) + " sequences written");
-    # Chunk of code to write out the sequences in a concatenated file to individual files by locus -- for development
-    ###
+    # Writes full extracted CDS seqs to a provided file with option -c
+    ##########
 
     return globs;
 

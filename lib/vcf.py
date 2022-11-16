@@ -2,10 +2,12 @@
 # Functions to handle vcf files
 #############################################################################
 
-import sys
+import math
 import os
 import random
+import sys
 from collections import defaultdict
+
 import lib.core as CORE
 
 #############################################################################
@@ -23,11 +25,19 @@ def read(globs):
     # Read the VCF
 
     #print();
+    # vcf_headers = [];
 
-    #x = globs['vcf'].fetch("NC_046340.1", 71, 73);
+    # for x in globs['vcf'].header.records:
+    #     if x.type=="CONTIG":
+    #         print(x.split(",")[0].split("=")[2]);
 
-    #print(x);
-    # print(list(x));
+    # x = globs['vcf'].fetch("NC_046340.1", 71, 150);
+
+    # print(x);
+    # #print(list(x));
+    # print(len(list(x)))
+
+    # sys.exit();
 
     # for i in [72,73,74]:
     #     print(i);
@@ -60,6 +70,12 @@ def read(globs):
     #     sys.exit();
     ## SANDBOX FOR FIGURING OUT PYSAM
 
+    for header in globs['vcf'].header.contigs:
+        if header not in globs['genome-seqs']:
+            CORE.printWrite(globs['logfilename'], 3, "# WARNING: " + header + " is present in the VCF file but not the genome fasta file.");
+            globs['warnings'] += 1;  
+    # Add warnings for each header in the VCF file that isn't in the input fasta file
+
     exclude_missing = [ sample for sample in globs['vcf-exclude'] if sample not in globs['vcf'].header.samples ];
     if exclude_missing:
         CORE.printWrite(globs['logfilename'], globs['log-v'], "# WARNING: some samples specified to be exclude (-e) were not found in the VCF file: " + ",".join(exclude_missing));
@@ -83,40 +99,84 @@ def read(globs):
 
 #############################################################################
 
-def getVariants(globs, transcript, transcript_position, ref_codon):
+def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, extra_trailing_nt):
 # Gets variant codons in the in- and outgroups
 
-    genome_region = globs['annotation'][transcript]['header'];
-    genome_start_pos = globs['coords'][transcript][transcript_position]-1;
-    #genome_positions = list(range(genome_start_pos, genome_start_pos+3));
-    # Convert the transcript coordinates to genomic ones for the VCF
-    # Pysam coordinates are 0 based, so subtract 1
-    ## TODO: Make sure this is consistent with our other data structures!!
+    mk_codons = { c : { 'poly' : [], 'fixed' : list(codons[c]), 'fixed-flag' : False } for c in range(len(codons)) };
+    # This dictionary will keep track of polymorphic codons (initialized as empty list)
+    # and fixed difference codons (initialized as reference codon) for each codon in the current
+    # transcript
+    # The fixed flag is swapped to True if any fixed differences have actually been found, else
+    # the codon is still the ref and shouldn't be counted
 
-    polymorphic_codons = [];
-    fixed_diff_codon = ref_codon;
-    # A list of polymorphic codons from the ingroups and a single codon string
-    # for fixed differences in the outgroups
+    strand = globs['annotation'][transcript]['strand'];
+    # Need to get strand, to convert leading/trailing bases into start/end padding
+
+    if strand == "+":
+        start_pad = extra_leading_nt;
+        end_pad = extra_trailing_nt;
     
-    records = globs['vcf'].fetch(genome_region, genome_start_pos, genome_start_pos+3)
-    #get records for the current codon
+    if strand == "-":
+        start_pad = extra_trailing_nt;
+        end_pad = extra_leading_nt;
+
+    # Extra leading nt and trailing nt are defined (leading, trailing) based on transcript orientation
+    # So in genomic coordinates, trailing nt on the minus strand is actually a shift of the start, and leading nt is a shift of the end
+    # This is because for the transcript feature, start < end
     
-    empty = next(records,None) is None
-    #check if records returns anything
-    
+    adj_ts_start = globs['annotation'][transcript]['start'] + start_pad;
+    adj_ts_end = globs['annotation'][transcript]['end'] - end_pad;
+    # Adjust the genomic start and end coordinates for this transcript based on 
+    # the extra out of frame nts in the transcript
+
+    transcript_records = globs['vcf'].fetch(transcript_region, adj_ts_start, adj_ts_end);
+    # Look up all variant records in the range of the adjusted transcript start and end coordinates
+
+    empty = next(transcript_records, None) is None
+    # Check if records returns anything
     if empty:
-    #no record at this position, which means no variation at this codon_pos
-        return polymorphic_codons, "".join(fixed_diff_codon);
-    
+    # No record at this position, which means no variation at this transcript
+        return mk_codons;
     else:
-    #one or more records at this position
-    
-        for rec in records:
-            codon_pos = rec.start - genome_start_pos
-            #print(rec.start, genome_start_pos, codon_pos) 
-            #get codon position of this record
+    # one or more records at this position    
+        for rec in transcript_records:
+
+            rec_pos = rec.start + 1
+            # Adjust 0-based pysam coordinate to 1-based gff coordinate here
+
+            if rec_pos not in globs['coords-rev'][transcript]:
+                continue;
+            # Skip any SNPs within the range of the transcript start and end,
+            # but not in the CDS
+
+            rec_transcript_pos = globs['coords-rev'][transcript][rec_pos];
+            # Look up the position of the record relative to the start of
+            # the transcript
+
+            adj_rec_pos = rec_transcript_pos - start_pad;
+            # Adjust the transcript position based on the number of extra leading nts
+
+            if adj_rec_pos < 1:
+                continue;
+            #if the variant is in the partial starting codon, skip it
+
+            rec_codon_pos = math.floor(adj_rec_pos / 3);
+            # Look up the codon position of the adjusted record position
+            # This is also the key for mk_codons
+
+            codon_pos = (adj_rec_pos) % 3;
+            # The position of the record within the codon, either 0, 1, or 2
+
+            try: 
+                ref_codon = codons[rec_codon_pos];
+            except IndexError:
+                continue;
+                # an IndexError here should mean that we are in a last partial codon and we should just ignore this variant
+                # however we should probably add some code to formally confirm this before just skipping
+
+            # Look up the codon at the record's codon position
         
-            ref_nt = rec.ref;
+            #ref_nt = rec.ref;
             alt_nts = rec.alts;
             # Look up the alleles at the current position
 
@@ -130,7 +190,7 @@ def getVariants(globs, transcript, transcript_position, ref_codon):
                 for allele in rec.samples[sample]['GT']:
                     if allele is None:
                         continue
-                    #skip missing data
+                    # Skip missing data
                     
                     in_allele_counts[allele] += 1;
             # Count alleles in the ingroups
@@ -138,14 +198,14 @@ def getVariants(globs, transcript, transcript_position, ref_codon):
             for allele in in_allele_counts:
                 if allele == 0:
                     continue;
-            
                 # Construct a codon for each allele in the ingroups except the
-                # reference allele (since that would match the reference codon)
+                # reference allele (since that would match the reference codon)         
 
-                polymorphic_codon = ref_codon;
-                # TODO: Make sure this doesn't copy just a pointer or something
+                polymorphic_codon = list(ref_codon);
+                # Convert the ref_codon to a list so we can change nts by index
+
                 polymorphic_codon[codon_pos] = alt_nts[int(allele)-1];
-                polymorphic_codons.append(polymorphic_codon);
+                mk_codons[rec_codon_pos]['poly'].append(polymorphic_codon);
                 # Add the polymorphic codon to the list of polymorphic codons
             ## End ingroup allele loop
 
@@ -166,15 +226,18 @@ def getVariants(globs, transcript, transcript_position, ref_codon):
             if all(alleles not in in_allele_counts for alleles in out_allele_counts):
             # Sites contain fixed differences only if all the alleles in the outgroup do not
             # exist in the ingroup 
+
+                mk_codons[rec_codon_pos]['fixed-flag'] = True;
+
                 if len(out_allele_counts) == 1:
-                    fixed_diff_codon[codon_pos] = alt_nts[list(out_allele_counts)[0]-1];
+                    mk_codons[rec_codon_pos]['fixed'][codon_pos] = alt_nts[list(out_allele_counts)[0]-1];
                 # If there is only one allele in the outgroup (the site is not polymorphic in the outgroup)
                 # add that allele to the fixed_diff_codon by looking it up in the alt_nts list
                 
                 else:
                     max_allele = [ allele for allele, count in out_allele_counts.items() if count == max(out_allele_counts.values()) ];
                     max_allele = random.choice(max_allele);
-                    fixed_diff_codon[codon_pos]= alt_nts[max_allele-1];
+                    mk_codons[rec_codon_pos]['fixed'][codon_pos] = alt_nts[max_allele-1];
                 # If there is more than one alternate allele in the outgroup (the site is polymorphic in the outgroup)
                 # use the allele at the highest frequency
                 # If more than one allele exists at the highest frequency, pick one randomly
@@ -183,17 +246,11 @@ def getVariants(globs, transcript, transcript_position, ref_codon):
             ####################
         ## End codon record block
 
-    polymorphic_codons = [ "".join(poly_codon) for poly_codon in polymorphic_codons ];
+    for codon_index in mk_codons:
+        mk_codons[codon_index]['poly'] = [ "".join(poly_codon) for poly_codon in mk_codons[codon_index]['poly'] ];    
+        mk_codons[codon_index]['fixed'] = "".join(mk_codons[codon_index]['fixed']);
     # Convert the polymorphic_codons from lists to strings
 
-    return polymorphic_codons, "".join(fixed_diff_codon);
-    # polymorphic_codons:   A list of codons that incorporate all SNPs in the ingroup samples, one codon
-    #                       per alternate allele per site. As is, this list will never have the reference codon in it,
-    #                       and could be an empty list if there are no SNPs in the ingroup samples.
-    # fixed_diff_codon:     A single codon string that incorporates all fixed differences in the outgroup species
-    #                       relative to the reference codon. A fixed difference only occurs if all the alleles in
-    #                       the outgroup samples 1) are not the reference allele and 2) never occur in the ingroup 
-    #                       samples. As currently implemented, if there are no fixed differences this will return
-    #                       the reference codon.
+    return mk_codons;
 
 #############################################################################

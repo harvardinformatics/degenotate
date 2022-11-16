@@ -52,6 +52,7 @@ def init():
         # Input by a directory with many fasta files or a single multi-fasta
 
         'vcf-file' : False,
+        'vcf-index-file' : False,
         'vcf' : False,
         'vcf-ingroups' : [],
         'vcf-outgroups' : False,
@@ -67,6 +68,7 @@ def init():
         'outbed' : 'degeneracy-all-sites.bed',
         'out-transcript' : 'transcript-counts.tsv',
         'outmk'  : 'mk.tsv',
+        'outseq' : False,
         'write-cds' : False,
         'run-name' : 'degenotate',
         'logfilename' : 'degenotate.errlog',
@@ -77,9 +79,13 @@ def init():
         'shortest-paths' : False,
         # Dependency functions
 
+        'extract-fold' : [],
+        # Site types to extract with -x
+
         'genome-seqs' : {},
         'cds-seqs' : {},
         'coords' : {},
+        'coords-rev' : {},
         # Sequence variables
 
         'degeneracy' : {},

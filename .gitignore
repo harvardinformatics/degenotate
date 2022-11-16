@@ -135,3 +135,4 @@ lib/*.pyc
 *.code-workspace
 *.errlog
 test-out
+mk-test-*

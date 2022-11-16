@@ -36,7 +36,9 @@ def readDegen(globs):
             globs['shortest-paths'] = nx.all_shortest_paths;
         except:
             CORE.errorOut("DEGEN1", "Missing networkx dependency. Please install and try again: https://anaconda.org/conda-forge/networkx", globs);
-    # Check for the networkx module
+    # Check for the networkx module and save the all_shortest_paths function to globs if present
+    # Error out if not found
+    # This is done here so there are no dependencies if the user doesn't want to generate the MK tables
 
     DEGEN_DICT = {}
     CODON_DICT = {}
@@ -70,6 +72,7 @@ def readDegen(globs):
 
 def getFrame(seq):
 # A function that returns the frame of a coding sequence
+
     seq_mod = len(seq) % 3;
     if seq_mod == 0:
         return 0;
@@ -92,15 +95,6 @@ def frameError(seq,frame):
         return False
     else:
         return True
-
-#############################################################################
-
-#def getVariants(globs,transcript,transcript_position):
-
-    #TO DO - function to return a list of variant codons based on vcf
-    #should return two lists: one with all ingroup codons, the other with all outgroup codons
-    #because outgroup is assumed to be only fixed differences, should only ever return a single
-    #outgroup codon
 
 #############################################################################
 
@@ -138,6 +132,7 @@ def codonPath(start_codon, end_codon, CODON_GRAPH, CODON_DICT, nx_shortest_paths
 #############################################################################
 
 def codonHamming(codon1,codon2):
+# Calculates hamming distance between two strings (codons) 
     return sum(1 for a, b in zip(codon1, codon2) if a != b)
 
 #############################################################################
@@ -147,21 +142,43 @@ def processCodons(globs):
 # might need a clearer name?
 
     DEGEN_DICT, CODON_DICT, CODON_GRAPH, globs = readDegen(globs)
-    MKTable = namedtuple("MKTable", "pn ps dn ds")
+    #MKTable = namedtuple("MKTable", "pn ps dn ds")
 
     ####################
 
     num_transcripts = len(globs['cds-seqs']);
 
     step = "Caclulating degeneracy per transcript";
-    step_start_time = CORE.report_step(globs, step, False, "Processed 0 / " + str(num_transcripts) + " alns...", full_update=True);
+    step_start_time = CORE.report_step(globs, step, False, "Processed 0 / " + str(num_transcripts) + " transcripts...", full_update=True);
     # Status update
 
     ####################
 
-    with open(globs['outbed'], "w") as bedfile, open(globs['out-transcript'], "a") as transcriptfile:
+    with open(globs['outbed'], "w") as bedfile, open(globs['out-transcript'], "w") as transcriptfile:
+        
+        OUT.initializeTranscriptSummary(transcriptfile);
+        # Write the column headers to the transcript summary file
+
+        if globs['outseq']:
+            seq_stream = open(globs['outseq'], "w");
+        # Open the sequence file if necessary
+
+        if "ns" in globs['codon-methods']:
+            mk_stream = OUT.initializeMKFile(globs['outmk']);
+        # Open the MK file if necessary
+
         counter = 0;
         for transcript in globs['cds-seqs']:
+
+            transcript_output = { 'bed' : [], 
+                                  'mk' : { 'pn' : 0, 'ps' : 0, 'dn' : 0, 'ds' : 0 },
+                                  'summary' : { 0 : 0, 2 : 0, 3 : 0, 4 : 0 },
+                                  'seq' : "" };
+            # The output lines for each transcript
+
+            if globs['outseq']:
+                transcript_output['header'] = ">" + transcript + " " + ",".join([ str(f) for f in globs['extract-fold'] ]) + "-fold degenerate sites";
+            # When outputting sequences by different folds, construct the header here
 
             if globs['gxf-file']:
                 transcript_region = globs['annotation'][transcript]['header'];
@@ -176,7 +193,6 @@ def processCodons(globs):
                     CORE.printWrite(globs['logfilename'], 3, "# WARNING: transcript " + transcript + " has an unknown frame....skipping");
                     globs['warnings'] += 1;                    
                     continue;
-
             # Get the frame when input is a when input is a gxf+genome
             else:
                 frame = getFrame(globs['cds-seqs'][transcript]);
@@ -184,7 +200,6 @@ def processCodons(globs):
                     CORE.printWrite(globs['logfilename'], 3, "# WARNING: transcript " + transcript + " is partial with unknown frame....skipping");
                     globs['warnings'] += 1;                    
                     continue;
-                    ## TODO: Add warning that transcript is skipped 
             # Get the frame when input is a dir/file of individual CDS seqs
             # In this case we just check to make sure the sequence is a multiple of 3
 
@@ -218,9 +233,9 @@ def processCodons(globs):
                 if frame != 0:
                     for out_of_frame_pos in range(extra_leading_nt):
                         outline = OUT.compileBedLine(globs, transcript, transcript_region, cds_coord, globs['cds-seqs'][transcript][cds_coord], "", "", ".", ".", "");
-                        bedfile.write("\t".join(outline) + "\n");
+                        transcript_output['bed'].append(outline);
                         # Call the output function with blank values since there is no degeneracy at this position
-                        # and write the output to the bed file 
+                        # and store the line in the output dict 
 
                         cds_coord += 1;
                         # Increment the position in the CDS
@@ -239,13 +254,18 @@ def processCodons(globs):
                         # Extract the current base from the codon string
                     
                         outline = OUT.compileBedLine(globs, transcript, transcript_region, cds_coord, base, codon, codon_pos, aa, degen[cds_coord], CODON_DICT);
-                        bedfile.write("\t".join(outline) + "\n");
-                        # Write the output from the current position to the bed file
+                        transcript_output['bed'].append(outline);
+                        # Store the output from the current position in the output dict 
 
                         if degen[cds_coord] != ".":
-                            globs['annotation'][transcript][int(degen[cds_coord])] += 1;
+                            transcript_output['summary'][int(degen[cds_coord])] += 1;
                         # Increment the count for the current degeneracy for the transcript summary
                         # Skip positions with unknown degeneracy ('.')
+
+                        if globs['outseq'] and degen[cds_coord] in globs['extract-fold']:
+                            transcript_output['seq'] += base;
+                        # Add the current base to the sequence string if extraction is specified and it is in 
+                        # a fold requested for extraction
 
                         cds_coord += 1;
                         # Increment the position in the CDS
@@ -257,23 +277,14 @@ def processCodons(globs):
                 if extra_trailing_nt != 0:
                     for out_of_frame_pos in range(extra_trailing_nt):
                         outline = OUT.compileBedLine(globs, transcript, transcript_region, cds_coord, globs['cds-seqs'][transcript][cds_coord], "", "", ".", ".", "");
-                        bedfile.write("\t".join(outline) + "\n");
+                        transcript_output['bed'].append(outline);
                         # Call the output function with blank values since there is no degeneracy at this position
-                        # and write the output to the bed file 
+                        # and store the line in the output dict 
 
                         cds_coord += 1;
                         # Increment the position in the CDS
                 # If the CDS has extra trailing bases, the bed output needs to be filled in for the leading bases that were removed
                 ##########
-
-                #globs['degeneracy'][transcript] = degen;
-                # Add the degen string to the global dict (not sure we need this anymore?)
-
-                # print();
-                # print(transcript);
-                # print(globs['degeneracy'][transcript]);
-                # print();
-                # For debugging
 
             ## Runtime for test chromosome without output:              6 sec
             ## Runtime for test chromosome with output without subs:    20 sec
@@ -281,90 +292,128 @@ def processCodons(globs):
 
             ## Out of frame test seq when using -s test-data/mm10/ensembl/cds/ as input: transcript:ENSMUST00000237320
 
-            t_outline = [transcript, globs['annotation'][transcript]['gene-id'], str(globs['annotation'][transcript]['cdslen']),  str(globs['annotation'][transcript]['len']), str(globs['annotation'][transcript]['longest']),
-                            str(globs['annotation'][transcript][0]), str(globs['annotation'][transcript][2]), 
-                            str(globs['annotation'][transcript][3]), str(globs['annotation'][transcript][4]) ]
-            transcriptfile.write("\t".join(t_outline) + "\n");
-            # Compile and write the transcript summary line to the transcript outfile
-
             # End degen method block
             ####################
 
-            if ("ns" in globs['codon-methods']):
+            if "ns" in globs['codon-methods']:
 
                 #define coordinate shift based on frame
-                transcript_position = extra_leading_nt;
+                #transcript_position = extra_leading_nt;
 
-                #process each codon
-                # NOTE GT: I think this will work since I now define the number of extra leading NTs above and in
-                # globs['leading-bases'][frame]. We can just start the transcript at that position and
-                # increment by 3 each time. Probably needs debuging.
-                for codon in codons:
+                mk_codons = VCF.getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, extra_trailing_nt)
+                # Call get variants for this transcript: returns a dictionary with the key being the index of each codon in codons with values as follows:
+                # 'poly' :       A list of codons that incorporate all SNPs in the ingroup samples, one codon
+                #                per alternate allele per site. As is, this list will never have the reference codon in it,
+                #                and could be an empty list if there are no SNPs in the ingroup samples.
+                # 'fixed' :      A single codon string that incorporates all fixed differences in the outgroup species
+                #                relative to the reference codon. A fixed difference only occurs if all the alleles in
+                #                the outgroup samples 1) are not the reference allele and 2) never occur in the ingroup 
+                #                samples. As currently implemented, if there are no fixed differences this will return
+                #                the reference codon. If no fixed differences are present, this is just the reference
+                #                codon.
+                # 'fixed-flag' : A boolean that is True if fixed differences have been found and False if not.
+
+                for codon_index in range(len(codons)):
+                # Loop over each codon by index
+
+                    codon = codons[codon_index];
+                    mk_alleles = mk_codons[codon_index];
+                    # Look up the codon and the results for the codon from getVariants
+
                     try: 
                         ref_aa = CODON_DICT[codon]
                     except KeyError:
                         continue;
+                    # Look up the original amino acid to compare variant codons against
 
-                    ps = 0.0
-                    pn = 0.0
-                    ds = 0.0
-                    dn = 0.0
+                    pn, ps, dn, ds = 0.0, 0.0, 0.0, 0.0;
+                    # Initialize site counts
 
-                    #assume getVariants returns a data structure of variant codons
-                    #this should be a list (empty, 1, or more) for in group codons
-                    #but for outgroup codons, it should be a single string with fixed differences
-                    poly_codons,div_codon = VCF.getVariants(globs, transcript, transcript_position, list(codon));
-                    #print(transcript,transcript_position,codon,poly_codons,div_codon, sep=":")
+                    if mk_alleles['poly']:
+                    # If there are polymorphisms
 
-                    if poly_codons:
-                        #there are variants
-                        for poly_codon in poly_codons:
-
-                            #for in group variants, we treat each as independent
+                        for poly_codon in mk_alleles['poly']:
+                        # For in group variants, we treat each SNP as independent
 
                             try:
                                 poly_aa = CODON_DICT[poly_codon]
                             except KeyError:
                                 continue;
+                            # Look up the amino acid of the polymorphic codon
                             
                             if poly_aa == ref_aa:
                                 ps += 1;
                             if poly_aa != ref_aa:
                                 pn += 1;
+                            # If the SNP doesn't change the AA from the reference, increment ps, otherwise pn
 
-                    if div_codon:
-                        #there are fixed differences
+                            # print(transcript, codon_index, codon, poly_codon, ref_aa, poly_aa, sep=":")
 
-                        #get number of differences between the codons
-                        diffs = codonHamming(div_codon,codon)
+                        # End polymorphic codon loop
+                        ##########
+                    # End polymorphism block
+                    ##########
+
+                    if mk_alleles['fixed-flag']:
+                    # If there are fixed differences
+
+                        diffs = codonHamming(mk_alleles['fixed'], codon);
+                        # Get number of differences between the outgroup codon and reference codon
 
                         if diffs == 1:
+                        # If there is only one difference between the outgroup codon and the reference codon, compare the AA's directly
+
                             try:
-                                div_aa = CODON_DICT[div_codon]
+                                div_aa = CODON_DICT[mk_alleles['fixed']]
                             except KeyError:
                                 continue;
+                            # Look up the amino acid of the outgroup codon
                                 
                             if div_aa == ref_aa:
                                 ds += 1;
                             if div_aa != ref_aa:
                                 dn += 1;
+                            # If the SNP doesn't change the AA from the reference, increment ds, otherwise dn
 
                         if diffs >= 2:
-                            ds,dn = codonPath(codon, div_codon, CODON_GRAPH, CODON_DICT, globs['shortest-paths'])
+                            ds, dn = codonPath(codon, mk_alleles['fixed'], CODON_GRAPH, CODON_DICT, globs['shortest-paths']);
+                        # If there is more than one difference between the outgroup and reference codon, find the order of the SNPs
+                        # to compare
+                    # End fixed diff block
+                    ##########
 
-                    try:
-                        globs['nonsyn'][transcript][transcript_position] = MKTable(pn,ps,dn,ds)
-                    except KeyError:
-                        globs['nonsyn'].update({transcript: {transcript_position : MKTable(pn,ps,dn,ds)}})
+                    transcript_output['mk']['pn'] += pn;
+                    transcript_output['mk']['ps'] += ps;
+                    transcript_output['mk']['dn'] += dn;
+                    transcript_output['mk']['ds'] += ds;
+                    # Increment the counts for each site type for this transcript
+
+                    # try:
+                    #     globs['nonsyn'][transcript][transcript_position] = MKTable(pn,ps,dn,ds)
+                    # except KeyError:
+                    #     globs['nonsyn'].update({transcript: {transcript_position : MKTable(pn,ps,dn,ds)}})
                     # NOTE GT: do we need to add placeholders for the extra leading bases to the nonsyn dict?
                     # e.g. globs['nonsyn'][transcript] could be a list with the index being the position... not
                     # sure what is easiest here.
-                    transcript_position += 3
+                    #transcript_position += 3
                 # End codon loop
                 ##########
 
             # End ns method block
             ##########
+
+            OUT.writeBed(transcript_output['bed'], bedfile, globs['annotation'][transcript]['strand']);
+            # Write the bed output for every site in this transcript
+
+            OUT.writeTranscriptSummary(globs, transcript, transcript_output['summary'], transcriptfile);
+            # Write the summary for this transcript
+
+            if globs['outseq']:
+                OUT.writeSeq(transcript_output['header'], transcript_output['seq'], seq_stream);
+
+            if "ns" in globs['codon-methods']:
+                OUT.writeMK(transcript, transcript_output['mk'], mk_stream);
+            # Write the MK table for this transcript
 
             counter += 1;
             if counter % 100 == 0:
@@ -376,6 +425,14 @@ def processCodons(globs):
 
     # Close bed file
     ##########
+
+    if globs['outseq']:
+        seq_stream.close();
+    # Close the sequence file if it is open
+
+    if "ns" in globs['codon-methods']:
+        mk_stream.close();
+    # Close the MK file if necessary
 
     step_start_time = CORE.report_step(globs, step, step_start_time, "Success", full_update=True);
     # Status update

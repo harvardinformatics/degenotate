@@ -4,6 +4,7 @@
 
 import sys
 import os
+import textwrap
 import lib.core as CORE
 
 #############################################################################
@@ -69,30 +70,61 @@ def compileBedLine(globs, transcript, transcript_region, cds_coord, base, codon,
 
 #############################################################################
 
-def writeMK(globs):
+def writeBed(line_list, bed_stream, strand):
+# Writes bet output per site in a transcript
 
+    if strand == "-":
+        line_list.reverse();
+    # Reverse the order of the transcript if it is on the - strand to preserve
+    # ascending ordering for bed file
+
+    for line in line_list:
+        bed_stream.write("\t".join(line) + "\n");
+
+#############################################################################
+
+def initializeTranscriptSummary(summary_stream):
+# Writes the headers for the transcript summary file
+
+    cols = ["transcript", "gene", "cds_length", "mrna_length", "is_longest", "f0", "f2", "f3", "f4"];
+    summary_stream.write("\t".join(cols) + "\n");
+
+#############################################################################
+
+def writeTranscriptSummary(globs, transcript, sum_dict, summary_stream):
+# Writes the summary output for a transcript including counts of sites per fold
+
+    outline = [ transcript, globs['annotation'][transcript]['gene-id'], str(globs['annotation'][transcript]['cdslen']),  
+                str(globs['annotation'][transcript]['len']), str(globs['annotation'][transcript]['longest']) ];
+    outline += [ str(sum_dict[fold]) for fold in sum_dict ];
+    summary_stream.write("\t".join(outline) + "\n");
+    # Compile and write the transcript summary line to the transcript outfile 
+
+#############################################################################
+
+def writeSeq(header, seq, seq_stream, linelen=60):
+# A function to write sequences in FASTA format when -x is specified
+
+    seq_stream.write(header + "\n");
+    seq_stream.write(textwrap.fill(seq, linelen) + "\n");
+
+
+#############################################################################
+
+def initializeMKFile(mkfilename):
+# Opens the MK output file and writes the headers
+
+    mkfile = open(mkfilename, "w");
+    cols = ['transcript', 'pN', 'pS', 'dN', 'dS'];
+    mkfile.write("\t".join(cols) + "\n");
+    return mkfile;
+
+#############################################################################
+
+def writeMK(transcript, outdict, mk_stream):
 # A function to write out MK tables for each transcript
-    
-    with open(globs['outmk'], "w") as mkfile:
-        cols = ['transcript', 'pN', 'pS', 'dN', 'dS']
-        mkfile.write("\t".join(cols) + "\n")
-        for transcript in globs['cds-seqs']:
-            pn = 0.0
-            ps = 0.0
-            dn = 0.0
-            ds = 0.0
+
+    outline = [ transcript, str(outdict['pn']), str(outdict['ps']), str(outdict['dn']), str(outdict['ds']) ]
+    mk_stream.write("\t".join(outline) + "\n");
         
-            if transcript in globs['nonsyn']:
-                for pos in globs['nonsyn'][transcript]:
-                   pn += globs['nonsyn'][transcript][pos].pn
-                   ps += globs['nonsyn'][transcript][pos].ps
-                   dn += globs['nonsyn'][transcript][pos].dn
-                   ds += globs['nonsyn'][transcript][pos].ds
-                   
-            outline = [transcript,str(pn),str(ps),str(dn),str(ds)]
-            mkfile.write("\t".join(outline) + "\n")
-        
-        
-    #globs['nonsyn'][transcript][transcript_position] = MKTable(pn,ps,dn,ds)
-    
 #############################################################################

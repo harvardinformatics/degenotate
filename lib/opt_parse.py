@@ -38,7 +38,8 @@ def optParse(globs):
     # Output
 
     parser.add_argument("-d", dest="seq_delim", help="degenotate assumes the chromosome IDs in the GFF file exactly match the sequence headers in the FASTA file. If this is not the case, use this to specify a character at which the FASTA headers will be trimmed.", default=False);
-    parser.add_argument("-c", dest="write_cds", help="If a file is provided, the program will extract CDS sequences from the genome and write them to the file and exit.", default=False);
+    parser.add_argument("-c", dest="write_cds", help="If a file is provided, the program will extract CDS sequences from the genome and write them to the file and exit. Equivalent to '-x 0234' except this stops the program before calculating degeneracy.", default=False);
+    parser.add_argument("-x", dest="extract_seq", help="Extract sites of a certain degeneracy. For instance, to extract 4-fold degenerate sites enter '4'. To extract 2- and 4-fold degenerate sites enter '24' and so on.", default=False);
     #parser.add_argument("-p", dest="num_procs", help="The total number of processes that degenotate can use. Default: 1.", type=int, default=1);
     # User params
 
@@ -57,6 +58,9 @@ def optParse(globs):
     # Performance tests
     args = parser.parse_args();
     # The input options and help messages
+
+    warnings = [];
+    # List of warnings to print after logfile is created
 
     globs['call'] = " ".join(sys.argv);
     # Save the program call for later
@@ -123,6 +127,9 @@ def optParse(globs):
         globs['codon-methods'].append("ns");
         # If a VCF file is supplied, add the ns method to the list of methods to apply to the input
 
+        globs['vcf-index-file'] = globs['vcf-file'] + ".tbi";
+        # Default VCF index file name from tabix, will check for it below in fileCheck
+
         if not args.vcf_outgroups:
             CORE.errorOut("OP4", "Outgroup samples must be specified (-u) with a vcf file (-v)", globs);
         # If a VCF file is supplied, outgroup samples must be specified
@@ -168,8 +175,7 @@ def optParse(globs):
         # Parse the samples to exclude
 
     elif args.vcf_outgroups or args.vcf_exclude:
-        CORE.printWrite(globs['logfilename'], globs['log-v'], "# WARNING: VCF outgroups (-u) or samples to exclude (-e) were provided without a VCF file (-v). They will be ignored.");
-        globs['warnings'] += 1;
+        warnings.append("# WARNING: VCF outgroups (-u) or samples to exclude (-e) were provided without a VCF file (-v). They will be ignored.")
     # Check for a VCF file
 
     ####################
@@ -205,15 +211,26 @@ def optParse(globs):
     globs['outbed'] = os.path.join(globs['outdir'], globs['outbed']);
     # Main bed file with degeneracy for all sites
 
-    globs['out-transcript'] = os.path.join(globs['outdir'], globs['out-transcript']);
-    if not globs['write-cds']:
-        with open(globs['out-transcript'], "w") as transcriptfile:
-            cols = ["transcript", "gene", "cds-length", "mrna-length", "is-longest", "0-fold", "2-fold", "3-fold", "4-fold"];
-            transcriptfile.write("\t".join(cols) + "\n");
-    # Transcript summary output and column headers
-
     globs['outmk'] = os.path.join(globs['outdir'], globs['outmk']);
     # MK table output
+     
+    globs['out-transcript'] = os.path.join(globs['outdir'], globs['out-transcript']);
+    # Main bed file with degeneracy for all sites
+
+
+    ####################
+
+    if args.extract_seq:
+        for char in args.extract_seq:
+            if char not in ["0","2","3","4"]:
+                warnings.append("# WARNING: the character '" + char + "' appears in the -x input string but does not correspond to one of the accepted folds (0,2,3,4) and will be ignored.");
+            else:
+                globs['extract-fold'].append(char);
+        globs['extract-fold'].sort();
+        # Check to see that all characters input with -x correspond to a fold and if so add them to the list to extract
+
+        globs['outseq'] = os.path.join(globs['outdir'], "cds-" + "".join(globs['extract-fold']) + "-fold.fa");
+        # Sequence output file for extracted sites     
 
     ####################
 
@@ -226,6 +243,13 @@ def optParse(globs):
         logfile.write("");
         logfile.close();
     # Prep the logfile to be overwritten if --appendlog isn't specified
+
+    if warnings:
+        for warning in warnings:
+            CORE.printWrite(globs['logfilename'], globs['log-v'], warning);
+            globs['warnings'] += 1; 
+        CORE.printWrite(globs['logfilename'], globs['log-v'], "#");
+    # Print any warnings here if there were any before the logfile was created   
 
     ####################
 
@@ -291,6 +315,9 @@ def startProg(globs):
         CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Per-site degeneracy output:", pad) + globs['outbed']);
         CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Transcript count output:", pad) + globs['out-transcript']);
 
+        if globs['outseq']:
+            CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Extracted sequence file:", pad) + globs['outseq']);
+
         if "ns" in globs['codon-methods']:
             CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# MK test count output:", pad) + globs['outmk']);
         
@@ -307,15 +334,30 @@ def startProg(globs):
     #             "degenotate will use this many processes.");
     # Reporting the resource options
 
-    if globs['vcf-file']:
-        CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# -u", pad) +
-                    CORE.spacedOut(",".join(globs['vcf-outgroups']), opt_pad) +
-                    " These samples will be used as outgroups in the VCF file and all others as ingroups.");       
+    if globs['write-cds']:
+        CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# -c", pad) +
+                    CORE.spacedOut("True", opt_pad) +
+                    "CDS sequences will be extracted from the provided genome and the program will exit.");           
+    # Report whether the -c option is set to exit immediately after writing CDS sequences
 
-        if globs['vcf-exclude']:
-            CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# -i", pad) +
-                    CORE.spacedOut(",".join(globs['vcf-exclude']), opt_pad) +
-                    " These samples will be excluded in the VCF file.");  
+    else:
+        if globs['vcf-file']:
+            CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# -u", pad) +
+                        CORE.spacedOut(",".join(globs['vcf-outgroups']), opt_pad) +
+                        " These samples will be used as outgroups in the VCF file and all others as ingroups.");
+            # Report VCF outgroup samples
+
+            if globs['vcf-exclude']:
+                CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# -i", pad) +
+                        CORE.spacedOut(",".join(globs['vcf-exclude']), opt_pad) +
+                        " These samples will be excluded in the VCF file.");  
+            # Report samples to exclude in the input VCF
+
+        if globs['outseq']:
+            CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# -x", pad) +
+                        CORE.spacedOut(",".join(globs['extract-fold']), opt_pad) +
+                        "Extracting sites of these degeneracies.");
+        # Reporting the delim option
 
     if globs['seq-delim']:
         if globs['seq-delim'] == " ":
@@ -325,13 +367,13 @@ def startProg(globs):
         CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# -d", pad) +
                     CORE.spacedOut(delim_str, opt_pad) +
                     "degenotate will split FASTA headers at this character.");
-    # Reporting the delim option.
+    # Reporting the delim option
 
     if globs['overwrite']:
         CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# --overwrite", pad) +
                     CORE.spacedOut("True", opt_pad) +
                     "degenotate will OVERWRITE the existing files in the specified output directory.");
-    # Reporting the overwrite option.
+    # Reporting the overwrite option
 
     if not globs['quiet']:
         CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# --quiet", pad) +
@@ -343,20 +385,20 @@ def startProg(globs):
                     "No further information will be printed to the screen while degenotate is running.");
         CORE.printWrite(globs['logfilename'], globs['log-v'], "# " + "-" * 125);
         CORE.printWrite(globs['logfilename'], globs['log-v'], "# Running...");
-    # Reporting the quiet option.
+    # Reporting the quiet option
 
     # if globs['debug']:
     #     CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# --debug", pad) +
     #                 CORE.spacedOut("True", opt_pad) +
     #                 "Printing out a bit of debug info.");
-    # Reporting the debug option.
+    # Reporting the debug option
 
     if globs['norun']:
         CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# --norun", pad) +
                     CORE.spacedOut("True", opt_pad) +
                     "ONLY PRINTING RUNTIME INFO.");
         CORE.printWrite(globs['logfilename'], globs['log-v'], "# " + "-" * 125);
-    # Reporting the norun option.
+    # Reporting the norun option
 
     # Other options
     #######################

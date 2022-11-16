@@ -63,6 +63,9 @@ if __name__ == '__main__':
         globs = SEQ.readGenome(globs);
         # Read the full sequence from the input genome
 
+        SEQ.checkHeaders(globs);
+        # Check to make sure the annotation and FASTA headers match
+
         globs = SEQ.extractCDS(globs);
         # Extract the coding sequences based on the annotation and the genome sequences
 
@@ -70,18 +73,18 @@ if __name__ == '__main__':
             CORE.endProg(globs);
         # If -c is specified, end the program here
 
-        step = "Removing genome sequence from memory";
-        step_start_time = CORE.report_step(globs, step, False, "In progress...");
-        del(globs['genome-seqs']);
-        step_start_time = CORE.report_step(globs, step, step_start_time, "Success");
-        # Free up the memory from the whole genome sequence since we don't need it anymore
-
         if globs['vcf-file']:
             step = "Reading VCF file";
             step_start_time = CORE.report_step(globs, step, False, "In progress...");
             globs = vcf.read(globs);
             step_start_time = CORE.report_step(globs, step, step_start_time, "Success");
         # Read the VCF file as a pysam VariantFile object
+
+        step = "Removing genome sequence from memory";
+        step_start_time = CORE.report_step(globs, step, False, "In progress...");
+        del(globs['genome-seqs']);
+        step_start_time = CORE.report_step(globs, step, step_start_time, "Success");
+        # Free up the memory from the whole genome sequence since we don't need it anymore
 
     else:
         globs = SEQ.readCDS(globs);
@@ -92,8 +95,8 @@ if __name__ == '__main__':
     globs = degen.processCodons(globs)
     #step_start_time = CORE.report_step(globs, step, step_start_time, "Success");
 
-    if ("ns" in globs['codon-methods']):
-        OUT.writeMK(globs);
+    # if ("ns" in globs['codon-methods']):
+    #     OUT.writeMK(globs);
 
     CORE.endProg(globs);
 
