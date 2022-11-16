@@ -199,7 +199,7 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
 
                 polymorphic_codon = list(ref_codon);
                 # Convert the ref_codon to a list so we can change nts by index
-                print(rec_codon_pos, codon_pos)
+                print(transcript, strand, start_pad, end_pad, adj_rec_pos, rec_codon_pos, codon_pos, sep=":")
 
                 polymorphic_codon[codon_pos] = alt_nts[int(allele)-1];
                 mk_codons[rec_codon_pos]['poly'].append(polymorphic_codon);
