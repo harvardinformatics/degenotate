@@ -2,11 +2,12 @@
 # Functions to handle vcf files
 #############################################################################
 
-import sys
-import os
 import math
+import os
 import random
+import sys
 from collections import defaultdict
+
 import lib.core as CORE
 
 #############################################################################
@@ -165,8 +166,8 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
             try: 
                 ref_codon = codons[rec_codon_pos];
             except IndexError:
-                continue
-                # a KeyError here should mean that we are in a last partial codon and we should just ignore this variant
+                continue;
+                # an IndexError here should mean that we are in a last partial codon and we should just ignore this variant
                 # however we should probably add some code to formally confirm this before just skipping
 
             # Look up the codon at the record's codon position
@@ -198,6 +199,7 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
 
                 polymorphic_codon = list(ref_codon);
                 # Convert the ref_codon to a list so we can change nts by index
+                print(rec_codon_pos, codon_pos)
 
                 polymorphic_codon[codon_pos] = alt_nts[int(allele)-1];
                 mk_codons[rec_codon_pos]['poly'].append(polymorphic_codon);
