@@ -5,8 +5,8 @@
 import sys
 import os
 import gzip
-import lib.core as CORE
-import lib.output as OUT
+import degenotate_lib.core as CORE
+import degenotate_lib.output as OUT
 from itertools import groupby
 
 ############################################################################# 

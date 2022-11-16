@@ -8,7 +8,7 @@
 
 import sys
 import timeit
-import lib.core as PC
+import degenotate_lib.core as PC
 
 #############################################################################
 

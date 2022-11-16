@@ -5,10 +5,8 @@
 
 import sys
 import os
-import math
 import argparse
-import multiprocessing as mp
-import lib.core as CORE
+import degenotate_lib.core as CORE
 
 #############################################################################
 

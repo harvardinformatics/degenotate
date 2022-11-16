@@ -1,0 +1,46 @@
+{% set name = "degenotate" %}
+{% set version = "1.0.1-beta" %}
+{% set sha256 = "d2c2b893d0512e64f27e9f1aa2925630e5d13b920c5306d093c46695809e004d" %}
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source: 
+  url: https://github.com/harvardinformatics/degenotate/releases/tags/v{{ version }}.tar.gz
+  sha256: {{ sha256 }}
+
+build:
+  number: 0
+  noarch: python
+
+requirements:
+  host:
+    - python
+    - pysam
+    - networkx
+  run:
+    - python
+    - pysam
+    - networkx
+
+test:
+  commands:
+    - degenotate.py -h
+# Test commands to run after building and installing
+
+about:
+  home: https://github.com/harvardinformatics/degenotate
+  license: MIT
+  license_file: LICENSE
+  summary: 'Annotation of degeneracy of sites in coding regions of a genome'
+  description: 'Annotation of degeneracy of sites in coding regions of a genome'
+  doc_url: https://github.com/harvardinformatics/degenotate
+  dev_url: https://github.com/harvardinformatics/degenotate
+# Package meta info
+# URLs just point to the github page until we update the docs
+
+extra:
+  recipe-maintainers:
+    - gwct
+# Extra info

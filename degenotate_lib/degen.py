@@ -7,10 +7,9 @@ import os
 import csv
 import re
 import itertools
-from collections import namedtuple
-import lib.vcf as VCF
-import lib.output as OUT
-import lib.core as CORE
+import degenotate_lib.vcf as VCF
+import degenotate_lib.output as OUT
+import degenotate_lib.core as CORE
 
 #############################################################################
 
