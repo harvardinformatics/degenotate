@@ -156,6 +156,10 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
             adj_rec_pos = rec_transcript_pos - start_pad;
             # Adjust the transcript position based on the number of extra leading nts
 
+            if adj_rec_pos < 1:
+                continue;
+            #if the variant is in the partial starting codon, skip it
+
             rec_codon_pos = math.floor(adj_rec_pos / 3);
             # Look up the codon position of the adjusted record position
             # This is also the key for mk_codons
