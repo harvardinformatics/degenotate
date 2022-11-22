@@ -25,12 +25,12 @@ class StrictDict(dict):
 
 def init():
     globs_init = {
-        'version' : 'Beta 1.0',
-        'releasedate' : "October 2021",
+        'version' : '1.0.0',
+        'releasedate' : "November 2022",
         'authors' : "Timothy Sackton, Gregg Thomas",
         'doi' : '',
-        'http' : '',
-        'github' : '',
+        'http' : 'https://github.com/harvardinformatics/degenotate',
+        'github' : 'https://github.com/harvardinformatics/degenotate',
         'starttime' : timeit.default_timer(),
         'startdatetime' : PC.getOutTime(),
         # Meta info
@@ -70,6 +70,7 @@ def init():
         'outmk'  : 'mk.tsv',
         'outseq' : False,
         'write-cds' : False,
+        'write-longest' : False,
         'run-name' : 'degenotate',
         'logfilename' : 'degenotate.errlog',
         'logdir' : '',

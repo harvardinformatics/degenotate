@@ -233,6 +233,23 @@ def extractCDS(globs):
     # Writes full extracted CDS seqs to a provided file with option -c
     ##########
 
+    ##########
+    if globs['write-longest']:
+        step = "Writing longest transcripts";
+        step_start_time = CORE.report_step(globs, step, False, "In progress...");
+        written = 0;
+
+        seq_stream = open(globs['write-longest'], "w");
+        for header in globs['cds-seqs']:
+            if globs['annotation'][header]['longest'] == "yes":
+                OUT.writeSeq(">" + header, globs['cds-seqs'][header], seq_stream);
+                written += 1;
+        seq_stream.close();
+
+        step_start_time = CORE.report_step(globs, step, step_start_time, "Success: " + str(written) + " sequences written");
+    # Writes full extracted CDS from longest transcripts to a provided file with option -l
+    ##########
+
     return globs;
 
 #############################################################################

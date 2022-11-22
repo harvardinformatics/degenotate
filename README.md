@@ -3,9 +3,30 @@
 
 ## Annotate degeneracy of sites in coding regions of a genome
 
+[![Install](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](https://bioconda.github.io/recipes/degenotate/README.html)
+[![OS](https://anaconda.org/bioconda/degenotate/badges/platforms.svg)](#degenotate)
+[![Version](https://img.shields.io/conda/vn/bioconda/degenotate?label=version)](https://bioconda.github.io/recipes/degenotate/README.html)
+[![Release Date](https://anaconda.org/bioconda/degenotate/badges/latest_release_date.svg)](#degenotate)
+[![Downloads](https://img.shields.io/conda/dn/bioconda/degenotate.svg?style=flat)](https://bioconda.github.io/recipes/degenotate/README.html)
+[![License](https://anaconda.org/bioconda/degenotate/badges/license.svg)](https://github.com/harvardinformatics/degenotate/blob/develop/LICENSE)
+
 # Authors
 
 ### Gregg Thomas and Timothy Sackton
+
+# Table of Contents
+
+- [About](#about)
+- [Installation](#installation)
+    - [Installing with bioconda](#installing-from-bioconda)
+    - [Installing from source](#installing-from-source)
+- [Usage](#usage)
+- [Output](#output)
+    - [How degenotate classifies degeneracy](#how-degenotate-classifies-degeneracy)
+    - [Degeneracy per site (bed file)](#degeneracy-per-site-bed-file)
+    - [Transcript site counts (tab delimited)](#transcript-site-counts-tab-delimited)
+    - [MK site counts (tab delimited)](#mk-site-counts-tab-delimited)
+- [Options](#options)
 
 ## About
 
@@ -15,15 +36,23 @@ If given a corresponding VCF file with specified outgroup samples, degenotate ca
 
 The program also offers coding sequence extraction from the input genome and extraction of sequences by degeneracy (e.g. extract only the 4-fold degenerate sites).
 
-**Warning: This is an early beta release. While we have done extensive testing, we are not certain our tests have hit all possible edge cases, especially those involving partial transcripts. We welcome bug reports and feature suggestions and are actively working to do more validation and testing.**
+**Warning: This is an early release. While we have done extensive testing, we are not certain our tests have hit all possible edge cases, especially those involving partial transcripts. We welcome bug reports and feature suggestions and are actively working to do more validation and testing.**
 
 ## Installation
 
-### Install
+### Installing from bioconda
 
-Simply download the program by cloning this repo and run it as `python degenotate.py`. You may want to add the degenotate folder to your $PATH variable for ease of use.
+We recommend installing degenotate from [bioconda](https://bioconda.github.io/recipes/degenotate/README.html) with the package manager [`conda`](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) or [`mamba`](https://mamba.readthedocs.io/en/latest/installation.html):
 
-### Dependencies
+```
+conda install degenotate
+```
+
+After this, you can run the program as `degenotate.py`. All dependencies should be automatically installed along with degenotate.
+
+### Installing from source
+
+Alternatively, since degenotate is purely Python and does not need compilation, one could simply download the program by cloning this repo and run it as `python degenotate.py`. In this case, you may want to add the degenotate folder to your $PATH variable for ease of use.
 
 degenotate is a standalone program for its core function of annotating degeneracy on a site-by-site basis.
 
@@ -110,7 +139,7 @@ This indicates that this site has 2-fold degeneracy, the nucleotide is A, and th
 
 For 3-fold sites, this would only have one `[nucleotide]:[amino acid]` entry and for 0-fold it would have three, each separated by a semi-colon.
 
-### Transcript site counts (tab-delimited)
+### Transcript site counts (tab delimited)
 
 Default name: `[output directory]/transcript-counts.tsv`
 
@@ -144,6 +173,7 @@ When provided with a multi-sample VCF file and outgroup samples, degenotate coun
 | `-o` |  Desired output directory. This will be created for you if it doesn't exist. Default: `degenotate-[date]-[time]` |
 | `-d` | degenotate assumes the chromosome IDs in the GFF file exactly match the sequence headers in the FASTA file. If this is not the case, use this to specify a character at which the FASTA headers will be trimmed. |
 | `-c` | If a file is provided, the program will extract CDS sequences from the genome and write them to the file and exit. |
+| `-l` | If a file is provided, the program will extract CDS sequences from the the longest transcript of each gene and write them to the file and exit. Both `-c` and `-l` can be specified. |
 | `-x` | Extract sites of a certain degeneracy. For instance, to extract 4-fold degenerate sites enter '4'. To extract 2- and 4-fold degenerate sites enter '24' and so on. | 
 | `--overwrite` | Set this to overwrite existing files. |
 | `--appendlog` | Set this to keep the old log file even if `--overwrite` is specified. New log information will instead be appended to the previous log file. |

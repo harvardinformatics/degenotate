@@ -68,7 +68,7 @@ if __name__ == '__main__':
         globs = SEQ.extractCDS(globs);
         # Extract the coding sequences based on the annotation and the genome sequences
 
-        if globs['write-cds']:
+        if globs['write-cds'] or globs['write-longest']:
             CORE.endProg(globs);
         # If -c is specified, end the program here
 

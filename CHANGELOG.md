@@ -1,3 +1,6 @@
+2022.11.21
+- Added `-l` to extract CDS sequences from longest transcripts and exit.
+
 2022.11.16
 - Numerous bugfixes in McDonald-Kreitman test calculations
 - Efficiency improvements, now can process about 1000 transcripts per minute (for a VCF with 20 individuals)
