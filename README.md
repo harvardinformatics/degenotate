@@ -4,9 +4,9 @@
 ## Annotate degeneracy of sites in coding regions of a genome
 
 [![Install](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](https://bioconda.github.io/recipes/degenotate/README.html)
-![OS](https://anaconda.org/bioconda/degenotate/badges/platforms.svg)
+[![OS](https://anaconda.org/bioconda/degenotate/badges/platforms.svg)](#)
 [![Version](https://img.shields.io/conda/vn/bioconda/degenotate?label=version)](https://bioconda.github.io/recipes/degenotate/README.html)
-![Release Date](https://anaconda.org/bioconda/degenotate/badges/latest_release_date.svg)
+[![Release Date](https://anaconda.org/bioconda/degenotate/badges/latest_release_date.svg)](#)
 [![Downloads](https://img.shields.io/conda/dn/bioconda/degenotate.svg?style=flat)](https://bioconda.github.io/recipes/degenotate/README.html)
 [![Commits](https://img.shields.io/github/commits-since/harvardinformatics/degenotate/v1.0.0)](https://github.com/harvardinformatics/degenotate/commits/main)
 [![License](https://anaconda.org/bioconda/degenotate/badges/license.svg)](https://github.com/harvardinformatics/degenotate/blob/develop/LICENSE)
