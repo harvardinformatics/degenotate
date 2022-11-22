@@ -70,6 +70,7 @@ def init():
         'outmk'  : 'mk.tsv',
         'outseq' : False,
         'write-cds' : False,
+        'write-longest' : False,
         'run-name' : 'degenotate',
         'logfilename' : 'degenotate.errlog',
         'logdir' : '',

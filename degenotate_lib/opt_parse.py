@@ -37,6 +37,7 @@ def optParse(globs):
 
     parser.add_argument("-d", dest="seq_delim", help="degenotate assumes the chromosome IDs in the GFF file exactly match the sequence headers in the FASTA file. If this is not the case, use this to specify a character at which the FASTA headers will be trimmed.", default=False);
     parser.add_argument("-c", dest="write_cds", help="If a file is provided, the program will extract CDS sequences from the genome and write them to the file and exit. Equivalent to '-x 0234' except this stops the program before calculating degeneracy.", default=False);
+    parser.add_argument("-l", dest="write_longest", help="If a file is provided, the program will extract CDS sequences from the longest transcript for each gene and write them to the file and exit. Both -c and -l can be specified.", default=False);
     parser.add_argument("-x", dest="extract_seq", help="Extract sites of a certain degeneracy. For instance, to extract 4-fold degenerate sites enter '4'. To extract 2- and 4-fold degenerate sites enter '24' and so on.", default=False);
     #parser.add_argument("-p", dest="num_procs", help="The total number of processes that degenotate can use. Default: 1.", type=int, default=1);
     # User params
@@ -194,13 +195,23 @@ def optParse(globs):
 
     ####################
 
+    if args.write_longest:
+        globs['write-longest'] = os.path.abspath(args.write_longest);
+        if os.path.isfile(globs['write-longest']):
+            if not globs['gxf-file']:
+                CORE.errorOut("OP9", "Extracting CDS sequences from longest transcripts can only be done with an annotation file (-a) and a genome file (-g).", globs);    
+            if not globs['overwrite']:
+                CORE.errorOut("OP10", "File specified with -l to write CDS sequences from longest transcripts to already exists and --overwrite was not set. Please move the current file or specify to --overwrite it.", globs);    
+
+    ####################
+
     if not args.out_dest:
         globs['outdir'] = "degenotate-out-" + globs['startdatetime'];
     else:
         globs['outdir'] = args.out_dest;
 
     if not globs['overwrite'] and os.path.exists(globs['outdir']):
-        CORE.errorOut("OP10", "Output directory already exists: " + globs['outdir'] + ". Specify new directory name OR set --overwrite to overwrite all files in that directory.", globs);
+        CORE.errorOut("OP11", "Output directory already exists: " + globs['outdir'] + ". Specify new directory name OR set --overwrite to overwrite all files in that directory.", globs);
 
     if not os.path.isdir(globs['outdir']) and not globs['norun'] and not globs['info']:
         os.makedirs(globs['outdir']);
@@ -214,7 +225,6 @@ def optParse(globs):
      
     globs['out-transcript'] = os.path.join(globs['outdir'], globs['out-transcript']);
     # Main bed file with degeneracy for all sites
-
 
     ####################
 
@@ -307,8 +317,11 @@ def startProg(globs):
         CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# VCF file:", pad) + globs['vcf-file']);
 
     CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Output directory:", pad) + globs['outdir']);
-    if globs['write-cds']:
-        CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# CDS sequence output:", pad) + globs['write-cds']);
+    if globs['write-cds'] or globs['write-longest']:
+        if globs['write-cds']:
+            CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# CDS sequence output:", pad) + globs['write-cds']);
+        if globs['write-longest']:
+            CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Longest transcript output:", pad) + globs['write-longest']);
     else:
         CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Per-site degeneracy output:", pad) + globs['outbed']);
         CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Transcript count output:", pad) + globs['out-transcript']);
@@ -332,11 +345,17 @@ def startProg(globs):
     #             "degenotate will use this many processes.");
     # Reporting the resource options
 
-    if globs['write-cds']:
-        CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# -c", pad) +
-                    CORE.spacedOut("True", opt_pad) +
-                    "CDS sequences will be extracted from the provided genome and the program will exit.");           
-    # Report whether the -c option is set to exit immediately after writing CDS sequences
+    if globs['write-cds'] or globs['write-longest']:
+        if globs['write-cds']:
+            CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# -c", pad) +
+                        CORE.spacedOut("True", opt_pad) +
+                        "CDS sequences will be extracted from the provided genome and the program will exit.");   
+
+        if globs['write-longest']:
+            CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# -l", pad) +
+                        CORE.spacedOut("True", opt_pad) +
+                        "CDS sequences from longest trancsripts will be extracted from the provided genome and the program will exit.");          
+    # Report whether the -c or -l option is set to exit immediately after writing CDS sequences
 
     else:
         if globs['vcf-file']:
