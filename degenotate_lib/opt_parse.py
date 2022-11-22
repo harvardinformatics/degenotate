@@ -278,7 +278,7 @@ def startProg(globs):
     CORE.printWrite(globs['logfilename'], globs['log-v'], "# Version " + globs['version'] + " released on " + globs['releasedate']);
     CORE.printWrite(globs['logfilename'], globs['log-v'], "# degenotate was developed by " + globs['authors']);
     #CORE.printWrite(globs['logfilename'], globs['log-v'], "# Citation:      " + globs['doi']);
-    #CORE.printWrite(globs['logfilename'], globs['log-v'], "# Website:       " + globs['http']);
+    CORE.printWrite(globs['logfilename'], globs['log-v'], "# Website:       " + globs['http']);
     #CORE.printWrite(globs['logfilename'], globs['log-v'], "# Report issues: " + globs['github']);
     CORE.printWrite(globs['logfilename'], globs['log-v'], "#");
     CORE.printWrite(globs['logfilename'], globs['log-v'], "# The date and time at the start is: " + CORE.getDateTime());
