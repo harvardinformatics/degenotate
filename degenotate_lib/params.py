@@ -7,6 +7,7 @@
 #############################################################################
 
 import sys
+import os
 import timeit
 import degenotate_lib.core as PC
 
@@ -70,12 +71,17 @@ def init():
         'outmk'  : 'mk.tsv',
         'outseq' : False,
         'write-cds' : False,
+        'write-cds-aa' : False,
         'write-longest' : False,
+        'write-longest-aa' : False,
         'run-name' : 'degenotate',
         'logfilename' : 'degenotate.errlog',
         'logdir' : '',
         'overwrite' : False,
         # I/O options
+
+        'genetic-code-file' : os.path.join(os.path.dirname(__file__), "codon-table.csv"),
+        # The file with the genetic code
 
         'shortest-paths' : False,
         # Dependency functions

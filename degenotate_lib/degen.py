@@ -13,6 +13,19 @@ import degenotate_lib.core as CORE
 
 #############################################################################
 
+def readCodonTable(genetic_code_file):
+    DEGEN_DICT = {}
+    CODON_DICT = {}
+    with open(os.path.join(os.path.dirname(__file__), "codon-table.csv"), "r") as dd:
+        reader = csv.reader(dd)
+        for row in reader:
+            DEGEN_DICT[row[0]] = row[2];
+            CODON_DICT[row[0]] = row[1];
+
+    return DEGEN_DICT, CODON_DICT;
+
+#############################################################################
+
 def readDegen(globs):
 # Read a codon table file into a degeneracy dict and a codon dict
 # Assumes a plain text, comma-separated file with two columns
@@ -39,13 +52,8 @@ def readDegen(globs):
     # Error out if not found
     # This is done here so there are no dependencies if the user doesn't want to generate the MK tables
 
-    DEGEN_DICT = {}
-    CODON_DICT = {}
-    with open(os.path.join(os.path.dirname(__file__), "codon-table.csv"), "r") as dd:
-        reader = csv.reader(dd)
-        for row in reader:
-            DEGEN_DICT[row[0]] = row[2];
-            CODON_DICT[row[0]] = row[1];
+    DEGEN_DICT, CODON_DICT = readCodonTable(globs['genetic-code-file']);
+    # Read the codon table
 
     if "ns" in globs['codon-methods']:
         # compute codon graph
@@ -138,7 +146,6 @@ def codonHamming(codon1,codon2):
 
 def processCodons(globs):
 # take CDS sequence and split into list of codons, computing degeneracy, ns, or both
-# might need a clearer name?
 
     DEGEN_DICT, CODON_DICT, CODON_GRAPH, globs = readDegen(globs)
     #MKTable = namedtuple("MKTable", "pn ps dn ds")
@@ -163,14 +170,21 @@ def processCodons(globs):
         # Open the sequence file if necessary
 
         if "ns" in globs['codon-methods']:
+            try:
+                from scipy.stats import fisher_exact
+            except:
+                CORE.errorOut("DEGEN2", "Missing scipy dependency. Please install and try again: https://anaconda.org/conda-forge/scipy", globs);
+            # For the MK test, check if scipy is available and error out if not     
+
             mk_stream = OUT.initializeMKFile(globs['outmk']);
-        # Open the MK file if necessary
+            # Open the MK file
+        # Prep for MK tables and tests if specified
 
         counter = 0;
         for transcript in globs['cds-seqs']:
 
             transcript_output = { 'bed' : [], 
-                                  'mk' : { 'pn' : 0, 'ps' : 0, 'dn' : 0, 'ds' : 0 },
+                                  'mk' : { 'pn' : 0, 'ps' : 0, 'dn' : 0, 'ds' : 0, 'mk.pval' : 'NA', 'mk.odds.ni' : 'NA', 'dos' : 'NA' },
                                   'summary' : { 0 : 0, 2 : 0, 3 : 0, 4 : 0 },
                                   'seq' : "" };
             # The output lines for each transcript
@@ -192,7 +206,7 @@ def processCodons(globs):
                     CORE.printWrite(globs['logfilename'], 3, "# WARNING: transcript " + transcript + " has an unknown frame....skipping");
                     globs['warnings'] += 1;                    
                     continue;
-            # Get the frame when input is a when input is a gxf+genome
+            # Get the frame when input is a gxf+genome
             else:
                 frame = getFrame(globs['cds-seqs'][transcript]);
                 if frame != 0:
@@ -411,6 +425,14 @@ def processCodons(globs):
                 OUT.writeSeq(transcript_output['header'], transcript_output['seq'], seq_stream);
 
             if "ns" in globs['codon-methods']:
+                transcript_output['mk']['mk.odds.ni'], transcript_output['mk']['mk.pval'] = fisher_exact([[transcript_output['mk']['pn'], transcript_output['mk']['ps']], [transcript_output['mk']['dn'], transcript_output['mk']['ds']]]);
+                # Do the MK test and save the pvalue and odds ratio (as the neutrality index)
+
+                dos_d = transcript_output['mk']['dn'] / (transcript_output['mk']['dn'] + transcript_output['mk']['ds']);
+                dos_p = transcript_output['mk']['pn'] / (transcript_output['mk']['pn'] + transcript_output['mk']['ps']);
+                transcript_output['mk']['dos'] = dos_d - dos_p;
+                # Calculate the direction of selection (https://doi.org/10.1093/molbev/msq249)
+
                 OUT.writeMK(transcript, transcript_output['mk'], mk_stream);
             # Write the MK table for this transcript
 

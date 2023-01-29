@@ -36,8 +36,10 @@ def optParse(globs):
     # Output
 
     parser.add_argument("-d", dest="seq_delim", help="degenotate assumes the chromosome IDs in the GFF file exactly match the sequence headers in the FASTA file. If this is not the case, use this to specify a character at which the FASTA headers will be trimmed.", default=False);
-    parser.add_argument("-c", dest="write_cds", help="If a file is provided, the program will extract CDS sequences from the genome and write them to the file and exit. Equivalent to '-x 0234' except this stops the program before calculating degeneracy.", default=False);
-    parser.add_argument("-l", dest="write_longest", help="If a file is provided, the program will extract CDS sequences from the longest transcript for each gene and write them to the file and exit. Both -c and -l can be specified.", default=False);
+    parser.add_argument("-c", dest="write_cds", help="If a file is provided, the program will extract CDS sequences from the genome and write them to the file and exit. If no file is given with the option, a file with the name of 'cds-nt.fa' will be written to the output directory. Equivalent to '-x 0234' except this stops the program before calculating degeneracy.", nargs='?', const="default", default=False);
+    parser.add_argument("-ca", dest="write_cds_aa", help="The same as -c, but writes translated amino acid sequences instead. Both -c and -ca can be specified. Default file name is 'cds-aa.fa'.", nargs='?', const="default", default=False);
+    parser.add_argument("-l", dest="write_longest", help="If a file is provided, the program will extract CDS sequences from the longest transcript for each gene and write them to the file and exit. If no file is given with the option, a file with the name of 'cds-nt-longest.fa' will be written to the output directory. Both -c and -l can be specified.", nargs='?', const="default", default=False);
+    parser.add_argument("-la", dest="write_longest_aa", help="The same as -l, but writes translated amino acid sequences instead. Both -l and -la can be specified. Default file name is 'cds-aa-longest.fa'.", nargs='?', const="default", default=False);
     parser.add_argument("-x", dest="extract_seq", help="Extract sites of a certain degeneracy. For instance, to extract 4-fold degenerate sites enter '4'. To extract 2- and 4-fold degenerate sites enter '24' and so on.", default=False);
     #parser.add_argument("-p", dest="num_procs", help="The total number of processes that degenotate can use. Default: 1.", type=int, default=1);
     # User params
@@ -185,33 +187,13 @@ def optParse(globs):
 
     ####################
 
-    if args.write_cds:
-        globs['write-cds'] = os.path.abspath(args.write_cds);
-        if os.path.isfile(globs['write-cds']):
-            if not globs['gxf-file']:
-                CORE.errorOut("OP8", "Extracting CDS sequences can only be done with an annotation file (-a) and a genome file (-g).", globs);    
-            if not globs['overwrite']:
-                CORE.errorOut("OP9", "File specified with -c to write CDS to already exists and --overwrite was not set. Please move the current file or specify to --overwrite it.", globs);    
-
-    ####################
-
-    if args.write_longest:
-        globs['write-longest'] = os.path.abspath(args.write_longest);
-        if os.path.isfile(globs['write-longest']):
-            if not globs['gxf-file']:
-                CORE.errorOut("OP9", "Extracting CDS sequences from longest transcripts can only be done with an annotation file (-a) and a genome file (-g).", globs);    
-            if not globs['overwrite']:
-                CORE.errorOut("OP10", "File specified with -l to write CDS sequences from longest transcripts to already exists and --overwrite was not set. Please move the current file or specify to --overwrite it.", globs);    
-
-    ####################
-
     if not args.out_dest:
         globs['outdir'] = "degenotate-out-" + globs['startdatetime'];
     else:
         globs['outdir'] = args.out_dest;
 
     if not globs['overwrite'] and os.path.exists(globs['outdir']):
-        CORE.errorOut("OP11", "Output directory already exists: " + globs['outdir'] + ". Specify new directory name OR set --overwrite to overwrite all files in that directory.", globs);
+        CORE.errorOut("OP8", "Output directory already exists: " + globs['outdir'] + ". Specify new directory name OR set --overwrite to overwrite all files in that directory.", globs);
 
     if not os.path.isdir(globs['outdir']) and not globs['norun'] and not globs['info']:
         os.makedirs(globs['outdir']);
@@ -225,6 +207,51 @@ def optParse(globs):
      
     globs['out-transcript'] = os.path.join(globs['outdir'], globs['out-transcript']);
     # Main bed file with degeneracy for all sites
+
+    ####################
+
+    if args.write_cds:
+        if args.write_cds == "default":
+            globs['write-cds'] = os.path.join(globs['outdir'], "cds-nt.fa");
+        else:
+            globs['write-cds'] = os.path.abspath(args.write_cds);
+        if os.path.isfile(globs['write-cds']) and not globs['overwrite']:
+            CORE.errorOut("OP9", "File specified with -c to write CDS to already exists and --overwrite was not set. Please move the current file or specify to --overwrite it.", globs);    
+
+    ####################
+
+    if args.write_cds_aa:
+        if args.write_cds_aa == "default":
+            globs['write-cds-aa'] = os.path.join(globs['outdir'], "cds-aa.fa");
+        else:
+            globs['write-cds-aa'] = os.path.abspath(args.write_cds_aa);
+        if os.path.isfile(globs['write-cds-aa']) and not globs['overwrite']:
+            CORE.errorOut("OP10", "File specified with -ca to write CDS peptides to already exists and --overwrite was not set. Please move the current file or specify to --overwrite it.", globs);    
+
+    ####################
+
+    if args.write_longest:
+        if args.write_longest == "default":
+            globs['write-longest'] = os.path.join(globs['outdir'], "cds-nt-longest.fa");
+        else:
+            globs['write-longest'] = os.path.abspath(args.write_longest);
+        if os.path.isfile(globs['write-longest']) and not globs['overwrite']:  
+            CORE.errorOut("OP11", "File specified with -l to write CDS sequences from longest transcripts to already exists and --overwrite was not set. Please move the current file or specify to --overwrite it.", globs);    
+
+    ####################
+
+    if args.write_longest_aa:
+        if args.write_longest_aa == "default":
+            globs['write-longest-aa'] = os.path.join(globs['outdir'], "cds-aa-longest.fa");
+        else:
+            globs['write-longest-aa'] = os.path.abspath(args.write_longest_aa);
+        if os.path.isfile(globs['write-longest-aa']) and not globs['overwrite']:  
+            CORE.errorOut("OP12", "File specified with -la to write CDS peptides from longest transcripts to already exists and --overwrite was not set. Please move the current file or specify to --overwrite it.", globs);    
+
+    ####################
+
+    if any((args.write_cds, args.write_cds_aa, args.write_longest, args.write_longest_aa)) and not globs['gxf-file']:
+        CORE.errorOut("OP13", "Extracting CDS sequences with -c, -ca, -l, or -la can only be done with an annotation file (-a) and a genome file (-g).", globs); 
 
     ####################
 
@@ -301,7 +328,7 @@ def startProg(globs):
 
     #######################
 
-    pad = 30;
+    pad = 40;
     opt_pad = 30;
     CORE.printWrite(globs['logfilename'], globs['log-v'], "# " + "-" * 125);
     CORE.printWrite(globs['logfilename'], globs['log-v'], "# INPUT/OUTPUT INFO:");
@@ -317,11 +344,14 @@ def startProg(globs):
         CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# VCF file:", pad) + globs['vcf-file']);
 
     CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Output directory:", pad) + globs['outdir']);
-    if globs['write-cds'] or globs['write-longest']:
-        if globs['write-cds']:
-            CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# CDS sequence output:", pad) + globs['write-cds']);
-        if globs['write-longest']:
-            CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Longest transcript output:", pad) + globs['write-longest']);
+    if globs['write-cds']:
+        CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# CDS dna output:", pad) + globs['write-cds']);
+    if globs['write-cds-aa']:
+        CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# CDS protein output:", pad) + globs['write-cds-aa']);
+    if globs['write-longest']:
+        CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Longest transcript dna output:", pad) + globs['write-longest']);
+    if globs['write-longest-aa']:
+        CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Longest transcript protein output:", pad) + globs['write-longest-aa']);
     else:
         CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Per-site degeneracy output:", pad) + globs['outbed']);
         CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Transcript count output:", pad) + globs['out-transcript']);
