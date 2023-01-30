@@ -87,7 +87,7 @@ def readFeatures(globs, file_reader, line_reader, feature_list, id_format, paren
                                                         0 : 0, 2 : 0, 3 : 0, 4 : 0 };
                     # Add the ID and related info to the annotation dict. This includes an empty dict for exons to be stored in a similar way
                     # The last 4 entries are counts for number of sites with each degeneracy to summarize transcripts
-                    
+
                     try: 
                         globs['genekey'][parent_id].append(feature_id);
                     except KeyError:
@@ -128,8 +128,7 @@ def getLongest(globs):
 # If there are multiple transcripts with the same CDS and mRNA length take the first alphabetically
 
     for gene_feature in globs['genekey']:
-        #longest_transcript = globs['genekey'][gene_feature][0];
-        longest_transcript = "";
+        longest_transcript = globs['genekey'][gene_feature][0];
         longest_cds = 0;
         longest_mrna = 0;
         for transcript_feature in sorted(globs['genekey'][gene_feature]):
