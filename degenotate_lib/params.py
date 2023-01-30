@@ -26,8 +26,8 @@ class StrictDict(dict):
 
 def init():
     globs_init = {
-        'version' : '1.1.0',
-        'releasedate' : "November 2022",
+        'version' : '1.1.1',
+        'releasedate' : "January 2023",
         'authors' : "Timothy Sackton, Gregg Thomas",
         'doi' : '',
         'http' : 'https://github.com/harvardinformatics/degenotate',
@@ -103,6 +103,7 @@ def init():
 
         'annotation' : {},
         'genekey' : {},
+        '0-len-transcripts' : [],
         # Annotation information
 
         'num-procs' : 1,

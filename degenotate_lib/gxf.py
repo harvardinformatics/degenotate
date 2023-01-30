@@ -61,7 +61,9 @@ def readFeatures(globs, file_reader, line_reader, feature_list, id_format, paren
                 parent_id = parent_id[0].replace(parent_id_format, "").replace("\"", "");
                 # Unpack and parse the gene ID
 
-                if feature_list[0] == "transcript":
+                feature_len = end - start;
+
+                if feature_list[0] == "transcript":                  
 
                     feature_id = [ info_field for info_field in feature_info if info_field.startswith(id_format) ];
                     # Get the feature ID as a list of fields with the "ID=" prefix
@@ -72,11 +74,20 @@ def readFeatures(globs, file_reader, line_reader, feature_list, id_format, paren
                     feature_id = feature_id[0].replace(id_format, "").replace("\"", "");
                     # Unpack and parse the ID
 
-                    globs['annotation'][feature_id] = { 'header' : seq_header, 'start' : start, 'end' : end, 'len' : end-start, 'longest' : "no", 'cdslen': 0, 'strand' : strand, 
+                    if feature_len < 1:
+                        CORE.printWrite(globs['logfilename'], 3, "# WARNING: transcript " + feature_id + " has a length of 0 and will be excluded from all calculations");
+                        globs['0-len-transcripts'].append(feature_id);
+                        globs['warnings'] += 1;                    
+                        continue;
+                    # If the transcript has 0 length for some reason, downstream stuff will be messed up and it should be excluded anyway, so we throw a warning about it
+                    # and skip adding it to the annotation dict
+
+                    globs['annotation'][feature_id] = { 'header' : seq_header, 'start' : start, 'end' : end, 'len' : feature_len, 'longest' : "no", 'cdslen': 0, 'strand' : strand, 
                                                         'exons' : {}, "gene-id" : parent_id, 'start-frame' : None, 'coding-start' : None,
                                                         0 : 0, 2 : 0, 3 : 0, 4 : 0 };
                     # Add the ID and related info to the annotation dict. This includes an empty dict for exons to be stored in a similar way
                     # The last 4 entries are counts for number of sites with each degeneracy to summarize transcripts
+
                     try: 
                         globs['genekey'][parent_id].append(feature_id);
                     except KeyError:
@@ -84,6 +95,11 @@ def readFeatures(globs, file_reader, line_reader, feature_list, id_format, paren
                     # Make a dict of that includes all the transcript ids associated with a geneid
 
                 elif feature_list[0] == "CDS":
+                    
+                    if parent_id in globs['0-len-transcripts']:
+                        continue;
+                    # Skip exons that have a 0 length transcript as a parent (and are likely 0 length themselves)
+
                     try: 
                         num_exons = len(globs['annotation'][parent_id]['exons']);
                     except KeyError:
@@ -107,13 +123,12 @@ def readFeatures(globs, file_reader, line_reader, feature_list, id_format, paren
 #############################################################################
 
 def getLongest(globs):
-
-    # Get the longest transcript for each gene. 
-    # First look at CDS length; if there are multiple transcript with same CDS length look at mRNA length;
-    # If there are multiple transcripts with the same CDS and mRNA length take the first alphabetically
+# Get the longest transcript for each gene. 
+# First look at CDS length; if there are multiple transcript with same CDS length look at mRNA length;
+# If there are multiple transcripts with the same CDS and mRNA length take the first alphabetically
 
     for gene_feature in globs['genekey']:
-        longest_transcript = "";
+        longest_transcript = globs['genekey'][gene_feature][0];
         longest_cds = 0;
         longest_mrna = 0;
         for transcript_feature in sorted(globs['genekey'][gene_feature]):
@@ -129,6 +144,7 @@ def getLongest(globs):
                 longest_transcript = transcript_feature;
             else:
                 continue;
+
         globs['annotation'][longest_transcript]['longest'] = "yes";
     
     return globs
