@@ -9,6 +9,23 @@ import degenotate_lib.core as CORE
 import degenotate_lib.output as OUT
 from itertools import groupby
 
+#############################################################################
+
+def bioTranslator(seq, code):
+# A function to translate a codon sequence to amino acids
+
+    assert len(seq) % 3 == 0, "\nOUT OF FRAME NUCLEOTIDE SEQUENCE! " + str(len(seq));
+    # Check that sequence is in frame.
+
+    codon_seq = [(seq[i:i+3]) for i in range(0, len(seq), 3)];
+    # Get chunks of 3 characters into a list.
+
+    aa_seq = [ code[codon] for codon in codon_seq];
+    # Build the aa sequence by looking up each codon in the provided code dict
+
+    return "".join(aa_seq);
+    # Return the amino acid sequence as a string
+
 ############################################################################# 
 
 def readFasta(filename, seq_compression, seq_delim):
@@ -77,6 +94,7 @@ def readGenome(globs):
     # Read the input sequence file
 
     #print(list(globs['genome-seqs'].keys()))
+    ## NOTE: reading by index actually doesn't seem feasible because gzipped files must be decompressed each time seek() is called
 
     return globs;
 
@@ -217,38 +235,75 @@ def extractCDS(globs):
     step_start_time = CORE.report_step(globs, step, step_start_time, "Success: " + str(len(globs['cds-seqs'])) + " CDS read");
     # Status update
 
-    ##########
-    if globs['write-cds']:
+    ####################
+
+    if globs['write-cds'] or globs['write-cds-aa'] or globs['write-longest'] or globs['write-longest-aa']:
         step = "Writing CDS sequences";
         step_start_time = CORE.report_step(globs, step, False, "In progress...");
         written = 0;
 
-        seq_stream = open(globs['write-cds'], "w");
-        for header in globs['cds-seqs']:
-            OUT.writeSeq(">" + header, globs['cds-seqs'][header], seq_stream);
+        if globs['write-cds-aa'] or globs['write-longest-aa']:
+            from degenotate_lib.degen import readCodonTable
+            degen_table, codon_table = readCodonTable(globs['genetic-code-file']);
+        # Read the genetic code to translate sequences if -ca or -la is specified
+
+        if globs['write-cds']:
+            nt_stream = open(globs['write-cds'], "w");
+        if globs['write-cds-aa']:
+            aa_stream = open(globs['write-cds-aa'], "w");
+        if globs['write-longest']:
+            nt_long_stream = open(globs['write-longest'], "w");
+        if globs['write-longest-aa']:
+            aa_long_stream = open(globs['write-longest-aa'], "w");
+        # Open the files to be written
+
+        for transcript in globs['cds-seqs']:
+            extra_leading_nt = globs['annotation'][transcript]['start-frame'];
+            if extra_leading_nt is None:
+                CORE.printWrite(globs['logfilename'], 3, "# WARNING: transcript " + transcript + " has an unknown frame....skipping");
+                globs['warnings'] += 1;                    
+                continue;
+            # Get the frame of the current transcript and print a warning if it is unknown
+
+            seq = globs['cds-seqs'][transcript][extra_leading_nt:];
+            extra_trailing_nt = len(seq) % 3;
+            if extra_trailing_nt > 0:
+                seq = seq[:-extra_trailing_nt];
+            # Adjust the sequence based on the frame and being divisible by 3
+
+            if globs['write-cds-aa'] or globs['write-longest-aa']:
+                aa_seq = bioTranslator(seq, codon_table);
+            # If an amino acid output has been specified, translate the sequence here
+
+            if globs['write-cds']:
+                OUT.writeSeq(">" + transcript, seq, nt_stream);
+            if globs['write-cds-aa']: 
+                OUT.writeSeq(">" + transcript, aa_seq, aa_stream);
+            # Write the nucleotide sequence
+
+            if globs['annotation'][transcript]['longest'] == "yes":
+                if globs['write-longest']:
+                    OUT.writeSeq(">" + transcript, seq, nt_long_stream);
+                if globs['write-longest-aa']:
+                    OUT.writeSeq(">" + transcript, aa_seq, aa_long_stream);
+            # Write the sequence if it is the longest isoform
+
             written += 1;
-        seq_stream.close();
+        ## End sequence writing loop
+
+        if globs['write-cds']:
+            nt_stream.close();
+        if globs['write-cds-aa']:
+            aa_stream.close();
+        if globs['write-longest']:
+            nt_long_stream.close();
+        if globs['write-longest-aa']:
+            aa_long_stream.close();
+        # Close all open files
 
         step_start_time = CORE.report_step(globs, step, step_start_time, "Success: " + str(written) + " sequences written");
-    # Writes full extracted CDS seqs to a provided file with option -c
-    ##########
-
-    ##########
-    if globs['write-longest']:
-        step = "Writing longest transcripts";
-        step_start_time = CORE.report_step(globs, step, False, "In progress...");
-        written = 0;
-
-        seq_stream = open(globs['write-longest'], "w");
-        for header in globs['cds-seqs']:
-            if globs['annotation'][header]['longest'] == "yes":
-                OUT.writeSeq(">" + header, globs['cds-seqs'][header], seq_stream);
-                written += 1;
-        seq_stream.close();
-
-        step_start_time = CORE.report_step(globs, step, step_start_time, "Success: " + str(written) + " sequences written");
-    # Writes full extracted CDS from longest transcripts to a provided file with option -l
-    ##########
+    # Writes extracted CDS seqs to a provided file with options -c, -ca, -l, -la
+    ####################
 
     return globs;
 

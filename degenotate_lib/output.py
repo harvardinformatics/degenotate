@@ -114,7 +114,7 @@ def initializeMKFile(mkfilename):
 # Opens the MK output file and writes the headers
 
     mkfile = open(mkfilename, "w");
-    cols = ['transcript', 'pN', 'pS', 'dN', 'dS'];
+    cols = ['transcript', 'pN', 'pS', 'dN', 'dS', 'mk.raw.p.value', 'mk.odds.ni', 'dos'];
     mkfile.write("\t".join(cols) + "\n");
     return mkfile;
 
@@ -123,7 +123,7 @@ def initializeMKFile(mkfilename):
 def writeMK(transcript, outdict, mk_stream):
 # A function to write out MK tables for each transcript
 
-    outline = [ transcript, str(outdict['pn']), str(outdict['ps']), str(outdict['dn']), str(outdict['ds']) ]
+    outline = [ transcript, str(outdict['pn']), str(outdict['ps']), str(outdict['dn']), str(outdict['ds']), str(outdict['mk.pval']), str(outdict['mk.odds.ni']), str(outdict['dos']) ];
     mk_stream.write("\t".join(outline) + "\n");
         
 #############################################################################
