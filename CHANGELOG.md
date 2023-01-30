@@ -1,3 +1,7 @@
+2023.01.30
+- We now skip transcripts with 0 length in the input annotation and print warnings about them in the log file
+- Updated `environment.yml` to include the [scipy](https://anaconda.org/conda-forge/scipy) dependency
+
 2023.01.26
 - Fixed bug when reading feature info from a gxf file and the field splitter remained on the last entry, causing no exons to be read
 - Added scipy dependency for Fisher's test

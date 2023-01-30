@@ -28,19 +28,19 @@
     - [MK site counts (tab delimited)](#mk-site-counts-tab-delimited)
 - [Options](#options)
 
-## About
+# About
 
 degenotate takes as input either a genome FASTA file and a corresponding annotation file (GFF or GTF) OR file or directory of files that contain coding sequences in FASTA format and outputs a bed-like file that contains the degeneracy score (0-, 2-, 3-, or 4-fold) of every coding site.
 
-If given a corresponding VCF file with specified outgroup samples, degenotate can also count synonymous and non-synonymous polymorphisms and fixed differences for use in [MK tests](https://en.wikipedia.org/wiki/McDonald%E2%80%93Kreitman_test).
+If given a corresponding VCF file with specified outgroup samples, degenotate can also count synonymous and non-synonymous polymorphisms and fixed differences for use in [MK tests](https://en.wikipedia.org/wiki/McDonald%E2%80%93Kreitman_test) ([McDonald and Kreitman 1991](https://doi.org/10.1038/351652a0)).
 
 The program also offers coding sequence extraction from the input genome and extraction of sequences by degeneracy (e.g. extract only the 4-fold degenerate sites).
 
 **Warning: This is an early release. While we have done extensive testing, we are not certain our tests have hit all possible edge cases, especially those involving partial transcripts. We welcome bug reports and feature suggestions and are actively working to do more validation and testing.**
 
-## Installation
+# Installation
 
-### Installing from bioconda
+## Installing from bioconda
 
 We recommend installing degenotate from [bioconda](https://bioconda.github.io/recipes/degenotate/README.html) with the package manager [`conda`](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html) or [`mamba`](https://mamba.readthedocs.io/en/latest/installation.html):
 
@@ -50,7 +50,7 @@ conda install degenotate
 
 After this, you can run the program as `degenotate.py`. All dependencies should be automatically installed along with degenotate.
 
-### Installing from source
+## Installing from source
 
 Alternatively, since degenotate is purely Python and does not need compilation, one could simply download the program by cloning this repo and run it as `python degenotate.py`. In this case, you may want to add the degenotate folder to your $PATH variable for ease of use.
 
@@ -58,12 +58,13 @@ degenotate is a standalone program for its core function of annotating degenerac
 
 **The main dependency is Python 3+**
 
-The VCF functionality (`-v`) specifically requires **Python version 3.10+** for the `itertools.pairwise()` function, as well as a couple of external packages.
+The VCF functionality (`-v`) specifically requires **Python version 3.10+** for the `itertools.pairwise()` function, as well as a some external libraries:
 
 1. [pysam](https://pysam.readthedocs.io/en/latest/api.html) is used for efficent reading of VCF files for MK test site counts. pysam can be easily [installed with conda](https://anaconda.org/bioconda/pysam), but if you don't use the VCF options the program should run fine without it.
 2. [NetworkX](https://networkx.org/) is used to easily trace the effect of mutations on different codons. NetworkX can also be [installed with conda](https://anaconda.org/conda-forge/networkx). Again if you don't use the VCF options the program should run without it.
+3. [scipy](https://scipy.org/)'s implementation of Fisher's exact test is used to do the MK test. scipy can also be [installed with conda](https://anaconda.org/conda-forge/scipy). Again if you don't use the VCF options the program should run without it.
 
-We facilitate the installation of these dependencies by providing a pre-made conda environment, `environment.yml`. To create this environment, run:
+These dependencies are all installed automatically when degenotate is installed from bioconda. But if you need to clone this repo to install degenotate, we facilitate the installation of these dependencies by providing a pre-made conda environment, `environment.yml`. To create this environment, run:
 
 ```bash
 conda env create -f environment.yml
@@ -77,34 +78,47 @@ conda activate degenotate
 
 to activate the environment.
 
-## Usage
+# Usage
 
-1. Annotate degeneracy of coding sites from a genome:
+### 1. Annotate degeneracy of coding sites from a genome in FASTA format and its annotation (gtf or gff):
 
-```bash
+```
 python degenotate.py -a [annotation file] -g [genome fasta file] -o [output directory]
 ```
 
-2. Annotate degeneracy of coding sites from a directory of individual coding sequences in FASTA format:
+### 2. Annotate degeneracy of coding sites from a directory of individual coding sequences in FASTA format:
 
-```bash
+```
 python degenotate.py -s [directory containing fasta files] -o [output directory]
 ```
 
-3. Annotate degeneracy of coding sites from a genome and output synonymous and non-synonomous polymorphisms and fixed differences for MK tests:
+### 3. Annotate degeneracy of coding sites from a genome and perform the MK test on every coding transcript:
 
 ```
-python degenotate.py -a [annotation file] -g [genome fasta file] -v [vcf file] -u [file containin outgroup samples] -o [output directory]
+python degenotate.py -a [annotation file] -g [genome fasta file] -v [vcf file] -u [sample ID(s) of outgroup in VCF file] -o [output directory]
 ```
 
-4. Extract coding sequences from genome:
+### 4. Extract all coding sequences from the genome as nucleotides:
 
 ```
-python degenotate.py -a [annotation file] -g [genome fasta file] -c [output file for CDS sequences]
+python degenotate.py -a [annotation file] -g [genome fasta file] -c [output file for CDS sequences] -o [output directory]
 ```
-## Output 
 
-### How degenotate classifies degeneracy
+### 5. Extract coding sequences from the longest transcript of each gene as nucleotides and amino acids:
+
+```
+python degenotate.py -a [annotation file] -g [genome fasta file] -l [output file for CDS sequences] -la [output file for amino acid sequences] -o [output directory]
+```
+
+### 6. Extract 4-fold degenerate sites from all coding sequences:
+
+```
+python degenotate.py -a [annotation file] -g [genome fasta file] -x 4 -o [output directory]
+```
+
+# Output 
+
+## How degenotate classifies degeneracy
 
 | Fold | Description |
 | ---- | ----------- |
@@ -113,7 +127,7 @@ python degenotate.py -a [annotation file] -g [genome fasta file] -c [output file
 | 3    | three nucleotides at the position code for the same AA, so 2 of the three possible mutations will be synonymous and 1 will be non-synonymous |
 | 4    | four nucleotides at the position code for the same AA, so all 3 possible mutations are synonymous |
 
-### Degeneracy per site (bed file)
+## Degeneracy per site (bed file)
 
 Default name: `[output directory]/degeneracy-all-sites.bed`
 
@@ -123,7 +137,7 @@ This is the main output file for degenotate. It contains one line for every codi
 | -------- | --------- | ------- | ------------- | --------------- | -------------------- | -------------------- | ---------------- |
 | The assembly scaffold or chromosome | The start position of the site | The end position of the site | The transcript ID | [See above](#how-degenotate-classifies-degeneracy) | The nucleotide at this site as read from the genome | The amino acid translated from the codon in that this site is in in the current transcript | [See below](#mutation-summary-column) |
 
-#### Mutation summary column
+### Mutation summary column
 
 For non-degenerate sites (not 0-fold), the last column of the bed file contains information about how each mutation to non-degenerate nucleotides changes the amino acid. For example, if the final 4 columns of the bed file are:
 
@@ -139,7 +153,7 @@ This indicates that this site has 2-fold degeneracy, the nucleotide is A, and th
 
 For 3-fold sites, this would only have one `[nucleotide]:[amino acid]` entry and for 0-fold it would have three, each separated by a semi-colon.
 
-### Transcript site counts (tab delimited)
+## Transcript site counts (tab delimited)
 
 Default name: `[output directory]/transcript-counts.tsv`
 
@@ -149,17 +163,17 @@ In addition to the information for every coding site, degenotate also outputs su
 | ---------- | ---- | ----------------- | ------ | ------ | ------ | ------ |------ | ------ |
 | Transcript ID | Gene ID | Length of coding sequence | Length of transcript | Indicator of longest transcript per gene | Count of 0-fold degenerate sites | Count of 2-fold degenerate sites | Count of 3-fold degenerate sites | Count of 4-fold degenerate sites | 
 
-### MK site counts (tab delimited)
+## MK site counts and tests (tab delimited)
 
 Default name: `[output directory]/mk.tsv`
 
-When provided with a multi-sample VCF file and outgroup samples, degenotate counts polymorphic and fixed differences for MK tests. The output counts are put in a file with the following columns:
+When provided with a multi-sample VCF file that includes outgroup samples, degenotate counts polymorphic and fixed differences and performs the [MK test](https://en.wikipedia.org/wiki/McDonald%E2%80%93Kreitman_test)  ([McDonald and Kreitman 1991](https://doi.org/10.1038/351652a0)) as well as calculating the direction of selection ([Stoletzki and Eyre-Walker 2010](https://doi.org/10.1093/molbev/msq249)). The output counts and calculations  are put in a file with the following columns:
 
-| transcript | pN | pS | dN | dS | 
-| ---------- | -- | -- | -- | -- | 
-| Transcript ID | Count of polymorphic non-synonymous sites | Count of polymorphic synonymous sites | Count of fixed non-synonymous sites | Count of fixed synonymous sites | 
+| transcript | pN | pS | dN | dS | mk.raw.p.value | mk.odds.ni | dos |
+| ---------- | -- | -- | -- | -- | -------------- | ---------- | --- |
+| Transcript ID | Count of polymorphic non-synonymous sites | Count of polymorphic synonymous sites | Count of fixed non-synonymous sites | Count of fixed synonymous sites | The raw p-value from the MK test | The odds-ratio from the MK test, which is equivalent to the neutrality index | The direction of selection |
 
-## Options
+# Options
 
 | Option | Description | 
 | :-------------------- | -------- |
@@ -172,8 +186,10 @@ When provided with a multi-sample VCF file and outgroup samples, degenotate coun
 | `-e` | A comma separated list of sample IDs in the VCF file to exclude (e.g. 'sample1,sample2') or a file with one sample per line. |
 | `-o` |  Desired output directory. This will be created for you if it doesn't exist. Default: `degenotate-[date]-[time]` |
 | `-d` | degenotate assumes the chromosome IDs in the GFF file exactly match the sequence headers in the FASTA file. If this is not the case, use this to specify a character at which the FASTA headers will be trimmed. |
-| `-c` | If a file is provided, the program will extract CDS sequences from the genome and write them to the file and exit. |
-| `-l` | If a file is provided, the program will extract CDS sequences from the the longest transcript of each gene and write them to the file and exit. Both `-c` and `-l` can be specified. |
+| `-c` | If a file is provided, the program will extract CDS sequences from the genome and write them to the file and exit. If no file is given with the option, a file with the name of 'cds-nt.fa' will be written to the output directory. This option is equivalent to '-x 0234' except this stops the program before calculating degeneracy. |
+| `-ca` |  The same as `-c`, but writes translated amino acid sequences instead. Both `-c` and `-ca` can be specified. Default file name is 'cds-aa.fa'. |
+| `-l` | If a file is provided, the program will extract CDS sequences from the longest transcript for each gene and write them to the file and exit. If no file is given with the option, a file with the name of 'cds-nt-longest.fa' will be written to the output directory. Both `-c` and `-l` can be specified. |
+| `-la` |  The same as `-l`, but writes translated amino acid sequences instead. Both -c and -ca can be specified. Default file name is 'cds-aa.fa'. Both `-c` and `-ca` can be specified to write both files. Default file name is 'cds-aa-longest.fa'. |
 | `-x` | Extract sites of a certain degeneracy. For instance, to extract 4-fold degenerate sites enter '4'. To extract 2- and 4-fold degenerate sites enter '24' and so on. | 
 | `--overwrite` | Set this to overwrite existing files. |
 | `--appendlog` | Set this to keep the old log file even if `--overwrite` is specified. New log information will instead be appended to the previous log file. |

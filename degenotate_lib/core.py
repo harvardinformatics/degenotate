@@ -17,12 +17,21 @@ def errorOut(errnum, errmsg, globs):
     border = "-" * len(fullmsg);
     fullstr = "\n" + border + "\n" + fullmsg + "\n" + border + "\n"
     printWrite(globs['logfilename'], globs['log-v'], "\n" + border + "\n" + fullmsg + "\n" + border + "\n");
+    # Format and print the error message
+
+    if globs['warnings'] != 0:
+        warnmsg = "**Additionally there were " + str(globs['warnings']) + " warnings. Check the log file for more info";
+        warnborder = border = "-" * len(warnmsg);
+        printWrite(globs['logfilename'], globs['log-v'], "\n" + warnborder + "\n" + warnmsg + "\n" + warnborder + "\n");
+    # Format and print information about warnings if there are any
+
     if globs['endprog']:
         globs['exit-code'] = 1;
         endProg(globs);
     else:
         printWrite(globs['logfilename'], globs['log-v'], "\nScript call: " + " ".join(sys.argv));
         sys.exit(1);
+    # Exit the program
 
 #############################################################################
 
@@ -286,7 +295,7 @@ def report_step(globs, step, step_start_time, step_status, start=False, full_upd
 #############################################################################
 
 def welcome():
-# Reads the ASCII art "Referee" text to be printed to the command line.
+# Reads the ASCII art "degenotate" text to be printed to the command line.
     return open(os.path.join(os.path.dirname(__file__), "welcome.txt"), "r").read();
 
 #############################################################################
@@ -304,15 +313,6 @@ def endProg(globs):
     printWrite(globs['logfilename'], globs['log-v'], "# Total execution time:            " + str(round(totaltime,3)) + " seconds.");
     printWrite(globs['logfilename'], globs['log-v'], "# Output directory for this run:   " + globs['outdir']);
     printWrite(globs['logfilename'], globs['log-v'], "# Log file for this run:           " + globs['logfilename']);
-
-    # if globs['aln-stats-written']:
-    #     printWrite(globs['logfilename'], globs['log-v'], "# Alignment stats file:            " + globs['alnstatsfile']);    
-
-    # if globs['scf-stats-written']:
-    #     printWrite(globs['logfilename'], globs['log-v'], "# Concordance factor stats file:   " + globs['scfstatsfile']); 
-
-    # if globs['scf-tree-written']:
-    #     printWrite(globs['logfilename'], globs['log-v'], "# Concordance factor tree file:    " + globs['scftreefile']); 
 
     if globs['exit-code'] != 0:
         printWrite(globs['logfilename'], globs['log-v'], "#\n# ERROR: NON-ZERO EXIT STATUS.");
