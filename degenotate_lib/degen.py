@@ -428,9 +428,12 @@ def processCodons(globs):
                 transcript_output['mk']['mk.odds.ni'], transcript_output['mk']['mk.pval'] = fisher_exact([[transcript_output['mk']['pn'], transcript_output['mk']['ps']], [transcript_output['mk']['dn'], transcript_output['mk']['ds']]]);
                 # Do the MK test and save the pvalue and odds ratio (as the neutrality index)
 
-                dos_d = transcript_output['mk']['dn'] / (transcript_output['mk']['dn'] + transcript_output['mk']['ds']);
-                dos_p = transcript_output['mk']['pn'] / (transcript_output['mk']['pn'] + transcript_output['mk']['ps']);
-                transcript_output['mk']['dos'] = dos_d - dos_p;
+                d_sum = transcript_output['mk']['dn'] + transcript_output['mk']['ds'];
+                p_sum = transcript_output['mk']['pn'] + transcript_output['mk']['ps'];
+                if d_sum and p_sum:
+                    dos_d = transcript_output['mk']['dn'] / d_sum;
+                    dos_p = transcript_output['mk']['pn'] / p_sum;
+                    transcript_output['mk']['dos'] = dos_d - dos_p;
                 # Calculate the direction of selection (https://doi.org/10.1093/molbev/msq249)
 
                 OUT.writeMK(transcript, transcript_output['mk'], mk_stream);
