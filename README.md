@@ -25,7 +25,7 @@
     - [How degenotate classifies degeneracy](#how-degenotate-classifies-degeneracy)
     - [Degeneracy per site (bed file)](#degeneracy-per-site-bed-file)
     - [Transcript site counts (tab delimited)](#transcript-site-counts-tab-delimited)
-    - [MK site counts (tab delimited)](#mk-site-counts-tab-delimited)
+    - [MK site counts (tab delimited)](#mk-site-counts-and-tests-tab-delimited)
 - [Options](#options)
 
 # About
