@@ -26,7 +26,7 @@ class StrictDict(dict):
 
 def init():
     globs_init = {
-        'version' : '1.1.1',
+        'version' : '1.1.2',
         'releasedate' : "January 2023",
         'authors' : "Timothy Sackton, Gregg Thomas",
         'doi' : '',

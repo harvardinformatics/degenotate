@@ -114,7 +114,6 @@ def readFeatures(globs, file_reader, line_reader, feature_list, id_format, paren
 
                     globs['annotation'][parent_id]['exons'][exon_id] = { 'header' : seq_header, 'start' : start, 'end' : end, 'len' : end-start, 'strand' : strand, 'phase' :  phase};
                     globs['annotation'][parent_id]['cdslen'] += end-start+1;
-
                 # Add the ID and related info to the annotation dict.                   
 
                 num_features += 1;

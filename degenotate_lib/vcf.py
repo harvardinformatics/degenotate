@@ -140,6 +140,11 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
     # one or more records at this position    
         for rec in transcript_records:
 
+            alt_nts = rec.alts;
+            if not alt_nts:
+                continue;
+            # Look up the alleles at the current position and if there are no alternate alleles (invariant site), skip
+
             rec_pos = rec.start + 1
             # Adjust 0-based pysam coordinate to 1-based gff coordinate here
 
@@ -172,12 +177,7 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
                 continue;
                 # an IndexError here should mean that we are in a last partial codon and we should just ignore this variant
                 # however we should probably add some code to formally confirm this before just skipping
-
             # Look up the codon at the record's codon position
-        
-            #ref_nt = rec.ref;
-            alt_nts = rec.alts;
-            # Look up the alleles at the current position
 
             in_allele_counts = defaultdict(int);
             out_allele_counts = defaultdict(int);
@@ -190,7 +190,6 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
                     if allele is None:
                         continue
                     # Skip missing data
-                    
                     in_allele_counts[allele] += 1;
             # Count alleles in the ingroups
 
@@ -215,12 +214,15 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
                     if allele is None:
                         continue
                     out_allele_counts[allele] += 1;
-            # Count alleles in the outgroup
+            # Count alleles in the outgroup              
 
-            if 0 in out_allele_counts:
+            if 0 in out_allele_counts or not out_allele_counts:
                 continue;
-            # If all outgroup alleles are reference, add the reference allele to
-            # the fixed_diff_codon
+            # If there are any reference alleles (0) in the outgroup, then this cannot
+            # be a fixed difference and it should be skipped
+            # Likewise, in the case of no outgroup alleles (e.g. all missing data), this
+            # should be skipped, else it would crash if there are also no ingroup alleles
+            # (because of missing data or because all alt alleles are in the excluded samples)
 
             if all(alleles not in in_allele_counts for alleles in out_allele_counts):
             # Sites contain fixed differences only if all the alleles in the outgroup do not
