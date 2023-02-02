@@ -395,7 +395,7 @@ def startProg(globs):
             # Report VCF outgroup samples
 
             if globs['vcf-exclude']:
-                CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# -i", pad) +
+                CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# -e", pad) +
                         CORE.spacedOut(",".join(globs['vcf-exclude']), opt_pad) +
                         " These samples will be excluded in the VCF file.");  
             # Report samples to exclude in the input VCF

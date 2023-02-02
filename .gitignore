@@ -141,3 +141,4 @@ test-data/mm10/ncbi/GCF_000001635.27_GRCm39_genomic.fna.gz.fai
 test-data/mm10/ncbi/GCF_000001635.27_GRCm39_genomic.fna.gz.gzi
 test-data/issue*
 environment-old.yml
+issue23-out/
