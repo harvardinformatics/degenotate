@@ -1,3 +1,6 @@
+2023.02.06
+- Added `-m` option so user can specify minimum transcript length, with a default value (and global minimum) of 3bp
+
 2023.02.02
 - Added check to skip invariant sites in the VCF file
 - Added a check to skip sites where there are no alleles in the outgroup, which could happen in the case of missing data or for variant sites in which all the alternate alleles are among excluded samples. In the latter case, the program would crash because it would try to select an allele from an empty list

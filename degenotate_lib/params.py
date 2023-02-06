@@ -103,7 +103,8 @@ def init():
 
         'annotation' : {},
         'genekey' : {},
-        '0-len-transcripts' : [],
+        'min-len' : 3,
+        'short-transcripts' : [],
         # Annotation information
 
         'num-procs' : 1,

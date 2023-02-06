@@ -149,17 +149,19 @@ def getDateTime():
 
 #############################################################################
 
-def isPosInt(numstr):
+def isPosInt(numstr, default=False, minval=1, maxval=False):
 # Check if a string is a positive integer
     try:
         num = int(numstr);
     except:
-        return False;
+        return default;
 
-    if num > 0:
-        return num;
+    if num < minval:
+        return default;
+    elif maxval and num > maxval:
+        return default;
     else:
-        return False;
+        return num;
 
 #############################################################################
 
