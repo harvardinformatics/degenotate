@@ -76,9 +76,9 @@ def readFeatures(globs, file_reader, line_reader, feature_list, id_format, paren
                     feature_id = feature_id[0].replace(id_format, "").replace("\"", "");
                     # Unpack and parse the ID
 
-                    if feature_len < 1:
-                        CORE.printWrite(globs['logfilename'], 3, "# WARNING: transcript " + feature_id + " has a length of 0 and will be excluded from all calculations");
-                        globs['0-len-transcripts'].append(feature_id);
+                    if feature_len < globs['min-len']:
+                        CORE.printWrite(globs['logfilename'], 3, "# WARNING: transcript " + feature_id + " has a length shorter than the minimum specified and will be excluded from all calculations (" + str(feature_len) + " < " + str(globs['min-len']) + ")");
+                        globs['short-transcripts'].append(feature_id);
                         globs['warnings'] += 1;                    
                         continue;
                     # If the transcript has 0 length for some reason, downstream stuff will be messed up and it should be excluded anyway, so we throw a warning about it
@@ -98,7 +98,7 @@ def readFeatures(globs, file_reader, line_reader, feature_list, id_format, paren
 
                 elif feature_list[0] == "CDS":
                     
-                    if parent_id in globs['0-len-transcripts']:
+                    if parent_id in globs['short-transcripts']:
                         continue;
                     # Skip exons that have a 0 length transcript as a parent (and are likely 0 length themselves)
 

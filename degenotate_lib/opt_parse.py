@@ -41,6 +41,7 @@ def optParse(globs):
     parser.add_argument("-l", dest="write_longest", help="If a file is provided, the program will extract CDS sequences from the longest transcript for each gene and write them to the file and exit. If no file is given with the option, a file with the name of 'cds-nt-longest.fa' will be written to the output directory. Both -c and -l can be specified.", nargs='?', const="default", default=False);
     parser.add_argument("-la", dest="write_longest_aa", help="The same as -l, but writes translated amino acid sequences instead. Both -l and -la can be specified. Default file name is 'cds-aa-longest.fa'.", nargs='?', const="default", default=False);
     parser.add_argument("-x", dest="extract_seq", help="Extract sites of a certain degeneracy. For instance, to extract 4-fold degenerate sites enter '4'. To extract 2- and 4-fold degenerate sites enter '24' and so on.", default=False);
+    parser.add_argument("-m", dest="min_length", help="The minimum length of a transcript for it to be counted. Default (and global min): 3", default=False);
     #parser.add_argument("-p", dest="num_procs", help="The total number of processes that degenotate can use. Default: 1.", type=int, default=1);
     # User params
 
@@ -176,8 +177,12 @@ def optParse(globs):
         # Parse the samples to exclude
 
     elif args.vcf_outgroups or args.vcf_exclude:
-        warnings.append("# WARNING: VCF outgroups (-u) or samples to exclude (-e) were provided without a VCF file (-v). They will be ignored.")
+        warnings.append("# WARNING: VCF outgroups (-u) or samples to exclude (-e) were provided without a VCF file (-v). They will be ignored.");
     # Check for a VCF file
+
+    ####################
+
+    globs['min-len'] = CORE.isPosInt(args.min_length, default=3, minval=3);
 
     ####################
 
@@ -374,6 +379,11 @@ def startProg(globs):
     #             CORE.spacedOut(str(globs['num-procs']), opt_pad) +
     #             "degenotate will use this many processes.");
     # Reporting the resource options
+
+    CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# -m", pad) +
+                CORE.spacedOut(str(globs['min-len']), opt_pad) +
+                "Transcripts shorter than this length will be ignored by degnotate.");
+    # The min length (-m) options
 
     if globs['write-cds'] or globs['write-longest']:
         if globs['write-cds']:
