@@ -128,10 +128,6 @@ def extractCDS(globs):
     step_start_time = CORE.report_step(globs, step, False, "In progress...");
     # Status update
 
-    complement = { 'A' : 'T', 'C' : 'G', 'G' : 'C', 'T' : 'A', 'N' : 'N',
-                   'a' : 't', 'c' : 'g', 'g' : 'c', 't' : 'a', 'n' : 'n'  };
-    # A dictionary with base complements for use when reverse complementing sequences
-
     for transcript in globs['annotation']:
 
         if len(globs['annotation'][transcript]['exons']) == 0:
@@ -198,7 +194,7 @@ def extractCDS(globs):
             # The list of genome coordinates in the current CDS
 
             if strand == "-": 
-                cur_exon_seq = "".join(complement.get(base, base) for base in reversed(cur_exon_seq));
+                cur_exon_seq = "".join(globs['complement'].get(base, base) for base in reversed(cur_exon_seq));
                 # Reverse complement the sequence of the current CDS
                 
                 genome_coord_list.reverse(); 
