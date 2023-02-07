@@ -145,6 +145,11 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
                 continue;
             # Look up the alleles at the current position and if there are no alternate alleles (invariant site), skip
 
+            if strand == "-":
+                alt_nts = [ globs['complement'][base] for base in alt_nts ];    
+            # For transcripts on the negative strand, the alternate alleles in the VCF
+            # need to be complemented      
+
             rec_pos = rec.start + 1
             # Adjust 0-based pysam coordinate to 1-based gff coordinate here
 
@@ -231,7 +236,7 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
                 mk_codons[rec_codon_pos]['fixed-flag'] = True;
 
                 if len(out_allele_counts) == 1:
-                    mk_codons[rec_codon_pos]['fixed'][codon_pos] = alt_nts[list(out_allele_counts)[0]-1];
+                    mk_codons[rec_codon_pos]['fixed'][codon_pos] = alt_nts[list(out_allele_counts)[0]-1];                   
                 # If there is only one allele in the outgroup (the site is not polymorphic in the outgroup)
                 # add that allele to the fixed_diff_codon by looking it up in the alt_nts list
                 
@@ -251,6 +256,8 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
         mk_codons[codon_index]['poly'] = [ "".join(poly_codon) for poly_codon in mk_codons[codon_index]['poly'] ];    
         mk_codons[codon_index]['fixed'] = "".join(mk_codons[codon_index]['fixed']);
     # Convert the polymorphic_codons from lists to strings
+
+    #print(mk_codons);
 
     return mk_codons;
 

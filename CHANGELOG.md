@@ -1,3 +1,6 @@
+2023.02.07
+- Fixed bug that miscounted substitutions on transcripts on the negative strand since the variants in the VCF file are all reported on the positive strand with respect to the reference
+
 2023.02.06
 - Added `-m` option so user can specify minimum transcript length, with a default value (and global minimum) of 3bp
 

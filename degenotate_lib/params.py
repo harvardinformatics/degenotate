@@ -116,6 +116,10 @@ def init():
         'bases' : ['A', 'T', 'C', 'G'],
         # List of standard nucleotides
 
+        'complement' : { 'A' : 'T', 'C' : 'G', 'G' : 'C', 'T' : 'A', 'N' : 'N',
+                         'a' : 't', 'c' : 'g', 'g' : 'c', 't' : 'a', 'n' : 'n'  },
+        # The complement of each base character
+
         'info' : False,
         'quiet' : False,
         # Other user options
