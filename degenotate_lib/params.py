@@ -37,6 +37,7 @@ def init():
         # Meta info
 
         'pyver' :  ".".join(map(str, sys.version_info[:3])),
+        'pyexe' : os.path.realpath(sys.executable),
         # System info
 
         'call' : "",
@@ -54,6 +55,7 @@ def init():
 
         'vcf-file' : False,
         'vcf-index-file' : False,
+        'vcf-index-exts' : ['.tbi', '.csi'],
         'vcf' : False,
         'vcf-ingroups' : [],
         'vcf-outgroups' : False,

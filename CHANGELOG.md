@@ -1,3 +1,7 @@
+2023.02.16
+- Added path to python executable to runtime info to help track down version issues as they arise
+- Now check for VCF indices with both .tbi and .csi extensions
+
 2023.02.07
 - Fixed bug that miscounted substitutions on transcripts on the negative strand since the variants in the VCF file are all reported on the positive strand with respect to the reference
 
