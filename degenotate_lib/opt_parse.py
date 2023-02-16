@@ -128,9 +128,7 @@ def optParse(globs):
         globs['vcf-file'] = args.vcf_file;
         globs['codon-methods'].append("ns");
         # If a VCF file is supplied, add the ns method to the list of methods to apply to the input
-
-        globs['vcf-index-file'] = globs['vcf-file'] + ".tbi";
-        # Default VCF index file name from tabix, will check for it below in fileCheck
+        # Check for index in fileCheck() below
 
         if not args.vcf_outgroups:
             CORE.errorOut("OP4", "Outgroup samples must be specified (-u) with a vcf file (-v)", globs);
@@ -323,9 +321,10 @@ def startProg(globs):
     CORE.printWrite(globs['logfilename'], globs['log-v'], "# Website:       " + globs['http']);
     #CORE.printWrite(globs['logfilename'], globs['log-v'], "# Report issues: " + globs['github']);
     CORE.printWrite(globs['logfilename'], globs['log-v'], "#");
-    CORE.printWrite(globs['logfilename'], globs['log-v'], "# The date and time at the start is: " + CORE.getDateTime());
-    CORE.printWrite(globs['logfilename'], globs['log-v'], "# Using Python version:              " + globs['pyver'] + "\n#");
-    CORE.printWrite(globs['logfilename'], globs['log-v'], "# The program was called as:         " + globs['call'] + "\n#");
+    CORE.printWrite(globs['logfilename'], globs['log-v'], "# The date and time at the start is:  " + CORE.getDateTime());
+    CORE.printWrite(globs['logfilename'], globs['log-v'], "# Using Python executable located at: " + globs['pyexe']);
+    CORE.printWrite(globs['logfilename'], globs['log-v'], "# Using Python version:               " + globs['pyver'] + "\n#");
+    CORE.printWrite(globs['logfilename'], globs['log-v'], "# The program was called as:          " + globs['call'] + "\n#");
 
     if globs['info']:
         return;

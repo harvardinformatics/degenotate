@@ -37,15 +37,25 @@ def errorOut(errnum, errmsg, globs):
 
 def fileCheck(globs):
 # Checks file options.
-    files = ['gxf-file', 'fa-file', 'in-seq', 'vcf-file', 'vcf-index-file'];
+    files = ['gxf-file', 'fa-file', 'in-seq', 'vcf-file'];
     for f in files:
         if globs[f]:
             if not os.path.isfile(globs[f]) and not os.path.isdir(globs[f]):
-                if f == 'vcf-index-file':
-                    errorOut("CORE1", "Did not find index for input vcf file: " + globs[f] + ". Please index your file with tabix (http://www.htslib.org/doc/tabix.html)", globs);
-                else:
-                    errorOut("CORE1", "File/path not found: " + globs[f], globs);
+                errorOut("CORE1", "File/path not found: " + globs[f], globs);
             globs[f] = os.path.abspath(globs[f]);
+
+            if f == 'vcf-file':
+                for ind_ext in globs['vcf-index-exts']:
+                    index_file = globs['vcf-file'] + ind_ext;
+                    if os.path.isfile(index_file):
+                        globs['vcf-index-file'] = index_file;
+                        break;
+                if not globs['vcf-index-file']:
+                    errorOut("CORE1", "Did not find index for input vcf file. Please index your file with tabix (http://www.htslib.org/doc/tabix.html)", globs);
+                # If a vcf file is given as input, check multiple possible extensions (.tbi, .csi) for an index file
+                # Error out if no index is found
+    # Check if the provided files exist and error out if not
+
     return globs;
 
 #############################################################################
