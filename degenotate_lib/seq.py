@@ -267,7 +267,7 @@ def extractCDS(globs):
         for transcript in globs['cds-seqs']:
             extra_leading_nt = globs['annotation'][transcript]['start-frame'];
             if extra_leading_nt is None:
-                CORE.printWrite(globs['logfilename'], 2, "# WARNING: transcript " + transcript + " has an unknown frame....skipping");
+                CORE.printWrite(globs['logfilename'], 3, "# WARNING: transcript " + transcript + " has an unknown frame....skipping");
                 globs['warnings'] += 1;                    
                 continue;
             # Get the frame of the current transcript and print a warning if it is unknown
