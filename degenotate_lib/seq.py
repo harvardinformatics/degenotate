@@ -128,11 +128,14 @@ def extractCDS(globs):
     step_start_time = CORE.report_step(globs, step, False, "In progress...");
     # Status update
 
+    transcripts_no_exons, rm_transcripts = [], [];
+
     for transcript in globs['annotation']:
 
         if len(globs['annotation'][transcript]['exons']) == 0:
+            transcripts_no_exons.append(transcript);
             continue;
-            #no exons means this transcript does not have a CDS, so we skip it
+        # No exons means this transcript does not have a CDS, so we skip it
 
         cur_seq = "";
         # Initialize the sequence string for the current transcript. This will be added to the 'seqs' dict later
@@ -150,12 +153,14 @@ def extractCDS(globs):
         # Get the exons for the current transcript
 
         if not all(exons[exon]['strand'] == strand for exon in exons):
-            print("\n\n");
-            print(transcript, strand);
-            print(exons);
-            print("\n\n");
-            CORE.errorOut("SEQ2", "Some exons have differing strands", globs);
-        # Add check to make sure exons all have same strand as transcript?
+            # print("\n\n");
+            # print(transcript, strand);
+            # print(exons);
+            # print("\n\n");
+            # CORE.errorOut("SEQ2", "Some exons have differing strands", globs);
+            rm_transcripts.append(transcript);
+            continue;
+        # Add check to make sure exons all have same strand as transcript
 
         exon_coords = { exons[exon]['start'] : exons[exon]['end'] for exon in exons };
         exon_phase = { exons[exon]['start'] : exons[exon]['phase'] for exon in exons };
@@ -218,18 +223,24 @@ def extractCDS(globs):
         globs['cds-seqs'][transcript] = cur_seq.upper();
         # Save the current transcript sequence to the global seqs dict
 
-        # if strand == "+":
-        #     print();
-        #     print(transcript);
-        #     print(globs['cds-seqs'][transcript]);
-        #     print(globs['coords'][transcript]);
-        #     sys.exit();
-
         # End transcript loop
         ##########
 
     step_start_time = CORE.report_step(globs, step, step_start_time, "Success: " + str(len(globs['cds-seqs'])) + " CDS read");
     # Status update
+
+    if transcripts_no_exons:
+        for no_exon_transcript in transcripts_no_exons:
+            CORE.printWrite(globs['logfilename'], 3, "# WARNING: transcript " + no_exon_transcript + " has no coding exons associated with it and will be REMOVED from subsequent analyses.");
+            globs['warnings'] += 1;
+            del globs['annotation'][no_exon_transcript];
+
+    if rm_transcripts:
+        for rm_transcript in rm_transcripts:
+            CORE.printWrite(globs['logfilename'], 3, "# WARNING: transcript " + rm_transcript + " contains exons annotated on differing strands. This transcript will be REMOVED from subsequent analyses.");
+            globs['warnings'] += 1;
+            del globs['annotation'][rm_transcript];
+    # Remove transcripts with problems, either no coding exons or mis-matched exon strands, from subsequent analyses
 
     ####################
 
@@ -322,7 +333,7 @@ def readCDS(globs):
     # If the input is a file, this will just be a list with only that file in it
 
     if seq_files == []:
-        CORE.errorOut("SEQ2", "No files in the input have extensions indicating they are FASTA files.", globs);
+        CORE.errorOut("SEQ3", "No files in the input have extensions indicating they are FASTA files.", globs);
     # Makes sure some files have been read    
 
     for seq_file in seq_files:
