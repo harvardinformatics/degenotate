@@ -1,3 +1,6 @@
+2023.04.20
+- Converted error for transcripts with exons on differing strands to a warning, and added warning for transcripts with no coding exons
+
 2023.02.16
 - Added path to python executable to runtime info to help track down version issues as they arise
 - Now check for VCF indices with both .tbi and .csi extensions
