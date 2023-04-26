@@ -23,52 +23,6 @@ def read(globs):
     globs['vcf'] = VariantFile(globs['vcf-file']);
     # Read the VCF
 
-    #print();
-    # vcf_headers = [];
-
-    # for x in globs['vcf'].header.records:
-    #     if x.type=="CONTIG":
-    #         print(x.split(",")[0].split("=")[2]);
-
-    # x = globs['vcf'].fetch("NC_046340.1", 71, 150);
-
-    # print(x);
-    # #print(list(x));
-    # print(len(list(x)))
-
-    # sys.exit();
-
-    # for i in [72,73,74]:
-    #     print(i);
-    #     f = globs['vcf'].fetch("NC_046340.1", i, i+1);
-
-    #     #print(len(f));
-
-    #     if not list(f):
-    #         print("HAS")
-
-    #     for rec in f:
-
-    #         if rec.ref:
-    #             print(i);
-    #             print(rec);
-    #             print(rec.ref);
-    #         else:
-    #             print("AAHJ")
-    #         #print(rec.info);
-
-    #sys.exit();
-    # for record in globs['vcf'].fetch():
-    #     print(record.ref);
-    #     print(record.alts);
-    #     print(record.alts[0]);
-
-    #     for sample in record.samples:
-    #         print(sample);
-    #         print(record.samples[sample]['GT']);
-    #     sys.exit();
-    ## SANDBOX FOR FIGURING OUT PYSAM
-
     for header in globs['vcf'].header.contigs:
         if header not in globs['genome-seqs']:
             CORE.printWrite(globs['logfilename'], 3, "# WARNING: " + header + " is present in the VCF file but not the genome fasta file.");
@@ -89,9 +43,14 @@ def read(globs):
     ## Outgroups
 
     globs['vcf-ingroups'] = [ sample for sample in globs['vcf'].header.samples if sample not in globs['vcf-outgroups'] + globs['vcf-exclude'] ];
+    globs['num-ingroup-chr'] = len(globs['vcf-ingroups']) * 2;
     if not globs['vcf-ingroups']:
         CORE.errorOut("VCF2", "No ingroup samples in VCF file -- all samples were specified as either outgroups (-u) or to be excluded (-e).", globs);
     # Check to make sure there are ingroup samples left after removing the excluded samples.
+
+    if not globs['ingroup-maf-cutoff']:
+        globs['ingroup-maf-cutoff'] = 1 / globs['num-ingroup-chr'];
+    # Calculate the default MAF cutoff here if none is provided (1 / N)
     ## Ingroups
 
     return globs;
@@ -102,11 +61,13 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
 # Gets variant codons in the in- and outgroups
 
     mk_codons = { c : { 'poly' : [], 'fixed' : list(codons[c]), 'fixed-flag' : False } for c in range(len(codons)) };
-    # This dictionary will keep track of polymorphic codons (initialized as empty list)
-    # and fixed difference codons (initialized as reference codon) for each codon in the current
-    # transcript
+    #mk_codons = { c : { 'ingroup-poly-samples' : [], 'ingroup-ref-samples' : [], 'poly' : defaultdict(int), 'fixed' : list(codons[c]), 'fixed-flag' : False } for c in range(len(codons)) };
+    #mk_codons = { c : { 'ref' : { codons[c] : 0 }, 'poly' : {}, 'fixed' : list(codons[c]), 'fixed-flag' : False } for c in range(len(codons)) };
+    # This dictionary will keep track of polymorphic codons and their frequencies (initialized as empty dict)
+    # and fixed difference codons (initialized as reference codon) for each codon in the current transcript
     # The fixed flag is swapped to True if any fixed differences have actually been found, else
     # the codon is still the ref and shouldn't be counted
+    # Also keeps track of which samples in the ingroup have at least 1 polymorphism in the codon (ingroup-poly-samples) and samples that are reference for each position in the codon (ingroup-ref-samples)
 
     strand = globs['annotation'][transcript]['strand'];
     # Need to get strand, to convert leading/trailing bases into start/end padding
@@ -118,7 +79,6 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
     if strand == "-":
         start_pad = extra_trailing_nt;
         end_pad = extra_leading_nt;
-
     # Extra leading nt and trailing nt are defined (leading, trailing) based on transcript orientation
     # So in genomic coordinates, trailing nt on the minus strand is actually a shift of the start, and leading nt is a shift of the end
     # This is because for the transcript feature, start < end
@@ -134,7 +94,7 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
     empty = next(transcript_records, None) is None
     # Check if records returns anything
     if empty:
-    # No record at this position, which means no variation at this transcript
+    # No record at this position, which means no variation in this transcript
         return mk_codons;
     else:
     # one or more records at this position    
@@ -185,32 +145,49 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
             # Look up the codon at the record's codon position
 
             in_allele_counts = defaultdict(int);
+            in_hom_alts = defaultdict(int);
             out_allele_counts = defaultdict(int);
             # Dicts for allele counts in each group
 
             ####################
 
             for sample in globs['vcf-ingroups']:
+                if rec.samples[sample]['GT'][0] == rec.samples[sample]['GT'][1] and rec.samples[sample]['GT'] != (0,0):
+                    in_hom_alts[rec.samples[sample]['GT']] += 1;
+                # Check if the sample is homozygous for an alternate allele and add that to the count of in_hom_alts here
+
                 for allele in rec.samples[sample]['GT']:
                     if allele is None:
                         continue
                     # Skip missing data
                     in_allele_counts[allele] += 1;
-            # Count alleles in the ingroups
+                # Count alleles in the ingroups
+            ## End ingroup allele counting block
 
-            for allele in in_allele_counts:
-                if allele == 0:
-                    continue;
-                # Construct a codon for each allele in the ingroups except the
-                # reference allele (since that would match the reference codon)         
+            ## NOTE: Should we be comparing to ingroups with called genotypes here instead of number of all ingroups?
 
-                polymorphic_codon = list(ref_codon);
-                # Convert the ref_codon to a list so we can change nts by index
+            if not globs['count-fixed-alt-ingroups'] and len(in_hom_alts) == 1 and sum(in_hom_alts.values()) == globs['num-ingroups']:
+                pass;
+            # If we don't want to count fixed ingroups, check to see if any alt alleles are fixed and skip if so
+            else:
+                for allele in in_allele_counts:
+                    if allele == 0:
+                        continue;
+                    # Construct a codon for each allele in the ingroups except the
+                    # reference allele (since that would match the reference codon)         
 
-                polymorphic_codon[codon_pos] = alt_nts[int(allele)-1];
-                mk_codons[rec_codon_pos]['poly'].append(polymorphic_codon);
-                # Add the polymorphic codon to the list of polymorphic codons
-            ## End ingroup allele loop
+                    if in_allele_counts[allele] / globs['num-ingroup-chr'] < globs['ingroup-maf-cutoff']:
+                        continue;
+                    # Make sure this allele is present at a frequency higher than the specified cutoff
+
+                    polymorphic_codon = list(ref_codon);
+                    # Convert the ref_codon to a list so we can change nts by index
+
+                    polymorphic_codon[codon_pos] = alt_nts[int(allele)-1];
+                    mk_codons[rec_codon_pos]['poly'].append(polymorphic_codon);
+                    # Add the polymorphic codon to the list of polymorphic codons
+                ## End ingroup codon loop
+            ## End ingroup codon block
 
             ####################
 
@@ -248,17 +225,21 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
                 # use the allele at the highest frequency
                 # If more than one allele exists at the highest frequency, pick one randomly
             ## End outgroup block
-
             ####################
-        ## End codon record block
+        ## End transcript record loop
+    ## End transcript record block
+
+    ####################
 
     for codon_index in mk_codons:
-        mk_codons[codon_index]['poly'] = [ "".join(poly_codon) for poly_codon in mk_codons[codon_index]['poly'] ];    
+
+        mk_codons[codon_index]['poly'] = [ "".join(poly_codon) for poly_codon in mk_codons[codon_index]['poly'] ];   
         mk_codons[codon_index]['fixed'] = "".join(mk_codons[codon_index]['fixed']);
-    # Convert the polymorphic_codons from lists to strings
-
-    #print(mk_codons);
-
+        # Convert the fixed difference codons from lists to strings
+    # End bookkeeping loop
+    #sys.exit();
     return mk_codons;
 
 #############################################################################
+
+

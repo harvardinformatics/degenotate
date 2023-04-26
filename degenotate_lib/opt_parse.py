@@ -42,9 +42,11 @@ def optParse(globs):
     parser.add_argument("-la", dest="write_longest_aa", help="The same as -l, but writes translated amino acid sequences instead. Both -l and -la can be specified. Default file name is 'cds-aa-longest.fa'.", nargs='?', const="default", default=False);
     parser.add_argument("-x", dest="extract_seq", help="Extract sites of a certain degeneracy. For instance, to extract 4-fold degenerate sites enter '4'. To extract 2- and 4-fold degenerate sites enter '24' and so on.", default=False);
     parser.add_argument("-m", dest="min_length", help="The minimum length of a transcript for it to be counted. Default (and global min): 3", default=False);
+    parser.add_argument("-maf", dest="maf_cutoff", help="The minor allele frequency cutoff for MK tests. Sites where alternate alleles in the ingroup are below this frequency will be excluded. Default: 1 / N, where N is the number of ingroup samples", default=False);
     #parser.add_argument("-p", dest="num_procs", help="The total number of processes that degenotate can use. Default: 1.", type=int, default=1);
     # User params
 
+    parser.add_argument("--no-fixed-in", dest="no_fixed_in_flag", help="Set this if you wish to exclude sites from the MK test in which all ingroup samples share the same alternate allele (only the reference differs).", action="store_true", default=False);
     parser.add_argument("--overwrite", dest="ow_flag", help="Set this to overwrite existing files.", action="store_true", default=False);
     parser.add_argument("--appendlog", dest="append_log_flag", help="Set this to keep the old log file even if --overwrite is specified. New log information will instead be appended to the previous log file.", action="store_true", default=False);
     # User options
@@ -174,13 +176,42 @@ def optParse(globs):
                 CORE.errorOut("OP7", "No outgroup samples left after excluding samples specified by -e.", globs);
         # Parse the samples to exclude
 
-    elif args.vcf_outgroups or args.vcf_exclude:
-        warnings.append("# WARNING: VCF outgroups (-u) or samples to exclude (-e) were provided without a VCF file (-v). They will be ignored.");
-    # Check for a VCF file
+        ##########
+
+        if args.no_fixed_in_flag:
+            globs['count-fixed-alt-ingroups'] = False;
+        # Parse the fixed ingroups option
+
+        ##########
+
+        if args.maf_cutoff:
+            maf_cutoff = CORE.isPosFloat(args.maf_cutoff, maxval=1.0);
+            if maf_cutoff or str(maf_cutoff) == "0.0":
+                globs['ingroup-maf-cutoff'] = maf_cutoff;
+            else:
+                CORE.errorOut("OP8", "The minor allele frequency (-maf) must be a number between 0 and 1.", globs);                
+    # Check for a VCF file and its associated options
+
+    else:
+        if args.vcf_outgroups:
+            warnings.append("# WARNING: VCF outgroups (-u) were provided without a VCF file (-v). This option will be ignored.");
+        if args.vcf_exclude:
+            warnings.append("# WARNING: VCF samples to exclude (-e) were provided without a VCF file (-v). This option will be ignored.");
+        if args.no_fixed_in_flag:
+            warnings.append("# WARNING: --no-fixed-in was specified without a VCF file (-v). This option will be ignored.");
+        if args.maf_cutoff:
+            warnings.append("# WARNING: A minor allele frequency cutoff (-maf) was specified without a VCF file (-v). This option will be ignored.");
+    # If some VCF options have been specified without a VCF file, throw some warnings
 
     ####################
 
-    globs['min-len'] = CORE.isPosInt(args.min_length, default=3, minval=3);
+    if args.min_length:
+        min_len = CORE.isPosInt(args.min_length, minval=3);
+        if not min_len:
+            CORE.errorOut("OP9", "The minimum transcript length (-m) must be an integer 3 or larger.", globs);
+        else:
+            globs['min-len'] = min_len;
+    # Parse the minimun transcript length option
 
     ####################
 
@@ -196,7 +227,7 @@ def optParse(globs):
         globs['outdir'] = args.out_dest;
 
     if not globs['overwrite'] and os.path.exists(globs['outdir']):
-        CORE.errorOut("OP8", "Output directory already exists: " + globs['outdir'] + ". Specify new directory name OR set --overwrite to overwrite all files in that directory.", globs);
+        CORE.errorOut("OP10", "Output directory already exists: " + globs['outdir'] + ". Specify new directory name OR set --overwrite to overwrite all files in that directory.", globs);
 
     if not os.path.isdir(globs['outdir']) and not globs['norun'] and not globs['info']:
         os.makedirs(globs['outdir']);
@@ -219,7 +250,7 @@ def optParse(globs):
         else:
             globs['write-cds'] = os.path.abspath(args.write_cds);
         if os.path.isfile(globs['write-cds']) and not globs['overwrite']:
-            CORE.errorOut("OP9", "File specified with -c to write CDS to already exists and --overwrite was not set. Please move the current file or specify to --overwrite it.", globs);    
+            CORE.errorOut("OP11", "File specified with -c to write CDS to already exists and --overwrite was not set. Please move the current file or specify to --overwrite it.", globs);    
 
     ####################
 
@@ -229,7 +260,7 @@ def optParse(globs):
         else:
             globs['write-cds-aa'] = os.path.abspath(args.write_cds_aa);
         if os.path.isfile(globs['write-cds-aa']) and not globs['overwrite']:
-            CORE.errorOut("OP10", "File specified with -ca to write CDS peptides to already exists and --overwrite was not set. Please move the current file or specify to --overwrite it.", globs);    
+            CORE.errorOut("OP12", "File specified with -ca to write CDS peptides to already exists and --overwrite was not set. Please move the current file or specify to --overwrite it.", globs);    
 
     ####################
 
@@ -239,7 +270,7 @@ def optParse(globs):
         else:
             globs['write-longest'] = os.path.abspath(args.write_longest);
         if os.path.isfile(globs['write-longest']) and not globs['overwrite']:  
-            CORE.errorOut("OP11", "File specified with -l to write CDS sequences from longest transcripts to already exists and --overwrite was not set. Please move the current file or specify to --overwrite it.", globs);    
+            CORE.errorOut("OP13", "File specified with -l to write CDS sequences from longest transcripts to already exists and --overwrite was not set. Please move the current file or specify to --overwrite it.", globs);    
 
     ####################
 
@@ -249,12 +280,12 @@ def optParse(globs):
         else:
             globs['write-longest-aa'] = os.path.abspath(args.write_longest_aa);
         if os.path.isfile(globs['write-longest-aa']) and not globs['overwrite']:  
-            CORE.errorOut("OP12", "File specified with -la to write CDS peptides from longest transcripts to already exists and --overwrite was not set. Please move the current file or specify to --overwrite it.", globs);    
+            CORE.errorOut("OP14", "File specified with -la to write CDS peptides from longest transcripts to already exists and --overwrite was not set. Please move the current file or specify to --overwrite it.", globs);    
 
     ####################
 
     if any((args.write_cds, args.write_cds_aa, args.write_longest, args.write_longest_aa)) and not globs['gxf-file']:
-        CORE.errorOut("OP13", "Extracting CDS sequences with -c, -ca, -l, or -la can only be done with an annotation file (-a) and a genome file (-g).", globs); 
+        CORE.errorOut("OP15", "Extracting CDS sequences with -c, -ca, -l, or -la can only be done with an annotation file (-a) and a genome file (-g).", globs); 
 
     ####################
 
@@ -399,15 +430,31 @@ def startProg(globs):
     else:
         if globs['vcf-file']:
             CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# -u", pad) +
-                        CORE.spacedOut(",".join(globs['vcf-outgroups']), opt_pad) +
-                        " These samples will be used as outgroups in the VCF file and all others as ingroups.");
+                        CORE.spacedOut(",".join(globs['vcf-outgroups']) + " ", opt_pad) +
+                        "These samples will be used as outgroups in the VCF file and all others as ingroups.");
             # Report VCF outgroup samples
+
+            CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# -maf", pad) +
+                        CORE.spacedOut(str(globs['ingroup-maf-cutoff']) + " ", opt_pad) +
+                        "Alleles below this frequency in the ingroup samples will not be counted in MK tests.");
+            # The minor allele frequency cutoff (-maf) option
 
             if globs['vcf-exclude']:
                 CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# -e", pad) +
                         CORE.spacedOut(",".join(globs['vcf-exclude']), opt_pad) +
-                        " These samples will be excluded in the VCF file.");  
+                        "These samples will be excluded in the VCF file.");  
             # Report samples to exclude in the input VCF
+
+            fixed_str = "";
+            fixed_bool_str = "False";
+            if not globs['count-fixed-alt-ingroups']:
+                fixed_str = " NOT ";
+                fixed_bool_str = "True"
+            CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# --no-fixed-in", pad) +
+                        CORE.spacedOut(fixed_bool_str, opt_pad) +
+                        "Sites that are fixed for an alternate allele in the ingroup samples will" + fixed_str  + "be counted in MK tests." );
+            # Report fixed ingroup option
+            
 
         if globs['outseq']:
             CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# -x", pad) +
