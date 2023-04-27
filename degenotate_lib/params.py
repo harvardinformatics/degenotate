@@ -58,6 +58,7 @@ def init():
         'vcf-index-exts' : ['.tbi', '.csi'],
         'vcf' : False,
         'vcf-ingroups' : [],
+        'num-ingroup-chr' : False,
         'vcf-outgroups' : False,
         'vcf-exclude' : [],
         # Input VCF file
@@ -101,13 +102,23 @@ def init():
         # Degeneracy output
 
         'nonsyn' : {},
-        #output of syn/nonsyn snp calculations
+        # output of syn/nonsyn snp calculations
 
         'annotation' : {},
         'genekey' : {},
         'min-len' : 3,
         'short-transcripts' : [],
         # Annotation information
+
+        'count-fixed-alt-ingroups' : True,
+        # For MK tests, whether or not to count sites where all ingroup samples share an allele that differs
+        # from the reference, which could just be an error in the reference
+
+        'ingroup-maf-cutoff' : False,
+        # The frequency cutoff for the minor allele in the ingroups to be considered in the MK tests
+        # Alleles present BELOW this frequency will not be considered
+        # Currently defaults to 1 / 2N, where N is the number of ingroup samples, so this has to be calculated
+        # after we read the VCF
 
         'num-procs' : 1,
         # Number of processes to use; currently multiprocessing not implemented

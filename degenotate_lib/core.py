@@ -175,6 +175,22 @@ def isPosInt(numstr, default=False, minval=1, maxval=False):
 
 #############################################################################
 
+def isPosFloat(numstr, default=False, minval=0.0, maxval=False):
+# Check if a string is a positive float
+    try:
+        num = float(numstr);
+    except:
+        return default;
+
+    if num < minval:
+        return default;
+    elif maxval and num > maxval:
+        return default;
+    else:
+        return num;        
+
+#############################################################################
+
 def printWrite(o_name, v, o_line1, o_line2="", pad=0):
 # Function to print a string AND write it to the file.
     if o_line2 == "":
