@@ -27,6 +27,7 @@
     - [Transcript site counts (tab delimited)](#transcript-site-counts-tab-delimited)
     - [MK site counts (tab delimited)](#mk-site-counts-and-tests-tab-delimited)
 - [Options](#options)
+- [Assumptions](#assumptions)
 
 # About
 
@@ -189,8 +190,11 @@ When provided with a multi-sample VCF file that includes outgroup samples, degen
 | `-c` | If a file is provided, the program will extract CDS sequences from the genome and write them to the file and exit. If no file is given with the option, a file with the name of 'cds-nt.fa' will be written to the output directory. This option is equivalent to '-x 0234' except this stops the program before calculating degeneracy. |
 | `-ca` |  The same as `-c`, but writes translated amino acid sequences instead. Both `-c` and `-ca` can be specified. Default file name is 'cds-aa.fa'. |
 | `-l` | If a file is provided, the program will extract CDS sequences from the longest transcript for each gene and write them to the file and exit. If no file is given with the option, a file with the name of 'cds-nt-longest.fa' will be written to the output directory. Both `-c` and `-l` can be specified. |
-| `-la` |  The same as `-l`, but writes translated amino acid sequences instead. Both -c and -ca can be specified. Default file name is 'cds-aa.fa'. Both `-c` and `-ca` can be specified to write both files. Default file name is 'cds-aa-longest.fa'. |
+| `-la` |  The same as `-l`, but writes translated amino acid sequences instead. Both `-l` and `-la` can be specified to write both files. Default file name is 'cds-aa-longest.fa'. |
 | `-x` | Extract sites of a certain degeneracy. For instance, to extract 4-fold degenerate sites enter '4'. To extract 2- and 4-fold degenerate sites enter '24' and so on. | 
+| `-m` | The minimum length of a transcript for it to be counted. Default (and global min): 3 | 
+| `-maf` | The minor allele frequency cutoff for MK tests. Sites where alternate alleles in the ingroup are below this frequency will be excluded. Default: 1 / 2N, where N is the number of ingroup samples | 
+| `--no-fixed-in` | Set this if you wish to exclude sites from the MK test in which all ingroup samples share the same alternate allele (only the reference differs). | 
 | `--overwrite` | Set this to overwrite existing files. |
 | `--appendlog` | Set this to keep the old log file even if `--overwrite` is specified. New log information will instead be appended to the previous log file. |
 | `--info` |  Print some meta information about the program and exit. No other options required. |
@@ -204,7 +208,7 @@ To compute MK tables of synonymous and nonsynonymous polymorphism and divergence
 - Codons with multiple polymorphisms: If a codon has more than one variant segregating within a population (either because multiple positions at the codon have segregating sites, or because one position has a multi-allelic SNP), we treat each segregating variant as independent.
 - Codons with multiple fixed differences: If there are multiple fixed differences in a single codon in the outgroup, we compute all possible mutational pathways between the ingroup codon and the outgroup codon, and take the average number of nonsynonymous and synonymous changes across these paths, weighted equally. This means we can have fractional numbers of synonymous and nonsynonymous divergence. 
 - Defining fixed differences: We consider a site to be a fixed difference only if all the alleles in the outgroup do not exist in the ingroup. This means, for example, that a polymorphic site in the outgroup can still contain a fixed difference as long as both the alleles are different from any ingroup allele. In this case, we use the highest frequency outgroup allele.
-- Defining polymorphic sites: We consider polymorphic sites to be any site where at least one ingroup individual has a non-reference allele. In most cases this is intuitive, however there are two edge cases worth pointing out. First, if all ingroup individuals are homozygous alternate, we will count that position as a polymorphism. This has implications if the reference genome is from a different population or species than your ingroup sequence. Second, we consider sites with shared polymorphism between the ingroup and the outgroup to be polymorphic, since we do not consider outgroup sequence at all when defining polymorphisms.
-- Site frequency: We do not filter any site based on frequency. For now, if you want to exclude singletons or other low-frequency sites from MK calculations, you need to remove these sites from your VCF before running degenotate. 
+- Defining polymorphic sites: We consider polymorphic sites to be any site where at least one ingroup individual has a non-reference allele. In most cases this is intuitive, however there are two edge cases worth pointing out. First, if all ingroup individuals are homozygous alternate, we will count that position as a polymorphism **unless the `--no-fixed-in` option is specified**. This has implications if the reference genome is from a different population or species than your ingroup sequence. Second, we consider sites with shared polymorphism between the ingroup and the outgroup to be polymorphic, since we do not consider outgroup sequence at all when defining polymorphisms.
+- Site frequency: By default, we do not filter any site based on frequency. Use the `-maf` option to specify a minimum ingroup minor allele frequency to consider sites. For example, with `-maf 0.3`, sites will only be considered for polymorphism if the minor allele exists in 30% of haplotypes (2 times the number of individuals). For now, if you want to exclude singletons or other low-frequency **fixed differences** from MK calculations, you need to remove these sites from your VCF before running degenotate. 
 
 **Any of these assumptions may change in future releases.** 
