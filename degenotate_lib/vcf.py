@@ -105,6 +105,9 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
                 continue;
             # Look up the alleles at the current position and if there are no alternate alleles (invariant site), skip
 
+            #if len(alt_nts != 1):
+            # TODO: ADD WARNING
+
             if strand == "-":
                 alt_nts = [ globs['complement'][base] for base in alt_nts ];    
             # For transcripts on the negative strand, the alternate alleles in the VCF

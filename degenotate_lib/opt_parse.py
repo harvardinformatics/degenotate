@@ -27,7 +27,7 @@ def optParse(globs):
 
     parser.add_argument("-s", dest="in_seq", help="Either a directory containing individual, in-frame coding sequence files or a single file containing multipl in-frame coding sequences on which to calculate degeneracy. Only one of -a/-g OR -s is REQUIRED.", default=False);
     
-    parser.add_argument("-v", dest="vcf_file", help="Optional VCF file with in and outgroups to output polymorphic and fixed differences for MK tests.", default=False);
+    parser.add_argument("-v", dest="vcf_file", help="Optional VCF file with in and outgroups to output polymorphic and fixed differences for MK tests. The VCF should contain SNPs only (no indels or structural variants).", default=False);
     parser.add_argument("-u", dest="vcf_outgroups", help="A comma separated list of sample IDs in the VCF file that make up the outgroup (e.g. 'sample1,sample2') or a file with one sample per line.", default=False);
     parser.add_argument("-e", dest="vcf_exclude", help="A comma separated list of sample IDs in the VCF file to exclude (e.g. 'sample1,sample2') or a file with one sample per line.", default=False);
     # Input

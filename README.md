@@ -182,7 +182,7 @@ When provided with a multi-sample VCF file that includes outgroup samples, degen
 | `-a` | A GFF or GTF file that contains the coordinates of transcripts in the provided genome file (`-g`). Only one of -`a`/`-g` OR `-s` is REQUIRED. |
 | `-g` | A FASTA file containing a genome. `-a` must also be specified. Only one of `-a`/`-g` OR `-s` is REQUIRED. |
 | `-s` | Either a directory containing individual, in-frame coding sequence files or a single file containing multipl in-frame coding sequences on which to calculate degeneracy. Only one of `-a`/`-g` OR `-s` is REQUIRED. |
-| `-v` | Optional VCF file with in and outgroups to output polymorphic and fixed differences for MK tests. |
+| `-v` | Optional VCF file with in and outgroups to output polymorphic and fixed differences for MK tests. The VCF should contain SNPs only (no indels or structural variants). |
 | `-u` | A comma separated list of sample IDs in the VCF file that make up the outgroup (e.g. 'sample1,sample2') or a file with one sample per line. |
 | `-e` | A comma separated list of sample IDs in the VCF file to exclude (e.g. 'sample1,sample2') or a file with one sample per line. |
 | `-o` |  Desired output directory. This will be created for you if it doesn't exist. Default: `degenotate-[date]-[time]` |
