@@ -105,8 +105,11 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
                 continue;
             # Look up the alleles at the current position and if there are no alternate alleles (invariant site), skip
 
-            #if len(alt_nts != 1):
-            # TODO: ADD WARNING
+            if not all(len(alt) == 1 for alt in alt_nts):
+                CORE.printWrite(globs['logfilename'], 3, "# WARNING: invalid allele in VCF file at position " + str(rec.start + 1) + "....skipping");
+                globs['warnings'] += 1;                    
+                continue;
+            # A warning for alternate alleles that are longer than one base (indels, svs)
 
             if strand == "-":
                 alt_nts = [ globs['complement'][base] for base in alt_nts ];    
@@ -241,7 +244,7 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
         # Convert the fixed difference codons from lists to strings
     # End bookkeeping loop
     #sys.exit();
-    return mk_codons;
+    return mk_codons, globs;
 
 #############################################################################
 

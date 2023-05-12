@@ -313,7 +313,7 @@ def processCodons(globs):
                 #define coordinate shift based on frame
                 #transcript_position = extra_leading_nt;
 
-                mk_codons = VCF.getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, extra_trailing_nt)
+                mk_codons, globs = VCF.getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, extra_trailing_nt)
                 # Call get variants for this transcript: returns a dictionary with the key being the index of each codon in codons with values as follows:
                 # 'poly' :       A list of codons that incorporate all SNPs in the ingroup samples, one codon
                 #                per alternate allele per site. As is, this list will never have the reference codon in it,
