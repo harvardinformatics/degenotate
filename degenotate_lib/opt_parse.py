@@ -27,7 +27,7 @@ def optParse(globs):
 
     parser.add_argument("-s", dest="in_seq", help="Either a directory containing individual, in-frame coding sequence files or a single file containing multipl in-frame coding sequences on which to calculate degeneracy. Only one of -a/-g OR -s is REQUIRED.", default=False);
     
-    parser.add_argument("-v", dest="vcf_file", help="Optional VCF file with in and outgroups to output polymorphic and fixed differences for MK tests.", default=False);
+    parser.add_argument("-v", dest="vcf_file", help="Optional VCF file with in and outgroups to output polymorphic and fixed differences for MK tests. The VCF should contain SNPs only (no indels or structural variants).", default=False);
     parser.add_argument("-u", dest="vcf_outgroups", help="A comma separated list of sample IDs in the VCF file that make up the outgroup (e.g. 'sample1,sample2') or a file with one sample per line.", default=False);
     parser.add_argument("-e", dest="vcf_exclude", help="A comma separated list of sample IDs in the VCF file to exclude (e.g. 'sample1,sample2') or a file with one sample per line.", default=False);
     # Input
@@ -42,7 +42,7 @@ def optParse(globs):
     parser.add_argument("-la", dest="write_longest_aa", help="The same as -l, but writes translated amino acid sequences instead. Both -l and -la can be specified. Default file name is 'cds-aa-longest.fa'.", nargs='?', const="default", default=False);
     parser.add_argument("-x", dest="extract_seq", help="Extract sites of a certain degeneracy. For instance, to extract 4-fold degenerate sites enter '4'. To extract 2- and 4-fold degenerate sites enter '24' and so on.", default=False);
     parser.add_argument("-m", dest="min_length", help="The minimum length of a transcript for it to be counted. Default (and global min): 3", default=False);
-    parser.add_argument("-maf", dest="maf_cutoff", help="The minor allele frequency cutoff for MK tests. Sites where alternate alleles in the ingroup are below this frequency will be excluded. Default: 1 / N, where N is the number of ingroup samples", default=False);
+    parser.add_argument("-maf", dest="maf_cutoff", help="The minor allele frequency cutoff for MK tests. Sites where alternate alleles in the ingroup are below this frequency will be excluded. Default: 1 / 2N, where N is the number of ingroup samples", default=False);
     #parser.add_argument("-p", dest="num_procs", help="The total number of processes that degenotate can use. Default: 1.", type=int, default=1);
     # User params
 

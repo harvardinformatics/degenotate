@@ -1,3 +1,6 @@
+2023.05.12
+- Added warnings for and skip alternate alleles longer than 1bp in the VCF
+
 2023.04.26
 - Added the `-maf` option that allows the user to specify a minor allele frequency cutoff for ingroups in the MK tests; alleles below the specified frequency will be excluded. The default `-maf` cutoff is 1 / 2N where N is the number of ingroup samples.
 - Added `--no-fixed-ingroup` option that will exclude sites from MK tests if all ingroup samples are fixed for an alternate allele, which is likely an error in the reference
