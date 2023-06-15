@@ -95,7 +95,7 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
     # Check if records returns anything
     if empty:
     # No record at this position, which means no variation in this transcript
-        return mk_codons;
+        return mk_codons, globs;
     else:
     # one or more records at this position    
         for rec in transcript_records:
