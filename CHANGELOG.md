@@ -1,3 +1,6 @@
+2023.08.29
+- Fixed bug with processing CDS fasta files
+
 2023.05.12
 - Added warnings for and skip alternate alleles longer than 1bp in the VCF
 

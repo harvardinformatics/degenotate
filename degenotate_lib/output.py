@@ -93,8 +93,18 @@ def initializeTranscriptSummary(summary_stream):
 def writeTranscriptSummary(globs, transcript, sum_dict, summary_stream):
 # Writes the summary output for a transcript including counts of sites per fold
 
-    outline = [ transcript, globs['annotation'][transcript]['gene-id'], str(globs['annotation'][transcript]['cdslen']),  
-                str(globs['annotation'][transcript]['len']), str(globs['annotation'][transcript]['longest']) ];
+    if globs['gxf-file']:
+        geneid = globs['annotation'][transcript]['gene-id']
+        cdslen = str(globs['annotation'][transcript]['cdslen'])
+        mrnalen = str(globs['annotation'][transcript]['len'])
+        longest = str(globs['annotation'][transcript]['longest']) 
+    else:
+        geneid = transcript
+        cdslen = str(len(globs['cds-seqs'][transcript]))
+        mrnalen = "NA"
+        longest = "NA"
+
+    outline = [ transcript, geneid, cdslen,  mrnalen, longest];
     outline += [ str(sum_dict[fold]) for fold in sum_dict ];
     summary_stream.write("\t".join(outline) + "\n");
     # Compile and write the transcript summary line to the transcript outfile 

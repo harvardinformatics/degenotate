@@ -201,6 +201,7 @@ def processCodons(globs):
 
             if globs['gxf-file']:
                 frame = globs['annotation'][transcript]['start-frame']
+                strand = globs['annotation'][transcript]['strand']
 
                 if frame is None:
                     CORE.printWrite(globs['logfilename'], 3, "# WARNING: transcript " + transcript + " has an unknown frame....skipping");
@@ -209,6 +210,7 @@ def processCodons(globs):
             # Get the frame when input is a gxf+genome
             else:
                 frame = getFrame(globs['cds-seqs'][transcript]);
+                strand = "+"
                 if frame != 0:
                     CORE.printWrite(globs['logfilename'], 3, "# WARNING: transcript " + transcript + " is partial with unknown frame....skipping");
                     globs['warnings'] += 1;                    
@@ -415,7 +417,7 @@ def processCodons(globs):
             # End ns method block
             ##########
 
-            OUT.writeBed(transcript_output['bed'], bedfile, globs['annotation'][transcript]['strand']);
+            OUT.writeBed(transcript_output['bed'], bedfile, strand);
             # Write the bed output for every site in this transcript
 
             OUT.writeTranscriptSummary(globs, transcript, transcript_output['summary'], transcriptfile);
