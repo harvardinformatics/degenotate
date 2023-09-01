@@ -44,6 +44,9 @@ def readFeatures(globs, file_reader, line_reader, feature_list, id_format, paren
             feature_type, seq_header, start, end, strand, phase, feature_info = line[2], line[0], int(line[3]), int(line[4]), line[6], line[7], line[8].split(info_field_splitter);
             # Unpack the pertinent information from the current line into more readable variables.
 
+            feature_info = list(filter(None, feature_info));
+            # Remove empty strings from the feature list in case the gff field has a trailing semicolon
+
             if feature_info[-1][-1] == ";":
                 feature_info[-1] = feature_info[-1][:-1];
             # For gtf files, the field splitter includes a space ("; "), meaning the last entry of feature_info will still contain a ; (since it ends ";\n")
