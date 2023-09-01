@@ -1,3 +1,6 @@
+2023.08.31
+- Added a check for trailing semi-colons in GFF file info fields
+
 2023.08.29
 - Fixed bug with processing CDS fasta files
 
