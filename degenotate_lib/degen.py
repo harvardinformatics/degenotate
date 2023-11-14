@@ -29,7 +29,7 @@ def readCodonTable(genetic_code_file):
 def readDegen(globs):
 # Read a codon table file into a degeneracy dict and a codon dict
 # Assumes a plain text, comma-separated file with two columns
-# The first column is the three lettter (DNA) codon sequence
+# The first column is the three letter (DNA) codon sequence
 # The second column is a three digit code for the degeneracy of the first, second, and third positions
 # 0 = non-degenerate; any mutation will change the amino acid
 # 2 = two nucleotides at the position code the same AA, so 1 of the three possible
@@ -144,6 +144,42 @@ def codonHamming(codon1,codon2):
 
 #############################################################################
 
+def compute_extended_MKT(d, d0, p_high, p0_high):
+    ## Calculates extended alpha and DoS (direction of selection: https://doi.org/10.1093/molbev/msq249)
+    try:
+        ext_alpha = 1 - p_high / p0_high * d0 / d
+    except ZeroDivisionError:
+        ext_alpha = 'NA'
+    try:
+        ext_dos = d / (d + d0) - p_high / (p_high + p0_high)
+        ext_odds, ext_pval = fisher_exact([[p_high, p0_high], [d, d0]])
+    except ZeroDivisionError:
+        ext_dos = 'NA'
+        ext_pval = 'NA'
+    return ext_alpha, ext_dos, ext_pval
+
+#############################################################################
+
+
+def compute_imputed_MKT(p, p0, d, d0, p_high, p0_high, p_low, p0_low):
+    ## Calculates imputed alpha and DoS (direction of selection: https://doi.org/10.1093/molbev/msq249)
+
+    try:
+        p_wd = p_low - p_high / p0_high * p0_low
+        imp_alpha = 1 - (p - p_wd) / p0 * d0 / d
+    except ZeroDivisionError:
+        imp_alpha = 'NA'
+    try:
+        p_wd = p_low - p_high / p0_high * p0_low
+        imp_dos = d / (d + d0) - (p - p_wd) / ((p - p_wd) + p0)
+        imp_odds, imp_pval = fisher_exact([[(p - p_wd), p0], [d, d0]])
+    except ZeroDivisionError:
+        imp_dos = 'NA'
+        imp_pval = 'NA'
+    return imp_alpha, imp_dos, imp_pval
+
+#############################################################################
+
 def processCodons(globs):
 # take CDS sequence and split into list of codons, computing degeneracy, ns, or both
 
@@ -184,7 +220,7 @@ def processCodons(globs):
         for transcript in globs['cds-seqs']:
 
             transcript_output = { 'bed' : [], 
-                                  'mk' : { 'pn' : 0, 'ps' : 0, 'dn' : 0, 'ds' : 0, 'mk.pval' : 'NA', 'mk.odds.ni' : 'NA', 'dos' : 'NA' },
+                                  'mk' : { 'pn' : 0, 'ps' : 0, 'dn' : 0, 'ds' : 0, 'mk.pval' : 'NA', 'mk.odds.ni' : 'NA', 'dos' : 'NA', 'imp_dos' : 'NA', 'imp_pval' : 'NA' },
                                   'summary' : { 0 : 0, 2 : 0, 3 : 0, 4 : 0 },
                                   'seq' : "" };
             # The output lines for each transcript
@@ -248,6 +284,7 @@ def processCodons(globs):
                 if frame != 0:
                     for out_of_frame_pos in range(extra_leading_nt):
                         outline = OUT.compileBedLine(globs, transcript, transcript_region, cds_coord, globs['cds-seqs'][transcript][cds_coord], "", "", ".", ".", "");
+                        print('OUTLINE: {}'.format(outline))
                         transcript_output['bed'].append(outline);
                         # Call the output function with blank values since there is no degeneracy at this position
                         # and store the line in the output dict 
@@ -328,6 +365,10 @@ def processCodons(globs):
                 #                codon.
                 # 'fixed-flag' : A boolean that is True if fixed differences have been found and False if not.
 
+                ps_af = []
+                pn_af = []
+                # Initiate lists to store allele frequencies of syn and nonsyn polymorphisms
+
                 for codon_index in range(len(codons)):
                 # Loop over each codon by index
 
@@ -346,20 +387,24 @@ def processCodons(globs):
 
                     if mk_alleles['poly']:
                     # If there are polymorphisms
-
-                        for poly_codon in mk_alleles['poly']:
-                        # For in group variants, we treat each SNP as independent
+                        print(mk_alleles)
+                        for i in range(len(mk_alleles['poly'])):
+                            poly_codon = mk_alleles['poly'][i]
+                            af = mk_alleles['AF'][i]
+                            # For in group variants, we treat each SNP as independent
 
                             try:
                                 poly_aa = CODON_DICT[poly_codon]
                             except KeyError:
                                 continue;
                             # Look up the amino acid of the polymorphic codon
-                            
+
                             if poly_aa == ref_aa:
-                                ps += 1;
+                                # ps += 1;
+                                ps_af.append(af)
                             if poly_aa != ref_aa:
-                                pn += 1;
+                                # pn += 1;
+                                pn_af.append(af)
                             # If the SNP doesn't change the AA from the reference, increment ps, otherwise pn
 
                             # print(transcript, codon_index, codon, poly_codon, ref_aa, poly_aa, sep=":")
@@ -397,12 +442,6 @@ def processCodons(globs):
                     # End fixed diff block
                     ##########
 
-                    transcript_output['mk']['pn'] += pn;
-                    transcript_output['mk']['ps'] += ps;
-                    transcript_output['mk']['dn'] += dn;
-                    transcript_output['mk']['ds'] += ds;
-                    # Increment the counts for each site type for this transcript
-
                     # try:
                     #     globs['nonsyn'][transcript][transcript_position] = MKTable(pn,ps,dn,ds)
                     # except KeyError:
@@ -427,17 +466,60 @@ def processCodons(globs):
                 OUT.writeSeq(transcript_output['header'], transcript_output['seq'], seq_stream);
 
             if "ns" in globs['codon-methods']:
-                transcript_output['mk']['mk.odds.ni'], transcript_output['mk']['mk.pval'] = fisher_exact([[transcript_output['mk']['pn'], transcript_output['mk']['ps']], [transcript_output['mk']['dn'], transcript_output['mk']['ds']]]);
+                # transcript_output['mk']['mk.odds.ni'], transcript_output['mk']['mk.pval'] = fisher_exact([[transcript_output['mk']['pn'], transcript_output['mk']['ps']], [transcript_output['mk']['dn'], transcript_output['mk']['ds']]]);
                 # Do the MK test and save the pvalue and odds ratio (as the neutrality index)
 
-                d_sum = transcript_output['mk']['dn'] + transcript_output['mk']['ds'];
-                p_sum = transcript_output['mk']['pn'] + transcript_output['mk']['ps'];
-                if d_sum and p_sum:
-                    dos_d = transcript_output['mk']['dn'] / d_sum;
-                    dos_p = transcript_output['mk']['pn'] / p_sum;
-                    transcript_output['mk']['dos'] = dos_d - dos_p;
-                # Calculate the direction of selection (https://doi.org/10.1093/molbev/msq249)
+                if not globs['ingroup-maf-cutoff']:
+                    globs['ingroup-maf-cutoff'] = 1 / globs['num-ingroup-chr']
+                ext_cutoff = globs['ingroup-maf-cutoff']
+                # singletons
+                if not globs['imp-maf-cutoff']:
+                    globs['imp-maf-cutoff'] = 0.15
+                imp_cutoff = globs['imp-maf-cutoff']
+                # cutoff for imputed MKT
 
+                d = dn
+                d0 = ds
+                pn_af_high = [i for i in pn_af if i > ext_cutoff]
+                ps_af_high = [i for i in ps_af if i > ext_cutoff]
+                p_high = len(pn_af_high)
+                p0_high = len(ps_af_high)
+                ext_alpha, ext_dos, ext_pval = compute_extended_MKT(d, d0, p_high, p0_high)
+                # calculate alpha and DoS with a standard low AF cutoff = extended MKT
+
+                pn_af_high = [i for i in pn_af if i > imp_cutoff]
+                pn_af_low = [i for i in pn_af if (i <= imp_cutoff) & (i > ext_cutoff)]
+                ps_af_high = [i for i in ps_af if i > imp_cutoff]
+                ps_af_low = [i for i in ps_af if (i <= imp_cutoff) & (i > ext_cutoff)]
+                p_high = len(pn_af_high)
+                p0_high = len(ps_af_high)
+                p_low = len(pn_af_low)
+                p0_low = len(ps_af_low)
+                print('p_high = {}, p_low = {}, p0_high = {}, p0_low = {}'.format(p_high, p_low, p0_high, p0_low))
+                p = p_high + p_low
+                p0 = p0_high + p0_low
+                imp_alpha, imp_dos, imp_pval = compute_imputed_MKT(p, p0, d, d0, p_high, p0_high, p_low, p0_low)
+                # calculate alpha and DoS in the imputed MKT framework
+
+                transcript_output['mk']['pn'] = p
+                transcript_output['mk']['ps'] = p0
+                transcript_output['mk']['dn'] = dn
+                transcript_output['mk']['ds'] = ds
+                # Increment the counts for each site type for this transcript
+
+                # d_sum = transcript_output['mk']['dn'] + transcript_output['mk']['ds'];
+                # p_sum = transcript_output['mk']['pn'] + transcript_output['mk']['ps'];
+                # if d_sum and p_sum:
+                #     dos_d = transcript_output['mk']['dn'] / d_sum;
+                #     dos_p = transcript_output['mk']['pn'] / p_sum;
+                #     transcript_output['mk']['dos'] = dos_d - dos_p;
+
+                transcript_output['mk']['dos'] = ext_dos
+                transcript_output['mk']['imp_dos'] = imp_dos
+                transcript_output['mk']['pval'] = ext_pval
+                transcript_output['mk']['imp_pval'] = imp_pval
+
+                print(transcript_output['mk'])
                 OUT.writeMK(transcript, transcript_output['mk'], mk_stream);
             # Write the MK table for this transcript
 

@@ -120,6 +120,10 @@ def init():
         # Currently defaults to 1 / 2N, where N is the number of ingroup samples, so this has to be calculated
         # after we read the VCF
 
+        'imp-maf-cutoff' : False,
+        # The frequency cutoff for the minor allele in the ingroups to divide low and high allele frequencies
+        # for calculating the fraction of weakly deleterious polymorphisms for imputed MKT calculation
+
         'num-procs' : 1,
         # Number of processes to use; currently multiprocessing not implemented
 

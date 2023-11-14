@@ -60,7 +60,7 @@ def read(globs):
 def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, extra_trailing_nt):
 # Gets variant codons in the in- and outgroups
 
-    mk_codons = { c : { 'poly' : [], 'fixed' : list(codons[c]), 'fixed-flag' : False } for c in range(len(codons)) };
+    mk_codons = { c : { 'poly' : [], 'fixed' : list(codons[c]), 'fixed-flag' : False, 'AF' : [] } for c in range(len(codons)) };
     #mk_codons = { c : { 'ingroup-poly-samples' : [], 'ingroup-ref-samples' : [], 'poly' : defaultdict(int), 'fixed' : list(codons[c]), 'fixed-flag' : False } for c in range(len(codons)) };
     #mk_codons = { c : { 'ref' : { codons[c] : 0 }, 'poly' : {}, 'fixed' : list(codons[c]), 'fixed-flag' : False } for c in range(len(codons)) };
     # This dictionary will keep track of polymorphic codons and their frequencies (initialized as empty dict)
@@ -91,148 +91,144 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
     transcript_records = globs['vcf'].fetch(transcript_region, adj_ts_start, adj_ts_end);
     # Look up all variant records in the range of the adjusted transcript start and end coordinates
 
-    empty = next(transcript_records, None) is None
-    # Check if records returns anything
-    if empty:
-    # No record at this position, which means no variation in this transcript
-        return mk_codons, globs;
-    else:
-    # one or more records at this position    
-        for rec in transcript_records:
+    for rec in transcript_records:
 
-            alt_nts = rec.alts;
-            if not alt_nts:
-                continue;
-            # Look up the alleles at the current position and if there are no alternate alleles (invariant site), skip
+        alt_nts = rec.alts;
+        if not alt_nts:
+            continue;
+        # Look up the alleles at the current position and if there are no alternate alleles (invariant site), skip
 
-            if not all(len(alt) == 1 for alt in alt_nts):
-                CORE.printWrite(globs['logfilename'], 3, "# WARNING: invalid allele in VCF file at position " + str(rec.start + 1) + "....skipping");
-                globs['warnings'] += 1;                    
-                continue;
-            # A warning for alternate alleles that are longer than one base (indels, svs)
+        if not all(len(alt) == 1 for alt in alt_nts):
+            CORE.printWrite(globs['logfilename'], 3, "# WARNING: invalid allele in VCF file at position " + str(rec.start + 1) + "....skipping");
+            globs['warnings'] += 1;
+            continue;
+        # A warning for alternate alleles that are longer than one base (indels, svs)
 
-            if strand == "-":
-                alt_nts = [ globs['complement'][base] for base in alt_nts ];    
-            # For transcripts on the negative strand, the alternate alleles in the VCF
-            # need to be complemented      
+        if strand == "-":
+            alt_nts = [ globs['complement'][base] for base in alt_nts ];
+        # For transcripts on the negative strand, the alternate alleles in the VCF
+        # need to be complemented
 
-            rec_pos = rec.start + 1
-            # Adjust 0-based pysam coordinate to 1-based gff coordinate here
+        rec_pos = rec.start + 1
+        # Adjust 0-based pysam coordinate to 1-based gff coordinate here
 
-            if rec_pos not in globs['coords-rev'][transcript]:
-                continue;
-            # Skip any SNPs within the range of the transcript start and end,
-            # but not in the CDS
+        if rec_pos not in globs['coords-rev'][transcript]:
+            continue;
+        # Skip any SNPs within the range of the transcript start and end,
+        # but not in the CDS
 
-            rec_transcript_pos = globs['coords-rev'][transcript][rec_pos];
-            # Look up the position of the record relative to the start of
-            # the transcript
+        rec_transcript_pos = globs['coords-rev'][transcript][rec_pos];
+        # Look up the position of the record relative to the start of
+        # the transcript
 
-            adj_rec_pos = rec_transcript_pos - start_pad;
-            # Adjust the transcript position based on the number of extra leading nts
+        adj_rec_pos = rec_transcript_pos - start_pad;
+        # Adjust the transcript position based on the number of extra leading nts
 
-            if adj_rec_pos < 1:
-                continue;
-            #if the variant is in the partial starting codon, skip it
+        if adj_rec_pos < 1:
+            continue;
+        #if the variant is in the partial starting codon, skip it
 
-            rec_codon_pos = math.floor(adj_rec_pos / 3);
-            # Look up the codon position of the adjusted record position
-            # This is also the key for mk_codons
+        rec_codon_pos = math.floor(adj_rec_pos / 3);
+        # Look up the codon position of the adjusted record position
+        # This is also the key for mk_codons
 
-            codon_pos = (adj_rec_pos) % 3;
-            # The position of the record within the codon, either 0, 1, or 2
+        codon_pos = (adj_rec_pos) % 3;
+        # The position of the record within the codon, either 0, 1, or 2
 
-            try: 
-                ref_codon = codons[rec_codon_pos];
-            except IndexError:
-                continue;
-                # an IndexError here should mean that we are in a last partial codon and we should just ignore this variant
-                # however we should probably add some code to formally confirm this before just skipping
-            # Look up the codon at the record's codon position
+        try:
+            ref_codon = codons[rec_codon_pos];
+        except IndexError:
+            continue;
+            # an IndexError here should mean that we are in a last partial codon and we should just ignore this variant
+            # however we should probably add some code to formally confirm this before just skipping
+        # Look up the codon at the record's codon position
 
-            in_allele_counts = defaultdict(int);
-            in_hom_alts = defaultdict(int);
-            out_allele_counts = defaultdict(int);
-            # Dicts for allele counts in each group
+        in_allele_counts = defaultdict(int);
+        in_hom_alts = defaultdict(int);
+        out_allele_counts = defaultdict(int);
+        # Dicts for allele counts in each group
 
-            ####################
+        ####################
 
-            for sample in globs['vcf-ingroups']:
-                if rec.samples[sample]['GT'][0] == rec.samples[sample]['GT'][1] and rec.samples[sample]['GT'] != (0,0):
+        for sample in globs['vcf-ingroups']:
+
+            for allele in rec.samples[sample]['GT']:
+                if allele is None:
+                    continue
+                # Skip missing data
+                in_allele_counts[allele] += 1;
+                # Count alleles in the ingroups
+                if (rec.samples[sample]['GT'][0] == rec.samples[sample]['GT'][1] and rec.samples[sample]['GT'] != (0,0)):
                     in_hom_alts[rec.samples[sample]['GT']] += 1;
                 # Check if the sample is homozygous for an alternate allele and add that to the count of in_hom_alts here
 
-                for allele in rec.samples[sample]['GT']:
-                    if allele is None:
-                        continue
-                    # Skip missing data
-                    in_allele_counts[allele] += 1;
-                # Count alleles in the ingroups
-            ## End ingroup allele counting block
+        ## End ingroup allele counting block
 
-            ## NOTE: Should we be comparing to ingroups with called genotypes here instead of number of all ingroups?
+        ## NOTE: Should we be comparing to ingroups with called genotypes here instead of number of all ingroups?
 
-            if not globs['count-fixed-alt-ingroups'] and len(in_hom_alts) == 1 and sum(in_hom_alts.values()) == globs['num-ingroups']:
-                pass;
-            # If we don't want to count fixed ingroups, check to see if any alt alleles are fixed and skip if so
+        if not globs['count-fixed-alt-ingroups'] and len(in_hom_alts) == 1 and sum(in_hom_alts.values()) == globs['num-ingroups']:
+            pass;
+        # If we don't want to count fixed ingroups, check to see if any alt alleles are fixed and skip if so
+        else:
+            for allele in in_allele_counts:
+                if allele == 0:
+                    continue;
+                # Construct a codon for each allele in the ingroups except the
+                # reference allele (since that would match the reference codon)
+
+                # if in_allele_counts[allele] / globs['num-ingroup-chr'] < globs['ingroup-maf-cutoff']:
+                #     continue;
+                # Make sure this allele is present at a frequency higher than the specified cutoff
+                frequency = in_allele_counts[allele] / globs['num-ingroup-chr']
+
+                polymorphic_codon = list(ref_codon);
+                # Convert the ref_codon to a list so we can change nts by index
+
+                polymorphic_codon[codon_pos] = alt_nts[int(allele)-1]
+                mk_codons[rec_codon_pos]['poly'].append(polymorphic_codon)
+                mk_codons[rec_codon_pos]['AF'].append(frequency)
+                # Add the polymorphic codon to the list of polymorphic codons
+            ## End ingroup codon loop
+        ## End ingroup codon block
+
+        ####################
+
+        for sample in globs['vcf-outgroups']:
+            for allele in rec.samples[sample]['GT']:
+                if allele is None:
+                    continue
+                out_allele_counts[allele] += 1;
+        # Count alleles in the outgroup
+
+        if 0 in out_allele_counts or not out_allele_counts:
+            continue;
+        # If there are any reference alleles (0) in the outgroup, then this cannot
+        # be a fixed difference and it should be skipped
+        # Likewise, in the case of no outgroup alleles (e.g. all missing data), this
+        # should be skipped, else it would crash if there are also no ingroup alleles
+        # (because of missing data or because all alt alleles are in the excluded samples)
+
+        if all(alleles not in in_allele_counts for alleles in out_allele_counts):
+        # Sites contain fixed differences only if all the alleles in the outgroup do not
+        # exist in the ingroup
+
+            mk_codons[rec_codon_pos]['fixed-flag'] = True;
+
+            if len(out_allele_counts) == 1:
+                mk_codons[rec_codon_pos]['fixed'][codon_pos] = alt_nts[list(out_allele_counts)[0]-1];
+            # If there is only one allele in the outgroup (the site is not polymorphic in the outgroup)
+            # add that allele to the fixed_diff_codon by looking it up in the alt_nts list
+
             else:
-                for allele in in_allele_counts:
-                    if allele == 0:
-                        continue;
-                    # Construct a codon for each allele in the ingroups except the
-                    # reference allele (since that would match the reference codon)         
-
-                    if in_allele_counts[allele] / globs['num-ingroup-chr'] < globs['ingroup-maf-cutoff']:
-                        continue;
-                    # Make sure this allele is present at a frequency higher than the specified cutoff
-
-                    polymorphic_codon = list(ref_codon);
-                    # Convert the ref_codon to a list so we can change nts by index
-
-                    polymorphic_codon[codon_pos] = alt_nts[int(allele)-1];
-                    mk_codons[rec_codon_pos]['poly'].append(polymorphic_codon);
-                    # Add the polymorphic codon to the list of polymorphic codons
-                ## End ingroup codon loop
-            ## End ingroup codon block
-
-            ####################
-
-            for sample in globs['vcf-outgroups']:
-                for allele in rec.samples[sample]['GT']:
-                    if allele is None:
-                        continue
-                    out_allele_counts[allele] += 1;
-            # Count alleles in the outgroup              
-
-            if 0 in out_allele_counts or not out_allele_counts:
-                continue;
-            # If there are any reference alleles (0) in the outgroup, then this cannot
-            # be a fixed difference and it should be skipped
-            # Likewise, in the case of no outgroup alleles (e.g. all missing data), this
-            # should be skipped, else it would crash if there are also no ingroup alleles
-            # (because of missing data or because all alt alleles are in the excluded samples)
-
-            if all(alleles not in in_allele_counts for alleles in out_allele_counts):
-            # Sites contain fixed differences only if all the alleles in the outgroup do not
-            # exist in the ingroup 
-
-                mk_codons[rec_codon_pos]['fixed-flag'] = True;
-
-                if len(out_allele_counts) == 1:
-                    mk_codons[rec_codon_pos]['fixed'][codon_pos] = alt_nts[list(out_allele_counts)[0]-1];                   
-                # If there is only one allele in the outgroup (the site is not polymorphic in the outgroup)
-                # add that allele to the fixed_diff_codon by looking it up in the alt_nts list
-                
-                else:
-                    max_allele = [ allele for allele, count in out_allele_counts.items() if count == max(out_allele_counts.values()) ];
-                    max_allele = random.choice(max_allele);
-                    mk_codons[rec_codon_pos]['fixed'][codon_pos] = alt_nts[max_allele-1];
-                # If there is more than one alternate allele in the outgroup (the site is polymorphic in the outgroup)
-                # use the allele at the highest frequency
-                # If more than one allele exists at the highest frequency, pick one randomly
-            ## End outgroup block
-            ####################
-        ## End transcript record loop
+                max_allele = [ allele for allele, count in out_allele_counts.items() if count == max(out_allele_counts.values()) ];
+                max_allele = random.choice(max_allele);
+                mk_codons[rec_codon_pos]['fixed'][codon_pos] = alt_nts[max_allele-1];
+            # If there is more than one alternate allele in the outgroup (the site is polymorphic in the outgroup)
+            # use the allele at the highest frequency
+            # If more than one allele exists at the highest frequency, pick one randomly
+        ## End outgroup block
+        ####################
+    ## End transcript record loop
     ## End transcript record block
 
     ####################
@@ -244,6 +240,7 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
         # Convert the fixed difference codons from lists to strings
     # End bookkeeping loop
     #sys.exit();
+
     return mk_codons, globs;
 
 #############################################################################
