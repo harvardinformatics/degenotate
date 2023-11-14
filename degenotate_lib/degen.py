@@ -146,6 +146,11 @@ def codonHamming(codon1,codon2):
 
 def compute_extended_MKT(d, d0, p_high, p0_high):
     ## Calculates extended alpha and DoS (direction of selection: https://doi.org/10.1093/molbev/msq249)
+
+    try:
+        from scipy.stats import fisher_exact
+    except:
+        CORE.errorOut("DEGEN2", "Missing scipy dependency. Please install and try again: https://anaconda.org/conda-forge/scipy", globs);
     try:
         ext_alpha = 1 - p_high / p0_high * d0 / d
     except ZeroDivisionError:
@@ -164,6 +169,10 @@ def compute_extended_MKT(d, d0, p_high, p0_high):
 def compute_imputed_MKT(p, p0, d, d0, p_high, p0_high, p_low, p0_low):
     ## Calculates imputed alpha and DoS (direction of selection: https://doi.org/10.1093/molbev/msq249)
 
+    try:
+        from scipy.stats import fisher_exact
+    except:
+        CORE.errorOut("DEGEN2", "Missing scipy dependency. Please install and try again: https://anaconda.org/conda-forge/scipy", globs);
     try:
         p_wd = p_low - p_high / p0_high * p0_low
         imp_alpha = 1 - (p - p_wd) / p0 * d0 / d
@@ -441,7 +450,9 @@ def processCodons(globs):
                         # to compare
                     # End fixed diff block
                     ##########
-
+                    
+                    transcript_output['mk']['dn'] += dn
+                    transcript_output['mk']['ds'] += ds
                     # try:
                     #     globs['nonsyn'][transcript][transcript_position] = MKTable(pn,ps,dn,ds)
                     # except KeyError:
@@ -465,7 +476,7 @@ def processCodons(globs):
             if globs['outseq']:
                 OUT.writeSeq(transcript_output['header'], transcript_output['seq'], seq_stream);
 
-            if "ns" in globs['codon-methods']:
+            if "ns" in globs['codon-methods']:                                                                                    # For the MK test, check if scipy is available and error out if not
                 # transcript_output['mk']['mk.odds.ni'], transcript_output['mk']['mk.pval'] = fisher_exact([[transcript_output['mk']['pn'], transcript_output['mk']['ps']], [transcript_output['mk']['dn'], transcript_output['mk']['ds']]]);
                 # Do the MK test and save the pvalue and odds ratio (as the neutrality index)
 
@@ -478,8 +489,10 @@ def processCodons(globs):
                 imp_cutoff = globs['imp-maf-cutoff']
                 # cutoff for imputed MKT
 
-                d = dn
-                d0 = ds
+                d = transcript_output['mk']['dn']
+                d0 = transcript_output['mk']['ds']
+                print('for MKT: dn = {}; ds = {}'.format(d, d0))
+
                 pn_af_high = [i for i in pn_af if i > ext_cutoff]
                 ps_af_high = [i for i in ps_af if i > ext_cutoff]
                 p_high = len(pn_af_high)
@@ -503,8 +516,6 @@ def processCodons(globs):
 
                 transcript_output['mk']['pn'] = p
                 transcript_output['mk']['ps'] = p0
-                transcript_output['mk']['dn'] = dn
-                transcript_output['mk']['ds'] = ds
                 # Increment the counts for each site type for this transcript
 
                 # d_sum = transcript_output['mk']['dn'] + transcript_output['mk']['ds'];
