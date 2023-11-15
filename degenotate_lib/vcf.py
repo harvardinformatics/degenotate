@@ -179,6 +179,7 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
                 # if in_allele_counts[allele] / globs['num-ingroup-chr'] < globs['ingroup-maf-cutoff']:
                 #     continue;
                 # Make sure this allele is present at a frequency higher than the specified cutoff
+
                 frequency = in_allele_counts[allele] / globs['num-ingroup-chr']
 
                 polymorphic_codon = list(ref_codon);
@@ -199,6 +200,9 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
                     continue
                 out_allele_counts[allele] += 1;
         # Count alleles in the outgroup
+
+        print('IN allele count = {}, OUT allele count = {}, IN hom alts = {}'.format(in_allele_counts, out_allele_counts, in_hom_alts))
+        print('AF = {}'.format(frequency))
 
         if 0 in out_allele_counts or not out_allele_counts:
             continue;
@@ -228,6 +232,7 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
             # If more than one allele exists at the highest frequency, pick one randomly
         ## End outgroup block
         ####################
+
     ## End transcript record loop
     ## End transcript record block
 
