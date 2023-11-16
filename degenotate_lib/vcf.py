@@ -183,7 +183,8 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
 
                 AC = in_allele_counts[allele] # derived allele count
                 AA = rec.info['AA']
-                derived = rec.alts[allele]
+                print(rec.alts)
+                derived = rec.alts[allele - 1]
                 if derived == AA:
                     AC = AN - AC
                 # if ancestral allele is the same as derived, flip allele count
