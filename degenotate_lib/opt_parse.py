@@ -30,6 +30,7 @@ def optParse(globs):
     parser.add_argument("-v", dest="vcf_file", help="Optional VCF file with in and outgroups to output polymorphic and fixed differences for MK tests. The VCF should contain SNPs only (no indels or structural variants).", default=False);
     parser.add_argument("-u", dest="vcf_outgroups", help="A comma separated list of sample IDs in the VCF file that make up the outgroup (e.g. 'sample1,sample2') or a file with one sample per line.", default=False);
     parser.add_argument("-e", dest="vcf_exclude", help="A comma separated list of sample IDs in the VCF file to exclude (e.g. 'sample1,sample2') or a file with one sample per line.", default=False);
+    parser.add_argument("-p", dest="polarized", help="Set this to specify that the provided vcf file is polarized (=has AA (ancestral allele) in the INFO field)", action='store_true', default=False)
     # Input
 
     parser.add_argument("-o", dest="out_dest", help="Desired output directory. This will be created for you if it doesn't exist. Default: degenotate-[date]-[time]", default=False);
@@ -189,7 +190,9 @@ def optParse(globs):
             if maf_cutoff or str(maf_cutoff) == "0.0":
                 globs['ingroup-maf-cutoff'] = maf_cutoff;
             else:
-                CORE.errorOut("OP8", "The minor allele frequency (-maf) must be a number between 0 and 1.", globs);                
+                CORE.errorOut("OP8", "The minor allele frequency (-maf) must be a number between 0 and 1.", globs);
+        if args.polarized:
+            warnings.append("# WARNING: VCF was specified as polarized (-p) => will use information about ancestral allele");
     # Check for a VCF file and its associated options
 
     else:

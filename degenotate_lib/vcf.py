@@ -182,12 +182,14 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
                 # Make sure this allele is present at a frequency higher than the specified cutoff
 
                 AC = in_allele_counts[allele] # derived allele count
-                AA = rec.info['AA']
-                print(rec.alts)
-                derived = rec.alts[allele - 1]
-                if derived == AA:
-                    AC = AN - AC
-                # if ancestral allele is the same as derived, flip allele count
+
+                if globs['vcf-polarized']:
+                    AA = rec.info['AA']
+                    print(rec.alts)
+                    derived = rec.alts[allele - 1]
+                    if derived == AA:
+                        AC = AN - AC
+                    # if ancestral allele is the same as derived, flip allele count
                 AF =  AC / AN  # derived allele frequency
                 print('AF = {}'.format(AF))
                 

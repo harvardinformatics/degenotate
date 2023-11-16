@@ -61,6 +61,7 @@ def init():
         'num-ingroup-chr' : False,
         'vcf-outgroups' : False,
         'vcf-exclude' : [],
+        'vcf-polarized' : False,
         # Input VCF file
 
         'gxf-compression' : 'none',
