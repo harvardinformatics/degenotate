@@ -170,6 +170,7 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
             pass;
         # If we don't want to count fixed ingroups, check to see if any alt alleles are fixed and skip if so
         else:
+            AN = sum([in_allele_counts[allele] for allele in in_allele_counts]) # total allele number without missing data
             for allele in in_allele_counts:
                 if allele == 0:
                     continue;
@@ -180,14 +181,20 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
                 #     continue;
                 # Make sure this allele is present at a frequency higher than the specified cutoff
 
-                frequency = in_allele_counts[allele] / globs['num-ingroup-chr']
+                AC = in_allele_counts[allele] # derived allele count
+                AA = rec.info['AA']
+                derived = rec.alts[allele]
+                if derived == AA:
+                    AC = AN - AC
+                # if ancestral allele is the same as derived, flip allele count
+                AF =  AC / AN  # derived allele frequency
 
                 polymorphic_codon = list(ref_codon);
                 # Convert the ref_codon to a list so we can change nts by index
 
                 polymorphic_codon[codon_pos] = alt_nts[int(allele)-1]
                 mk_codons[rec_codon_pos]['poly'].append(polymorphic_codon)
-                mk_codons[rec_codon_pos]['AF'].append(frequency)
+                mk_codons[rec_codon_pos]['AF'].append(AF)
                 # Add the polymorphic codon to the list of polymorphic codons
             ## End ingroup codon loop
         ## End ingroup codon block
@@ -202,7 +209,7 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
         # Count alleles in the outgroup
 
         print('IN allele count = {}, OUT allele count = {}, IN hom alts = {}'.format(in_allele_counts, out_allele_counts, in_hom_alts))
-        print('AF = {}'.format(frequency))
+        print('AF = {}'.format(AF))
 
         if 0 in out_allele_counts or not out_allele_counts:
             continue;
