@@ -188,7 +188,8 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
                     AC = AN - AC
                 # if ancestral allele is the same as derived, flip allele count
                 AF =  AC / AN  # derived allele frequency
-
+                print('AF = {}'.format(AF))
+                
                 polymorphic_codon = list(ref_codon);
                 # Convert the ref_codon to a list so we can change nts by index
 
@@ -209,7 +210,6 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
         # Count alleles in the outgroup
 
         print('IN allele count = {}, OUT allele count = {}, IN hom alts = {}'.format(in_allele_counts, out_allele_counts, in_hom_alts))
-        print('AF = {}'.format(AF))
 
         if 0 in out_allele_counts or not out_allele_counts:
             continue;
