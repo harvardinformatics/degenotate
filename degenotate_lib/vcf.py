@@ -185,12 +185,13 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
 
                 if globs['vcf-polarized']:
                     AA = rec.info['AA']
-                    print(rec.alts)
+                    print('ANCESTRAL ALLELE: {}'.format(rec.alts))
                     derived = rec.alts[allele - 1]
                     if derived == AA:
                         AC = AN - AC
                     # if ancestral allele is the same as derived, flip allele count
                 AF =  AC / AN  # derived allele frequency
+                
                 print('AF = {}'.format(AF))
                 
                 polymorphic_codon = list(ref_codon);
@@ -211,8 +212,7 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
                     continue
                 out_allele_counts[allele] += 1;
         # Count alleles in the outgroup
-
-        print('IN allele count = {}, OUT allele count = {}, IN hom alts = {}'.format(in_allele_counts, out_allele_counts, in_hom_alts))
+        print('INGROUPS: {}, OUTGROUPS: {}'.format(in_allele_counts, out_allele_counts))
 
         if 0 in out_allele_counts or not out_allele_counts:
             continue;

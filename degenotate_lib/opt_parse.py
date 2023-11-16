@@ -155,6 +155,12 @@ def optParse(globs):
         # Parse the outgroup samples
 
         ##########
+        
+        if args.polarized:
+            globs['vcf-polarized'] = args.polarized;
+        # Check if provided VCF is polarized (= has ancestral allele in the INFO field)
+
+        ##########
 
         if args.vcf_exclude:
             globs['vcf-exclude'] = args.vcf_exclude;
