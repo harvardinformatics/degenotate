@@ -42,6 +42,12 @@ def read(globs):
     # A quick check to make sure all provided outgroup species are in the VCF file
     ## Outgroups
 
+    if 'AA' in globs['vcf'].header.info:
+        globs['vcf-polarized'] = True
+        CORE.printWrite(globs['logfilename'], 1, "# WARNING: " + "provided VCF appears to be polarized (has ancestral allele field in the header) => will try to recalculate derived allele frequency and run imputed MKT framework.");
+        globs['warnings'] += 1;
+    ## Check it VCF if polarized
+
     globs['vcf-ingroups'] = [ sample for sample in globs['vcf'].header.samples if sample not in globs['vcf-outgroups'] + globs['vcf-exclude'] ];
     globs['num-ingroup-chr'] = len(globs['vcf-ingroups']) * 2;
     if not globs['vcf-ingroups']:
@@ -184,7 +190,10 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
                 AC = in_allele_counts[allele] # derived allele count
 
                 if globs['vcf-polarized']:
-                    AA = rec.info['AA']
+                    try:
+                        AA = rec.info['AA']
+                    except KeyError:
+                        CORE.errorOut("the VCF header suggested it is polarized, but there is no AA (ancestral allele) field in this entry! : {}\n EXIT".format(rec))
                     print('ANCESTRAL ALLELE: {}'.format(rec.alts))
                     derived = rec.alts[allele - 1]
                     if derived == AA:
