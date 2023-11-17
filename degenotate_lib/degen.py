@@ -161,7 +161,7 @@ def compute_extended_MKT(d, d0, p_high, p0_high):
     except ZeroDivisionError:
         ext_dos = 'NA'
         ext_pval = 'NA'
-    return ext_alpha, ext_dos, ext_pval
+    return ext_odds, ext_alpha, ext_dos, ext_pval
 
 #############################################################################
 
@@ -185,7 +185,7 @@ def compute_imputed_MKT(p, p0, d, d0, p_high, p0_high, p_low, p0_low):
     except ZeroDivisionError:
         imp_dos = 'NA'
         imp_pval = 'NA'
-    return imp_alpha, imp_dos, imp_pval
+    return imp_odds, imp_alpha, imp_dos, imp_pval
 
 #############################################################################
 
@@ -229,7 +229,11 @@ def processCodons(globs):
         for transcript in globs['cds-seqs']:
 
             transcript_output = { 'bed' : [], 
-                                  'mk' : { 'pn' : 0, 'ps' : 0, 'dn' : 0, 'ds' : 0, 'mk.pval' : 'NA', 'mk.odds.ni' : 'NA', 'dos' : 'NA', 'imp_dos' : 'NA', 'imp_pval' : 'NA' },
+                                  'mk' : { 'pn' : 0, 'ps' : 0, 'dn' : 0, 'ds' : 0,                   # polymorphism counts
+                                           'pval' : 'NA', 'odds_ni' : 'NA', 'dos' : 'NA',            # standard (or extended) MKT stats
+                                           'imp.pval' : 'NA', 'imp.odds_ni': 'NA', 'imp.dos' : 'NA', # imputed MKT stats
+                                           'pn_af' : 'NA', 'ps_af' : 'NA'                            # raw allele frequencies in syn/nonsyn class
+                                            },
                                   'summary' : { 0 : 0, 2 : 0, 3 : 0, 4 : 0 },
                                   'seq' : "" };
             # The output lines for each transcript
@@ -476,9 +480,7 @@ def processCodons(globs):
             if globs['outseq']:
                 OUT.writeSeq(transcript_output['header'], transcript_output['seq'], seq_stream);
 
-            if "ns" in globs['codon-methods']:                                                                                    # For the MK test, check if scipy is available and error out if not
-                # transcript_output['mk']['mk.odds.ni'], transcript_output['mk']['mk.pval'] = fisher_exact([[transcript_output['mk']['pn'], transcript_output['mk']['ps']], [transcript_output['mk']['dn'], transcript_output['mk']['ds']]]);
-                # Do the MK test and save the pvalue and odds ratio (as the neutrality index)
+            if "ns" in globs['codon-methods']:
 
                 if not globs['ingroup-maf-cutoff']:
                     globs['ingroup-maf-cutoff'] = 1 / globs['num-ingroup-chr']
@@ -497,7 +499,7 @@ def processCodons(globs):
                 ps_af_high = [i for i in ps_af if i > ext_cutoff]
                 p_high = len(pn_af_high)
                 p0_high = len(ps_af_high)
-                ext_alpha, ext_dos, ext_pval = compute_extended_MKT(d, d0, p_high, p0_high)
+                ext_odds, ext_alpha, ext_dos, ext_pval = compute_extended_MKT(d, d0, p_high, p0_high)
                 # calculate alpha and DoS with a standard low AF cutoff = extended MKT
 
                 pn_af_high = [i for i in pn_af if i > imp_cutoff]
@@ -511,7 +513,7 @@ def processCodons(globs):
                 print('p_high = {}, p_low = {}, p0_high = {}, p0_low = {}'.format(p_high, p_low, p0_high, p0_low))
                 p = p_high + p_low
                 p0 = p0_high + p0_low
-                imp_alpha, imp_dos, imp_pval = compute_imputed_MKT(p, p0, d, d0, p_high, p0_high, p_low, p0_low)
+                imp_odds, imp_alpha, imp_dos, imp_pval = compute_imputed_MKT(p, p0, d, d0, p_high, p0_high, p_low, p0_low)
                 # calculate alpha and DoS in the imputed MKT framework
 
                 transcript_output['mk']['pn'] = p
@@ -526,9 +528,18 @@ def processCodons(globs):
                 #     transcript_output['mk']['dos'] = dos_d - dos_p;
 
                 transcript_output['mk']['dos'] = ext_dos
-                transcript_output['mk']['imp_dos'] = imp_dos
+                transcript_output['mk']['odds_ni'] = ext_odds
                 transcript_output['mk']['pval'] = ext_pval
-                transcript_output['mk']['imp_pval'] = imp_pval
+                transcript_output['mk']['imp.dos'] = imp_dos
+                transcript_output['mk']['imp.pval'] = imp_pval
+                transcript_output['mk']['imp.odds_ni'] = imp_odds
+                # store MKT stats
+
+                transcript_output['mk']['pn_af'] = ','.join(pn_af)
+                transcript_output['mk']['ps_af'] = ','.join(ps_af)
+                # store raw allele frequencies by syn/nonsyn class
+
+
 
                 print(transcript_output['mk'])
                 OUT.writeMK(transcript, transcript_output['mk'], mk_stream);
