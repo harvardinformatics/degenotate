@@ -161,6 +161,7 @@ def compute_extended_MKT(d, d0, p_high, p0_high):
     except ZeroDivisionError:
         ext_dos = 'NA'
         ext_pval = 'NA'
+        ext_odds = 'NA'
     return ext_odds, ext_alpha, ext_dos, ext_pval
 
 #############################################################################
@@ -185,6 +186,7 @@ def compute_imputed_MKT(p, p0, d, d0, p_high, p0_high, p_low, p0_low):
     except ZeroDivisionError:
         imp_dos = 'NA'
         imp_pval = 'NA'
+        imp_odds = 'NA'
     return imp_odds, imp_alpha, imp_dos, imp_pval
 
 #############################################################################
@@ -221,7 +223,7 @@ def processCodons(globs):
                 CORE.errorOut("DEGEN2", "Missing scipy dependency. Please install and try again: https://anaconda.org/conda-forge/scipy", globs);
             # For the MK test, check if scipy is available and error out if not     
 
-            mk_stream = OUT.initializeMKFile(globs['outmk']);
+            mk_stream = OUT.initializeMKFile(globs, globs['outmk']);
             # Open the MK file
         # Prep for MK tables and tests if specified
 
@@ -297,7 +299,6 @@ def processCodons(globs):
                 if frame != 0:
                     for out_of_frame_pos in range(extra_leading_nt):
                         outline = OUT.compileBedLine(globs, transcript, transcript_region, cds_coord, globs['cds-seqs'][transcript][cds_coord], "", "", ".", ".", "");
-                        print('OUTLINE: {}'.format(outline))
                         transcript_output['bed'].append(outline);
                         # Call the output function with blank values since there is no degeneracy at this position
                         # and store the line in the output dict 
@@ -400,7 +401,6 @@ def processCodons(globs):
 
                     if mk_alleles['poly']:
                     # If there are polymorphisms
-                        print(mk_alleles)
                         for i in range(len(mk_alleles['poly'])):
                             poly_codon = mk_alleles['poly'][i]
                             af = mk_alleles['AF'][i]
@@ -419,8 +419,6 @@ def processCodons(globs):
                                 # pn += 1;
                                 pn_af.append(af)
                             # If the SNP doesn't change the AA from the reference, increment ps, otherwise pn
-
-                            # print(transcript, codon_index, codon, poly_codon, ref_aa, poly_aa, sep=":")
 
                         # End polymorphic codon loop
                         ##########
@@ -493,7 +491,6 @@ def processCodons(globs):
 
                 d = transcript_output['mk']['dn']
                 d0 = transcript_output['mk']['ds']
-                print('for MKT: dn = {}; ds = {}'.format(d, d0))
 
                 pn_af_high = [i for i in pn_af if i > ext_cutoff]
                 ps_af_high = [i for i in ps_af if i > ext_cutoff]
@@ -510,7 +507,6 @@ def processCodons(globs):
                 p0_high = len(ps_af_high)
                 p_low = len(pn_af_low)
                 p0_low = len(ps_af_low)
-                print('p_high = {}, p_low = {}, p0_high = {}, p0_low = {}'.format(p_high, p_low, p0_high, p0_low))
                 p = p_high + p_low
                 p0 = p0_high + p0_low
                 imp_odds, imp_alpha, imp_dos, imp_pval = compute_imputed_MKT(p, p0, d, d0, p_high, p0_high, p_low, p0_low)
@@ -534,15 +530,12 @@ def processCodons(globs):
                 transcript_output['mk']['imp.pval'] = imp_pval
                 transcript_output['mk']['imp.odds_ni'] = imp_odds
                 # store MKT stats
-
-                transcript_output['mk']['pn_af'] = ','.join(pn_af)
-                transcript_output['mk']['ps_af'] = ','.join(ps_af)
+                
+                transcript_output['mk']['pn_af'] = ','.join([str(round(i, 2)) for i in pn_af])
+                transcript_output['mk']['ps_af'] = ','.join([str(round(i, 2)) for i in ps_af])
                 # store raw allele frequencies by syn/nonsyn class
 
-
-
-                print(transcript_output['mk'])
-                OUT.writeMK(transcript, transcript_output['mk'], mk_stream);
+                OUT.writeMK(globs, transcript, transcript_output['mk'], mk_stream);
             # Write the MK table for this transcript
 
             counter += 1;

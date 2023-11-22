@@ -34,6 +34,7 @@ def optParse(globs):
     # Input
 
     parser.add_argument("-o", dest="out_dest", help="Desired output directory. This will be created for you if it doesn't exist. Default: degenotate-[date]-[time]", default=False);
+    parser.add_argument("-sfs", dest="sfs", help="Set this to output raw allele frequencies in the mk table)", action='store_true', default=False)
     # Output
 
     parser.add_argument("-d", dest="seq_delim", help="degenotate assumes the chromosome IDs in the GFF file exactly match the sequence headers in the FASTA file. If this is not the case, use this to specify a character at which the FASTA headers will be trimmed.", default=False);
@@ -197,8 +198,6 @@ def optParse(globs):
                 globs['ingroup-maf-cutoff'] = maf_cutoff;
             else:
                 CORE.errorOut("OP8", "The minor allele frequency (-maf) must be a number between 0 and 1.", globs);
-    #    if args.polarized:
-    #        warnings.append("# WARNING: VCF was specified as polarized (-p) => will use information about ancestral allele");
     # Check for a VCF file and its associated options
 
     else:
@@ -250,6 +249,10 @@ def optParse(globs):
      
     globs['out-transcript'] = os.path.join(globs['outdir'], globs['out-transcript']);
     # Main bed file with degeneracy for all sites
+
+    if args.sfs:
+        globs['sfs'] = args.sfs;
+    # Check if the flag to output raw allele frequencies is set to True
 
     ####################
 

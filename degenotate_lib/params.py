@@ -84,6 +84,9 @@ def init():
         'overwrite' : False,
         # I/O options
 
+        'sfs' : False,
+        # Output raw allele frequencies for syn/nonsyn polymorphisms if True
+
         'genetic-code-file' : os.path.join(os.path.dirname(__file__), "codon-table.csv"),
         # The file with the genetic code
 
