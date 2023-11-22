@@ -44,7 +44,7 @@ def read(globs):
 
     if 'AA' in globs['vcf'].header.info:
         globs['vcf-polarized'] = True
-        CORE.printWrite(globs['logfilename'], 1, "# WARNING: " + "provided VCF appears to be polarized (has ancestral allele field in the header) => will try to recalculate derived allele frequency and run imputed MKT framework.");
+        CORE.printWrite(globs['logfilename'], 3, "# WARNING: " + "provided VCF appears to be polarized (has ancestral allele field in the header) => will try to recalculate derived allele frequency and run imputed MKT framework.");
         globs['warnings'] += 1;
     ## Check it VCF if polarized
 
@@ -194,14 +194,11 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
                         AA = rec.info['AA']
                     except KeyError:
                         CORE.errorOut("the VCF header suggested it is polarized, but there is no AA (ancestral allele) field in this entry! : {}\n EXIT".format(rec))
-                    print('ANCESTRAL ALLELE: {}'.format(rec.alts))
                     derived = rec.alts[allele - 1]
                     if derived == AA:
                         AC = AN - AC
                     # if ancestral allele is the same as derived, flip allele count
                 AF =  AC / AN  # derived allele frequency
-                
-                print('AF = {}'.format(AF))
                 
                 polymorphic_codon = list(ref_codon);
                 # Convert the ref_codon to a list so we can change nts by index
@@ -221,7 +218,6 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
                     continue
                 out_allele_counts[allele] += 1;
         # Count alleles in the outgroup
-        print('INGROUPS: {}, OUTGROUPS: {}'.format(in_allele_counts, out_allele_counts))
 
         if 0 in out_allele_counts or not out_allele_counts:
             continue;

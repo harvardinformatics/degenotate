@@ -448,8 +448,8 @@ def startProg(globs):
 
             if globs['vcf-polarized']:
                 CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# polarized", pad) +
-                        CORE.spacedOut(str(globs['vcf-polarized']) + " ", opt_pad) +
-            "provided VCF appears to be polarized (has ancestral allele field in the header) => will try to recalculate derived allele frequency and run imputed MKT framework.");
+            #            CORE.spacedOut(str(globs['vcf-polarized']) + " ", opt_pad) +
+             "provided VCF appears to be polarized (has ancestral allele field in the header) => will try to recalculate derived allele frequency and run imputed MKT framework.");
             # Check if VCF is polarized
 
 
