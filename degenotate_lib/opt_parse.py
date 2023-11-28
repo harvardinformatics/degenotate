@@ -446,12 +446,6 @@ def startProg(globs):
                         "These samples will be used as outgroups in the VCF file and all others as ingroups.");
             # Report VCF outgroup samples
 
-            if globs['vcf-polarized']:
-                CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# polarized", pad) +
-            #            CORE.spacedOut(str(globs['vcf-polarized']) + " ", opt_pad) +
-             "provided VCF appears to be polarized (has ancestral allele field in the header) => will try to recalculate derived allele frequency and run imputed MKT framework.");
-            # Check if VCF is polarized
-
 
             CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# -maf", pad) +
                         CORE.spacedOut(str(globs['ingroup-maf-cutoff']) + " ", opt_pad) +
