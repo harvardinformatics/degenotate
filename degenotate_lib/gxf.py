@@ -52,7 +52,6 @@ def readFeatures(globs, file_reader, line_reader, feature_list, id_format, paren
             # For gtf files, the field splitter includes a space ("; "), meaning the last entry of feature_info will still contain a ; (since it ends ";\n")
             # Remove that trailing ; here.
 
-            #print(feature_info);
 
             if feature_type in feature_list:
             # Skipping any 'unconfirmed_transcript'

@@ -61,6 +61,7 @@ def init():
         'num-ingroup-chr' : False,
         'vcf-outgroups' : False,
         'vcf-exclude' : [],
+        'vcf-polarized' : False,
         # Input VCF file
 
         'gxf-compression' : 'none',
@@ -82,6 +83,9 @@ def init():
         'logdir' : '',
         'overwrite' : False,
         # I/O options
+
+        'sfs' : False,
+        # Output raw allele frequencies for syn/nonsyn polymorphisms if True
 
         'genetic-code-file' : os.path.join(os.path.dirname(__file__), "codon-table.csv"),
         # The file with the genetic code
@@ -119,6 +123,10 @@ def init():
         # Alleles present BELOW this frequency will not be considered
         # Currently defaults to 1 / 2N, where N is the number of ingroup samples, so this has to be calculated
         # after we read the VCF
+
+        'imp-maf-cutoff' : False,
+        # The frequency cutoff for the minor allele in the ingroups to divide low and high allele frequencies
+        # for calculating the fraction of weakly deleterious polymorphisms for imputed MKT calculation
 
         'num-procs' : 1,
         # Number of processes to use; currently multiprocessing not implemented

@@ -120,20 +120,46 @@ def writeSeq(header, seq, seq_stream, linelen=60):
 
 #############################################################################
 
-def initializeMKFile(mkfilename):
+def initializeMKFile(globs, mkfilename):
 # Opens the MK output file and writes the headers
 
     mkfile = open(mkfilename, "w");
-    cols = ['transcript', 'pN', 'pS', 'dN', 'dS', 'mk.raw.p.value', 'mk.odds.ni', 'dos'];
+    cols = ['transcript', 'pN', 'pS', 'dN', 'dS',  'pval', 'odds_ni', 'dos'];
+
+    if globs['vcf-polarized']:
+        cols.extend(['imp.pval', 'imp.odds_ni', 'imp.dos'])
+
+    if globs['sfs']:
+        cols.extend(['pn_af', 'ps_af'])
+
     mkfile.write("\t".join(cols) + "\n");
     return mkfile;
 
 #############################################################################
 
-def writeMK(transcript, outdict, mk_stream):
+def writeMK(globs, transcript, outdict, mk_stream):
 # A function to write out MK tables for each transcript
 
-    outline = [ transcript, str(outdict['pn']), str(outdict['ps']), str(outdict['dn']), str(outdict['ds']), str(outdict['mk.pval']), str(outdict['mk.odds.ni']), str(outdict['dos']) ];
+    outline = [ transcript,
+                str(outdict['pn']),
+                str(outdict['ps']),
+                str(outdict['dn']),
+                str(outdict['ds']),
+                str(outdict['pval']),
+                str(outdict['odds_ni']),
+                str(outdict['dos']),
+                ];
+
+    if globs['vcf-polarized']:
+        outline.extend([str(outdict['imp.pval']),
+                        str(outdict['imp.odds_ni']),
+                        str(outdict['imp.dos'])
+                        ])
+    if globs['sfs']:
+        outline.extend([str(outdict['pn_af']),
+                        str(outdict['ps_af'])
+                        ])
+
     mk_stream.write("\t".join(outline) + "\n");
         
 #############################################################################
