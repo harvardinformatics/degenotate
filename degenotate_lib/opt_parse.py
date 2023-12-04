@@ -45,7 +45,9 @@ def optParse(globs):
     parser.add_argument("-x", dest="extract_seq", help="Extract sites of a certain degeneracy. For instance, to extract 4-fold degenerate sites enter '4'. To extract 2- and 4-fold degenerate sites enter '24' and so on.", default=False);
     parser.add_argument("-m", dest="min_length", help="The minimum length of a transcript for it to be counted. Default (and global min): 3", default=False);
     parser.add_argument("-maf", dest="maf_cutoff", help="The minor allele frequency cutoff for MK tests. Sites where alternate alleles in the ingroup are below this frequency will be excluded. Default: 1 / 2N, where N is the number of ingroup samples", default=False);
-    #parser.add_argument("-p", dest="num_procs", help="The total number of processes that degenotate can use. Default: 1.", type=int, default=1);
+    parser.add_argument("-imp", dest="imp_cutoff", help="The minor allele frequency cutoff that distinguishes low and high allele frequencies for imputed MK test. Only used if provided VCF is polarized. Default: 0.15", default=False);
+
+#parser.add_argument("-p", dest="num_procs", help="The total number of processes that degenotate can use. Default: 1.", type=int, default=1);
     # User params
 
     parser.add_argument("--no-fixed-in", dest="no_fixed_in_flag", help="Set this if you wish to exclude sites from the MK test in which all ingroup samples share the same alternate allele (only the reference differs).", action="store_true", default=False);
@@ -198,6 +200,15 @@ def optParse(globs):
                 globs['ingroup-maf-cutoff'] = maf_cutoff;
             else:
                 CORE.errorOut("OP8", "The minor allele frequency (-maf) must be a number between 0 and 1.", globs);
+
+        ##########
+
+        if args.imp_cutoff:
+            imp_cutoff = CORE.isPosFloat(args.imp_cutoff, maxval=1.0);
+            if imp_cutoff or str(imp_cutoff) == "0.0":
+                globs['imp-maf-cutoff'] = imp_cutoff;
+            else:
+                CORE.errorOut("OP9", "The allele frequency cutoff for imputed MKT (-imp) must be a number between 0 and 1.", globs);
     # Check for a VCF file and its associated options
 
     else:
