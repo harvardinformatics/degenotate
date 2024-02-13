@@ -34,7 +34,7 @@
 degenotate takes as input either a genome FASTA file and a corresponding annotation file (GFF or GTF) OR file or directory of files that contain coding sequences in FASTA format and outputs a bed-like file that contains the degeneracy score (0-, 2-, 3-, or 4-fold) of every coding site.
 
 If given a corresponding VCF file with specified outgroup samples, degenotate can also count synonymous and non-synonymous polymorphisms and fixed differences for use in [MK tests](https://en.wikipedia.org/wiki/McDonald%E2%80%93Kreitman_test).
-By default tries to run both standard ([McDonald and Kreitman 1991](https://doi.org/10.1038/351652a0) and imputed ([Murga-Moreno et al 2022](https://doi.org/10.1093/g3journal/jkac206))) MK tests. imputed MK test provides increased power to detect positive selection by taking into account the distribution of fitness effects.
+By default tries to run both standard ([McDonald and Kreitman 1991](https://doi.org/10.1038/351652a0)) and imputed ([Murga-Moreno et al 2022](https://doi.org/10.1093/g3journal/jkac206)) MK tests. imputed MK test provides increased power to detect positive selection by taking into account the distribution of fitness effects.
 
 The program also offers coding sequence extraction from the input genome and extraction of sequences by degeneracy (e.g. extract only the 4-fold degenerate sites).
 
@@ -173,7 +173,7 @@ When provided with a multi-sample VCF file that includes outgroup samples, degen
 
 | transcript | pN | pS | dN | dS | pval	| odds_ni |	dos | imp.pval | imp.odds_ni | imp.dos | pn_af | ps_af |
 | ---------- | -- | -- | -- | -- | ---- | ------- | --- | -------- | ----------- | ------- | ----- | ----- |
-| Transcript ID | Count of polymorphic non-synonymous sites | Count of polymorphic synonymous sites | Count of fixed non-synonymous sites | Count of fixed synonymous sites | The raw p-value from the MK test | The odds-ratio from the MK test, which is equivalent to the neutrality index | The direction of selection | The raw p-value from the imputed MK test | The odds ratio (neutrality index) from the imputed MK test | allele frequencies of each non-synonymous polymorphism found in the transcript (if -sfs specified) | allele frequencies of each synonymous polymorphism found in the transcript (if -sfs specified)|
+| Transcript ID | Count of polymorphic non-synonymous sites | Count of polymorphic synonymous sites | Count of fixed non-synonymous sites | Count of fixed synonymous sites | The raw p-value from the MK test | The odds-ratio from the MK test, which is equivalent to the neutrality index | The direction of selection | The raw p-value from the imputed MK test | The odds ratio (neutrality index) from the imputed MK test | The direction of selection (from imputed MK test) | allele frequencies of each non-synonymous polymorphism found in the transcript (if -sfs specified) | allele frequencies of each synonymous polymorphism found in the transcript (if -sfs specified)|
 
 # Options
 
