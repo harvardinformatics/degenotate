@@ -1,5 +1,7 @@
 
-# degenotate
+<div align="center">
+  <img src="https://github.com/harvardinformatics/degenotate/blob/main/etc/logo/degen-link-logo-hex.png" style="height: 200px;"/>
+</div>
 
 ## Annotate degeneracy of sites in coding regions of a genome
 
@@ -17,6 +19,7 @@
 # Table of Contents
 
 - [About](#about)
+    - [Citation](#citation)
 - [Installation](#installation)
     - [Installing with bioconda](#installing-from-bioconda)
     - [Installing from source](#installing-from-source)
@@ -39,6 +42,12 @@ By default tries to run both standard ([McDonald and Kreitman 1991](https://doi.
 The program also offers coding sequence extraction from the input genome and extraction of sequences by degeneracy (e.g. extract only the 4-fold degenerate sites).
 
 **Warning: This is an early release. While we have done extensive testing, we are not certain our tests have hit all possible edge cases, especially those involving partial transcripts. We welcome bug reports and feature suggestions and are actively working to do more validation and testing.**
+
+## Citation
+
+degenotate was released with [snpArcher](https://snparcher.readthedocs.io/en/latest/) and can be cited with the snpArcher paper:
+
+> Mirchandani CD, Shultz AJ, Thomas GWC, Smith SJ, Baylis M, Arnold B, Corbett-Detig R, Enbody E, Sackton TB. 2024. A Fast, Reproducible, High-throughput Variant Calling Workflow for Population Genomics. _Molecular Biology and Evolution_ 41(1):msad270. doi: [10.1093/molbev/msad270](https://doi.org/10.1093/molbev/msad270).
 
 # Installation
 
