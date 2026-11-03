@@ -44,8 +44,8 @@ def optParse(globs):
     parser.add_argument("-la", dest="write_longest_aa", help="The same as -l, but writes translated amino acid sequences instead. Both -l and -la can be specified. Default file name is 'cds-aa-longest.fa'.", nargs='?', const="default", default=False);
     parser.add_argument("-x", dest="extract_seq", help="Extract sites of a certain degeneracy. For instance, to extract 4-fold degenerate sites enter '4'. To extract 2- and 4-fold degenerate sites enter '24' and so on.", default=False);
     parser.add_argument("-m", dest="min_length", help="The minimum length of a transcript for it to be counted. Default (and global min): 3", default=False);
-    parser.add_argument("-maf", dest="maf_cutoff", help="The minor allele frequency cutoff for MK tests. Sites where alternate alleles in the ingroup are below this frequency will be excluded. Default: 1 / 2N, where N is the number of ingroup samples", default=False);
-    parser.add_argument("-imp", dest="imp_cutoff", help="The minor allele frequency cutoff that distinguishes low and high allele frequencies for imputed MK test. Only used if provided VCF is polarized. Default: 0.15", default=False);
+    parser.add_argument("-maf", dest="maf_cutoff", help="The allele frequency cutoff for MK tests. Alternate alleles (derived alleles, for a polarized VCF) in the ingroup at or below this frequency will not be counted as polymorphisms. Default: 1 / 2N, where N is the number of ingroup samples, which excludes singletons at sites with no missing genotypes", default=False);
+    parser.add_argument("-imp", dest="imp_cutoff", help="The allele frequency cutoff that distinguishes low (at or below the cutoff) and high (above the cutoff) frequency polymorphisms for the imputed MK test. Only used if provided VCF is polarized. Default: 0.15", default=False);
 
 #parser.add_argument("-p", dest="num_procs", help="The total number of processes that degenotate can use. Default: 1.", type=int, default=1);
     # User params
@@ -56,7 +56,7 @@ def optParse(globs):
     # User options
 
     parser.add_argument("--info", dest="info_flag", help="Print some meta information about the program and exit. No other options required.", action="store_true", default=False);
-    parser.add_argument("--version", dest="version_flag", help="Simply print the version and exit. Can also be called as '-version', '-v', or '--v'", action="store_true", default=False);
+    parser.add_argument("--version", dest="version_flag", help="Simply print the version and exit. Can also be called as '-version' or '--v'", action="store_true", default=False);
     parser.add_argument("--quiet", dest="quiet_flag", help="Set this flag to prevent degenotate from reporting detailed information about each step.", action="store_true", default=False);
     # Run options
 
@@ -98,7 +98,7 @@ def optParse(globs):
 
     if args.annotation_file:
         if not args.genome_file:
-            CORE.errorOut("OP2", "A genome fasta file be specified with -g when an annotation file is given with -g", globs);
+            CORE.errorOut("OP2", "A genome fasta file must be specified with -g when an annotation file is given with -a", globs);
         globs['gxf-file'] = args.annotation_file;
         globs['fa-file'] = args.genome_file;
 
@@ -131,6 +131,10 @@ def optParse(globs):
     ####################
 
     if args.vcf_file:
+        if args.in_seq:
+            CORE.errorOut("OP17", "A VCF file (-v) can only be used with an annotation file (-a) and a genome file (-g), not with coding sequences (-s).", globs);
+        # The VCF coordinates can only be matched to transcripts with genome input
+
         globs['vcf-file'] = args.vcf_file;
         globs['codon-methods'].append("ns");
         # If a VCF file is supplied, add the ns method to the list of methods to apply to the input
@@ -220,6 +224,10 @@ def optParse(globs):
             warnings.append("# WARNING: --no-fixed-in was specified without a VCF file (-v). This option will be ignored.");
         if args.maf_cutoff:
             warnings.append("# WARNING: A minor allele frequency cutoff (-maf) was specified without a VCF file (-v). This option will be ignored.");
+        if args.imp_cutoff:
+            warnings.append("# WARNING: An allele frequency cutoff for the imputed MK test (-imp) was specified without a VCF file (-v). This option will be ignored.");
+        if args.sfs:
+            warnings.append("# WARNING: Output of allele frequencies (-sfs) was specified without a VCF file (-v). This option will be ignored.");
     # If some VCF options have been specified without a VCF file, throw some warnings
 
     ####################
@@ -227,7 +235,7 @@ def optParse(globs):
     if args.min_length:
         min_len = CORE.isPosInt(args.min_length, minval=3);
         if not min_len:
-            CORE.errorOut("OP9", "The minimum transcript length (-m) must be an integer 3 or larger.", globs);
+            CORE.errorOut("OP16", "The minimum transcript length (-m) must be an integer 3 or larger.", globs);
         else:
             globs['min-len'] = min_len;
     # Parse the minimun transcript length option
@@ -410,7 +418,8 @@ def startProg(globs):
         CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Longest transcript dna output:", pad) + globs['write-longest']);
     if globs['write-longest-aa']:
         CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Longest transcript protein output:", pad) + globs['write-longest-aa']);
-    else:
+    if not (globs['write-cds'] or globs['write-cds-aa'] or globs['write-longest'] or globs['write-longest-aa']):
+    # The degeneracy outputs are only written if the program doesn't exit after extracting CDS sequences
         CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Per-site degeneracy output:", pad) + globs['outbed']);
         CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# Transcript count output:", pad) + globs['out-transcript']);
 
@@ -438,17 +447,27 @@ def startProg(globs):
                 "Transcripts shorter than this length will be ignored by degnotate.");
     # The min length (-m) options
 
-    if globs['write-cds'] or globs['write-longest']:
+    if globs['write-cds'] or globs['write-cds-aa'] or globs['write-longest'] or globs['write-longest-aa']:
         if globs['write-cds']:
             CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# -c", pad) +
                         CORE.spacedOut("True", opt_pad) +
                         "CDS sequences will be extracted from the provided genome and the program will exit.");   
 
+        if globs['write-cds-aa']:
+            CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# -ca", pad) +
+                        CORE.spacedOut("True", opt_pad) +
+                        "CDS sequences will be extracted from the provided genome and translated, and the program will exit.");
+
         if globs['write-longest']:
             CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# -l", pad) +
                         CORE.spacedOut("True", opt_pad) +
                         "CDS sequences from longest trancsripts will be extracted from the provided genome and the program will exit.");          
-    # Report whether the -c or -l option is set to exit immediately after writing CDS sequences
+
+        if globs['write-longest-aa']:
+            CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# -la", pad) +
+                        CORE.spacedOut("True", opt_pad) +
+                        "CDS sequences from longest transcripts will be extracted from the provided genome and translated, and the program will exit.");
+    # Report whether the -c, -ca, -l, or -la option is set to exit immediately after writing CDS sequences
 
     else:
         if globs['vcf-file']:
@@ -458,10 +477,24 @@ def startProg(globs):
             # Report VCF outgroup samples
 
 
+            if globs['ingroup-maf-cutoff'] is False:
+                maf_str = "1 / 2N (default)";
+            else:
+                maf_str = str(globs['ingroup-maf-cutoff']);
+            # The default cutoff can't be calculated until the number of ingroup samples is read from the VCF file
             CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# -maf", pad) +
-                        CORE.spacedOut(str(globs['ingroup-maf-cutoff']) + " ", opt_pad) +
-                        "Alleles below this frequency in the ingroup samples will not be counted in MK tests.");
+                        CORE.spacedOut(maf_str + " ", opt_pad) +
+                        "Alleles at or below this frequency in the ingroup samples will not be counted in MK tests.");
             # The minor allele frequency cutoff (-maf) option
+
+            if globs['imp-maf-cutoff'] is False:
+                imp_str = "0.15 (default)";
+            else:
+                imp_str = str(globs['imp-maf-cutoff']);
+            CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# -imp", pad) +
+                        CORE.spacedOut(imp_str + " ", opt_pad) +
+                        "Polymorphisms at or below this frequency are low frequency in the imputed MK test (only done if the VCF is polarized).");
+            # The low/high allele frequency cutoff for the imputed MK test (-imp) option
 
             if globs['vcf-exclude']:
                 CORE.printWrite(globs['logfilename'], globs['log-v'], CORE.spacedOut("# -e", pad) +

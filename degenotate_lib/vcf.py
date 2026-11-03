@@ -38,7 +38,7 @@ def read(globs):
 
     outgroups_missing = [ sample for sample in globs['vcf-outgroups'] if sample not in globs['vcf'].header.samples ];
     if outgroups_missing:
-        CORE.errorOut("VCF1", "Not all outgroups samples specified exist in provided VCF file. Missing outgroups: " + ",".join(outgroups_missing), globs);
+        CORE.errorOut("VCF3", "Not all outgroups samples specified exist in provided VCF file. Missing outgroups: " + ",".join(outgroups_missing), globs);
     # A quick check to make sure all provided outgroup species are in the VCF file
     ## Outgroups
 
@@ -54,9 +54,11 @@ def read(globs):
         CORE.errorOut("VCF2", "No ingroup samples in VCF file -- all samples were specified as either outgroups (-u) or to be excluded (-e).", globs);
     # Check to make sure there are ingroup samples left after removing the excluded samples.
 
-    if not globs['ingroup-maf-cutoff']:
+    if globs['ingroup-maf-cutoff'] is False:
         globs['ingroup-maf-cutoff'] = 1 / globs['num-ingroup-chr'];
+        CORE.printWrite(globs['logfilename'], 3, "# No -maf cutoff was given, so the default 1 / 2N = 1 / " + str(globs['num-ingroup-chr']) + " = " + str(globs['ingroup-maf-cutoff']) + " will be used.");
     # Calculate the default MAF cutoff here if none is provided (1 / N)
+    # Checked with 'is False' since 0 is a valid cutoff
     ## Ingroups
 
     return globs;
@@ -94,8 +96,9 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
     # Adjust the genomic start and end coordinates for this transcript based on 
     # the extra out of frame nts in the transcript
 
-    transcript_records = globs['vcf'].fetch(transcript_region, adj_ts_start, adj_ts_end);
+    transcript_records = globs['vcf'].fetch(transcript_region, adj_ts_start - 1, adj_ts_end);
     # Look up all variant records in the range of the adjusted transcript start and end coordinates
+    # pysam takes 0-based, half-open coordinates, so the 1-based start is shifted by 1 and the end is not
 
     for rec in transcript_records:
 
@@ -127,10 +130,11 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
         # Look up the position of the record relative to the start of
         # the transcript
 
-        adj_rec_pos = rec_transcript_pos - start_pad;
+        adj_rec_pos = rec_transcript_pos - extra_leading_nt;
         # Adjust the transcript position based on the number of extra leading nts
+        # The transcript position is in transcript orientation, so this is the leading nts on both strands
 
-        if adj_rec_pos < 1:
+        if adj_rec_pos < 0:
             continue;
         #if the variant is in the partial starting codon, skip it
 
@@ -193,7 +197,7 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
                     try:
                         AA = rec.info['AA']
                     except KeyError:
-                        CORE.errorOut("the VCF header suggested it is polarized, but there is no AA (ancestral allele) field in this entry! : {}\n EXIT".format(rec))
+                        CORE.errorOut("VCF4", "The VCF header indicates it is polarized, but the record at " + rec.chrom + ":" + str(rec.pos) + " has no AA (ancestral allele) field.", globs);
                     derived = rec.alts[allele - 1]
                     if derived == AA:
                         AC = AN - AC

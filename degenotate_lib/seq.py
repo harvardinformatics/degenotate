@@ -20,8 +20,9 @@ def bioTranslator(seq, code):
     codon_seq = [(seq[i:i+3]) for i in range(0, len(seq), 3)];
     # Get chunks of 3 characters into a list.
 
-    aa_seq = [ code[codon] for codon in codon_seq];
+    aa_seq = [ code.get(codon, "X") for codon in codon_seq];
     # Build the aa sequence by looking up each codon in the provided code dict
+    # Codons not in the code (e.g. with ambiguous bases like N) are translated as X (unknown)
 
     return "".join(aa_seq);
     # Return the amino acid sequence as a string

@@ -36,9 +36,9 @@ def readFeatures(globs, file_reader, line_reader, feature_list, id_format, paren
             # Maker GFF files sometimes include the sequence of all transcripts at the end. We need to stop reading the file
             # at that point.
 
-            if line[0][0] == "#":
+            if not line[0] or line[0][0] == "#":
                 continue;
-            # Header/comment lines should be skipped. Note that this must come after the check for "##FASTA" above, or else
+            # Blank lines and header/comment lines should be skipped. Note that this must come after the check for "##FASTA" above, or else
             # the file will keep being read into the sequences and error out.
 
             feature_type, seq_header, start, end, strand, phase, feature_info = line[2], line[0], int(line[3]), int(line[4]), line[6], line[7], line[8].split(info_field_splitter);
@@ -65,7 +65,8 @@ def readFeatures(globs, file_reader, line_reader, feature_list, id_format, paren
                 parent_id = parent_id[0].replace(parent_id_format, "").replace("\"", "");
                 # Unpack and parse the gene ID
 
-                feature_len = end - start;
+                feature_len = end - start + 1;
+                # GXF coordinates are 1-based and inclusive
 
                 if feature_list[0] == "transcript":                  
 
@@ -114,7 +115,7 @@ def readFeatures(globs, file_reader, line_reader, feature_list, id_format, paren
                     # Because exon IDs are not always included for CDS, or they only represent the CDS as a whole (e.g. protein ID from Ensembl), we 
                     # count the number of exons in the transcript as the ID
 
-                    globs['annotation'][parent_id]['exons'][exon_id] = { 'header' : seq_header, 'start' : start, 'end' : end, 'len' : end-start, 'strand' : strand, 'phase' :  phase};
+                    globs['annotation'][parent_id]['exons'][exon_id] = { 'header' : seq_header, 'start' : start, 'end' : end, 'len' : end-start+1, 'strand' : strand, 'phase' :  phase};
                     globs['annotation'][parent_id]['cdslen'] += end-start+1;
                 # Add the ID and related info to the annotation dict.                   
 
