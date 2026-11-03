@@ -172,7 +172,7 @@ def getVariants(globs, transcript, transcript_region, codons, extra_leading_nt, 
 
         ## NOTE: Should we be comparing to ingroups with called genotypes here instead of number of all ingroups?
 
-        if not globs['count-fixed-alt-ingroups'] and len(in_hom_alts) == 1 and sum(in_hom_alts.values()) == globs['num-ingroups']:
+        if not globs['count-fixed-alt-ingroups'] and len(in_hom_alts) == 1 and sum(in_hom_alts.values()) == globs['num-ingroup-chr']:
             pass;
         # If we don't want to count fixed ingroups, check to see if any alt alleles are fixed and skip if so
         else:
