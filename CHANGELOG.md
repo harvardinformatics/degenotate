@@ -1,3 +1,7 @@
+2026.11.03
+- Added a strand column (column 6) to `degeneracy-all-sites.bed`, making it a BED6+ file, and a `strand` column to `transcript-counts.tsv` (#56)
+- Clarified in the README that the reference nucleotides and the nucleotides in the mutation summary column are reported on the strand of the transcript, so they are the complement of the genome for transcripts on the `-` strand (#56)
+
 2023.08.31
 - Added a check for trailing semi-colons in GFF file info fields
 
