@@ -1,6 +1,8 @@
 2026.11.03
 - Added a strand column (column 6) to `degeneracy-all-sites.bed`, making it a BED6+ file, and a `strand` column to `transcript-counts.tsv` (#56)
 - Clarified in the README that the reference nucleotides and the nucleotides in the mutation summary column are reported on the strand of the transcript, so they are the complement of the genome for transcripts on the `-` strand (#56)
+- Added a pytest test suite (`tests/`) with small hand-checked inputs covering degeneracy annotation, sequence extraction, the command line options, and the MK tables and tests
+- Added a GitHub Actions workflow that runs the tests on every push and pull request
 - Fixed MK counts skipping variants at the first base of a transcript's first full codon
 - Fixed MK counts for partial transcripts on the `-` strand with different numbers of leading and trailing out-of-frame bases, where variants were placed at the wrong codon position
 - Fixed MK counts missing a variant at the first base of a transcript, which happens when a transcript has no UTR at that end

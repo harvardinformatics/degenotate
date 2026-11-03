@@ -23,6 +23,7 @@
 - [Installation](#installation)
     - [Installing with bioconda](#installing-from-bioconda)
     - [Installing from source](#installing-from-source)
+    - [Running the tests](#running-the-tests)
 - [Usage](#usage)
 - [Output](#output)
     - [How degenotate classifies degeneracy](#how-degenotate-classifies-degeneracy)
@@ -88,6 +89,22 @@ conda activate degenotate
 ```
 
 to activate the environment.
+
+## Running the tests
+
+If you've installed from source, you can run the test suite with [pytest](https://docs.pytest.org/). pytest isn't included in `environment.yml`, so install it into the environment first:
+
+```bash
+conda install -n degenotate -c conda-forge pytest
+```
+
+Then, from the root of the repository:
+
+```bash
+pytest
+```
+
+The tests run degenotate on small inputs in `tests/data/`, where the expected outputs are worked out by hand (see [tests/data/README.md](tests/data/README.md)). Tests of the VCF options are skipped if Python is older than 3.10 or if pysam, NetworkX, or scipy is missing. Tests marked `xfail` are known bugs. They are expected to fail until the bug is fixed.
 
 # Usage
 
