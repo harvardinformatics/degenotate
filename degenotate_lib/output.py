@@ -16,17 +16,22 @@ def compileBedLine(globs, transcript, transcript_region, cds_coord, base, codon,
 
     if globs['gxf-file']:
         genome_coord = globs['coords'][transcript][cds_coord];
+        strand = globs['annotation'][transcript]['strand'];
         outline += [transcript_region, genome_coord-1, genome_coord];
     # In case the input was a gxf file and a genome, the first three columns of output
-    # reference genome coordinate which are retrieved here
+    # reference genome coordinate which are retrieved here, and the strand of the
+    # transcript is looked up from the annotation
 
     else:
+        strand = ".";
         outline += [transcript, cds_coord, cds_coord+1];
     # If the input was a directory of CDS sequences, the first three columns of output
-    # reference the CDS coordinates
+    # reference the CDS coordinates and there is no strand info
 
-    outline += [transcript + ":" + str(cds_coord), base_degen, base, aa];
+    outline += [transcript + ":" + str(cds_coord), base_degen, strand, base, aa];
     # The rest of the output except for the substitution strings
+    # Note that the base (and the substitutions below) are on the strand of the transcript,
+    # so for transcripts on the - strand they are the complement of the genome base
 
     subs = [];
     # Initialize an empty list to store substitutions of the current base that change the AA 
@@ -85,7 +90,7 @@ def writeBed(line_list, bed_stream, strand):
 def initializeTranscriptSummary(summary_stream):
 # Writes the headers for the transcript summary file
 
-    cols = ["transcript", "gene", "cds_length", "mrna_length", "is_longest", "f0", "f2", "f3", "f4"];
+    cols = ["transcript", "gene", "strand", "cds_length", "mrna_length", "is_longest", "f0", "f2", "f3", "f4"];
     summary_stream.write("\t".join(cols) + "\n");
 
 #############################################################################
@@ -95,16 +100,18 @@ def writeTranscriptSummary(globs, transcript, sum_dict, summary_stream):
 
     if globs['gxf-file']:
         geneid = globs['annotation'][transcript]['gene-id']
+        strand = globs['annotation'][transcript]['strand']
         cdslen = str(globs['annotation'][transcript]['cdslen'])
         mrnalen = str(globs['annotation'][transcript]['len'])
         longest = str(globs['annotation'][transcript]['longest']) 
     else:
         geneid = transcript
+        strand = "NA"
         cdslen = str(len(globs['cds-seqs'][transcript]))
         mrnalen = "NA"
         longest = "NA"
 
-    outline = [ transcript, geneid, cdslen,  mrnalen, longest];
+    outline = [ transcript, geneid, strand, cdslen,  mrnalen, longest];
     outline += [ str(sum_dict[fold]) for fold in sum_dict ];
     summary_stream.write("\t".join(outline) + "\n");
     # Compile and write the transcript summary line to the transcript outfile 

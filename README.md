@@ -144,19 +144,21 @@ Default name: `[output directory]/degeneracy-all-sites.bed`
 
 This is the main output file for degenotate. It contains one line for every coding site in the input genome, formatted with the following columns:
 
-| Scaffold | Start pos | End pos | Transcript ID | Degeneracy code | Reference nucleotide | Reference amino acid | Mutation summary |
-| -------- | --------- | ------- | ------------- | --------------- | -------------------- | -------------------- | ---------------- |
-| The assembly scaffold or chromosome | The start position of the site | The end position of the site | The transcript ID | [See above](#how-degenotate-classifies-degeneracy) | The nucleotide at this site as read from the genome | The amino acid translated from the codon in that this site is in in the current transcript | [See below](#mutation-summary-column) |
+| Scaffold | Start pos | End pos | Transcript ID | Degeneracy code | Strand | Reference nucleotide | Reference amino acid | Mutation summary |
+| -------- | --------- | ------- | ------------- | --------------- | ------ | -------------------- | -------------------- | ---------------- |
+| The assembly scaffold or chromosome | The start position of the site | The end position of the site | The transcript ID | [See above](#how-degenotate-classifies-degeneracy) | The strand of the transcript (`+` or `-`), or `.` when the input is coding sequences (`-s`) | The nucleotide at this site on the strand of the transcript. For transcripts on the `-` strand, this is the complement of the base in the genome (see note below) | The amino acid translated from the codon in that this site is in in the current transcript | [See below](#mutation-summary-column) |
+
+**Note on strand:** The reference nucleotide and the nucleotides in the mutation summary column are always given on the strand of the transcript, since this is the sequence that is read as codons. For transcripts on the `-` strand, these are the complements of the bases in the genome FASTA file and of the REF and ALT alleles in a VCF file. For example, a reference nucleotide of `G` at a site on a `-` strand transcript corresponds to a `C` in the genome. The degeneracy codes and amino acids do not depend on strand.
 
 ### Mutation summary column
 
-For non-degenerate sites (not 0-fold), the last column of the bed file contains information about how each mutation to non-degenerate nucleotides changes the amino acid. For example, if the final 4 columns of the bed file are:
+For sites that are not 4-fold degenerate, the last column of the bed file contains information about how each mutation to non-degenerate nucleotides changes the amino acid. For example, if the final 5 columns of the bed file are:
 
 ```
-2       A       E       T:D;C:D
+2       +       A       E       T:D;C:D
 ```
 
-This indicates that this site has 2-fold degeneracy, the nucleotide is A, and the codon that this nucleotide is part of in this transcript translates to E (Glutamic Acid). The final column shows the two nucleotides that change the amino acid at this position and the amino acid they change it to. Formatted as:
+This indicates that this site has 2-fold degeneracy, the transcript is on the `+` strand, the nucleotide is A, and the codon that this nucleotide is part of in this transcript translates to E (Glutamic Acid). The final column shows the two nucleotides that change the amino acid at this position and the amino acid they change it to. Formatted as:
 
 ```
 [nucleotide 1]:[corresponding amino acid 1];[nucleotide 2]:[corresponding amino acid 2]
@@ -164,15 +166,17 @@ This indicates that this site has 2-fold degeneracy, the nucleotide is A, and th
 
 For 3-fold sites, this would only have one `[nucleotide]:[amino acid]` entry and for 0-fold it would have three, each separated by a semi-colon.
 
+Like the reference nucleotide, the nucleotides in this column are on the strand of the transcript. For sites on `-` strand transcripts, complement them to compare with the ALT alleles in a VCF file. For example, `T:M` at a site on a `-` strand transcript corresponds to an `A` ALT allele in the VCF.
+
 ## Transcript site counts (tab delimited)
 
 Default name: `[output directory]/transcript-counts.tsv`
 
 In addition to the information for every coding site, degenotate also outputs summaries by transcript. The columns in this file are:
 
-| transcript | gene | cds_length | mrna_length | is_longest | f0 | f2 | f3 | f4 |
-| ---------- | ---- | ----------------- | ------ | ------ | ------ | ------ |------ | ------ |
-| Transcript ID | Gene ID | Length of coding sequence | Length of transcript | Indicator of longest transcript per gene | Count of 0-fold degenerate sites | Count of 2-fold degenerate sites | Count of 3-fold degenerate sites | Count of 4-fold degenerate sites | 
+| transcript | gene | strand | cds_length | mrna_length | is_longest | f0 | f2 | f3 | f4 |
+| ---------- | ---- | ------ | ----------------- | ------ | ------ | ------ | ------ |------ | ------ |
+| Transcript ID | Gene ID | Strand of the transcript (`+` or `-`), or `NA` when the input is coding sequences (`-s`) | Length of coding sequence | Length of transcript | Indicator of longest transcript per gene | Count of 0-fold degenerate sites | Count of 2-fold degenerate sites | Count of 3-fold degenerate sites | Count of 4-fold degenerate sites | 
 
 ## MK site counts and tests (tab delimited)
 
