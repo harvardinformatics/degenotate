@@ -16,7 +16,7 @@ import degenotate_lib.core as CORE
 def readCodonTable(genetic_code_file):
     DEGEN_DICT = {}
     CODON_DICT = {}
-    with open(os.path.join(os.path.dirname(__file__), "codon-table.csv"), "r") as dd:
+    with open(genetic_code_file, "r") as dd:
         reader = csv.reader(dd)
         for row in reader:
             DEGEN_DICT[row[0]] = row[2];
@@ -144,20 +144,40 @@ def codonHamming(codon1,codon2):
 
 #############################################################################
 
+def neutralityIndex(pn, ps, dn, ds):
+# Calculates the neutrality index, (pN * dS) / (pS * dN), from the exact counts, which can be fractional
+# For integer counts this is the same as the odds ratio from scipy's fisher_exact, including its edge cases:
+# nan if a row or column of the table [[pN, pS], [dN, dS]] is empty, and inf if pS * dN is 0
+
+    if 0 in [pn + ps, dn + ds, pn + dn, ps + ds]:
+        return float('nan');
+    if ps * dn == 0:
+        return float('inf');
+    return (pn * ds) / (ps * dn);
+
+#############################################################################
+
+def roundCounts(table):
+# Rounds the counts in an MK table half-up to integers for Fisher's exact test, which needs integer counts
+# Counts are never negative, so adding 0.5 and truncating rounds half-up
+    return [ [ int(count + 0.5) for count in row ] for row in table ];
+
+#############################################################################
+
 def compute_extended_MKT(d, d0, p_high, p0_high):
     ## Calculates extended alpha and DoS (direction of selection: https://doi.org/10.1093/molbev/msq249)
 
-    try:
-        from scipy.stats import fisher_exact
-    except:
-        CORE.errorOut("DEGEN2", "Missing scipy dependency. Please install and try again: https://anaconda.org/conda-forge/scipy", globs);
+    from scipy.stats import fisher_exact
+    # processCodons() checks that scipy is installed before this is called
     try:
         ext_alpha = 1 - p_high / p0_high * d0 / d
     except ZeroDivisionError:
         ext_alpha = 'NA'
     try:
         ext_dos = d / (d + d0) - p_high / (p_high + p0_high)
-        ext_odds, ext_pval = fisher_exact([[p_high, p0_high], [d, d0]])
+        ext_odds = neutralityIndex(p_high, p0_high, d, d0)
+        ext_pval = fisher_exact(roundCounts([[p_high, p0_high], [d, d0]]))[1]
+        # The neutrality index uses the exact counts, but Fisher's exact test needs integer counts
     except ZeroDivisionError:
         ext_dos = 'NA'
         ext_pval = 'NA'
@@ -170,10 +190,8 @@ def compute_extended_MKT(d, d0, p_high, p0_high):
 def compute_imputed_MKT(p, p0, d, d0, p_high, p0_high, p_low, p0_low):
     ## Calculates imputed alpha and DoS (direction of selection: https://doi.org/10.1093/molbev/msq249)
 
-    try:
-        from scipy.stats import fisher_exact
-    except:
-        CORE.errorOut("DEGEN2", "Missing scipy dependency. Please install and try again: https://anaconda.org/conda-forge/scipy", globs);
+    from scipy.stats import fisher_exact
+    # processCodons() checks that scipy is installed before this is called
     try:
         p_wd = p_low - p_high / p0_high * p0_low
         imp_alpha = 1 - (p - p_wd) / p0 * d0 / d
@@ -182,7 +200,9 @@ def compute_imputed_MKT(p, p0, d, d0, p_high, p0_high, p_low, p0_low):
     try:
         p_wd = p_low - p_high / p0_high * p0_low
         imp_dos = d / (d + d0) - (p - p_wd) / ((p - p_wd) + p0)
-        imp_odds, imp_pval = fisher_exact([[(p - p_wd), p0], [d, d0]])
+        imp_odds = neutralityIndex((p - p_wd), p0, d, d0)
+        imp_pval = fisher_exact(roundCounts([[(p - p_wd), p0], [d, d0]]))[1]
+        # The neutrality index uses the exact counts, but Fisher's exact test needs integer counts
     except ZeroDivisionError:
         imp_dos = 'NA'
         imp_pval = 'NA'
@@ -480,11 +500,11 @@ def processCodons(globs):
 
             if "ns" in globs['codon-methods']:
 
-                if not globs['ingroup-maf-cutoff']:
+                if globs['ingroup-maf-cutoff'] is False:
                     globs['ingroup-maf-cutoff'] = 1 / globs['num-ingroup-chr']
                 ext_cutoff = globs['ingroup-maf-cutoff']
                 # singletons
-                if not globs['imp-maf-cutoff']:
+                if globs['imp-maf-cutoff'] is False:
                     globs['imp-maf-cutoff'] = 0.15
                 imp_cutoff = globs['imp-maf-cutoff']
                 # cutoff for imputed MKT
@@ -499,10 +519,12 @@ def processCodons(globs):
                 ext_odds, ext_alpha, ext_dos, ext_pval = compute_extended_MKT(d, d0, p_high, p0_high)
                 # calculate alpha and DoS with a standard low AF cutoff = extended MKT
 
-                pn_af_high = [i for i in pn_af if i > imp_cutoff]
+                pn_af_high = [i for i in pn_af if (i > imp_cutoff) & (i > ext_cutoff)]
                 pn_af_low = [i for i in pn_af if (i <= imp_cutoff) & (i > ext_cutoff)]
-                ps_af_high = [i for i in ps_af if i > imp_cutoff]
+                ps_af_high = [i for i in ps_af if (i > imp_cutoff) & (i > ext_cutoff)]
                 ps_af_low = [i for i in ps_af if (i <= imp_cutoff) & (i > ext_cutoff)]
+                # Both classes exclude alleles at or below the MAF cutoff, so that p and p0 below
+                # (the reported pN and pS) are the same as in the extended MKT even if -imp is below -maf
                 p_high = len(pn_af_high)
                 p0_high = len(ps_af_high)
                 p_low = len(pn_af_low)

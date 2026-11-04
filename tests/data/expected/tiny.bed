@@ -1,0 +1,102 @@
+chr1	15	16	TX1:0	0	+	A	M	T:L;C:L;G:V
+chr1	16	17	TX1:1	0	+	T	M	A:K;C:T;G:R
+chr1	17	18	TX1:2	0	+	G	M	A:I;T:I;C:I
+chr1	18	19	TX1:3	0	+	G	A	A:T;T:S;C:P
+chr1	19	20	TX1:4	0	+	C	A	A:D;T:V;G:G
+chr1	20	21	TX1:5	4	+	T	A	
+chr1	21	22	TX1:6	2	+	T	L	A:I;G:V
+chr1	22	23	TX1:7	0	+	T	L	A:*;C:S;G:*
+chr1	23	24	TX1:8	2	+	A	L	T:F;C:F
+chr1	24	25	TX1:9	0	+	A	I	T:F;C:L;G:V
+chr1	25	26	TX1:10	0	+	T	I	A:N;C:T;G:S
+chr1	26	27	TX1:11	3	+	T	I	G:M
+chr1	27	28	TX1:12	0	+	T	W	A:R;C:R;G:G
+chr1	28	29	TX1:13	0	+	G	W	A:*;T:L;C:S
+chr1	29	30	TX1:14	0	+	G	W	A:*;T:C;C:C
+chr1	30	31	TX1:15	2	+	C	R	T:*;G:G
+chr1	31	32	TX1:16	0	+	G	R	A:Q;T:L;C:P
+chr1	32	33	TX1:17	4	+	A	R	
+chr1	33	34	TX1:18	0	+	G	E	A:K;T:*;C:Q
+chr1	34	35	TX1:19	0	+	A	E	T:V;C:A;G:G
+chr1	35	36	TX1:20	2	+	A	E	T:D;C:D
+chr1	36	37	TX1:21	0	+	T	*	A:K;C:Q;G:E
+chr1	37	38	TX1:22	2	+	A	*	T:L;C:S
+chr1	38	39	TX1:23	2	+	A	*	T:Y;C:Y
+chr1	57	58	TX3:0	0	+	A	M	T:L;C:L;G:V
+chr1	58	59	TX3:1	0	+	T	M	A:K;C:T;G:R
+chr1	59	60	TX3:2	0	+	G	M	A:I;T:I;C:I
+chr1	60	61	TX3:3	0	+	G	A	A:T;T:S;C:P
+chr1	61	62	TX3:4	0	+	C	A	A:D;T:V;G:G
+chr1	62	63	TX3:5	4	+	T	A	
+chr1	63	64	TX3:6	0	+	T	*	A:K;C:Q;G:E
+chr1	64	65	TX3:7	2	+	A	*	T:L;C:S
+chr1	65	66	TX3:8	2	+	A	*	T:Y;C:Y
+chr1	83	84	TX2:17	0	-	A	*	T:C;C:C;G:W
+chr1	84	85	TX2:16	2	-	G	*	T:L;C:S
+chr1	85	86	TX2:15	0	-	T	*	A:R;C:R;G:G
+chr1	86	87	TX2:14	2	-	C	F	A:L;G:L
+chr1	87	88	TX2:13	0	-	T	F	A:Y;C:S;G:C
+chr1	88	89	TX2:12	0	-	T	F	A:I;C:L;G:V
+chr1	89	90	TX2:11	4	-	C	P	
+chr1	90	91	TX2:10	0	-	C	P	A:H;T:L;G:R
+chr1	91	92	TX2:9	0	-	C	P	A:T;T:S;G:A
+chr1	92	93	TX2:8	4	-	C	G	
+chr1	93	94	TX2:7	0	-	G	G	A:D;T:V;C:A
+chr1	104	105	TX2:6	0	-	G	G	A:S;T:C;C:R
+chr1	105	106	TX2:5	2	-	A	K	T:N;C:N
+chr1	106	107	TX2:4	0	-	A	K	T:I;C:T;G:R
+chr1	107	108	TX2:3	0	-	A	K	T:*;C:Q;G:E
+chr1	108	109	TX2:2	0	-	G	M	A:I;T:I;C:I
+chr1	109	110	TX2:1	0	-	T	M	A:K;C:T;G:R
+chr1	110	111	TX2:0	0	-	A	M	T:L;C:L;G:V
+chr1	126	127	TX4:0	.	+	G	.	
+chr1	127	128	TX4:1	.	+	C	.	
+chr1	128	129	TX4:2	0	+	A	K	T:*;C:Q;G:E
+chr1	129	130	TX4:3	0	+	A	K	T:I;C:T;G:R
+chr1	130	131	TX4:4	2	+	A	K	T:N;C:N
+chr1	131	132	TX4:5	0	+	T	C	A:S;C:R;G:G
+chr1	132	133	TX4:6	0	+	G	C	A:Y;T:F;C:S
+chr1	133	134	TX4:7	2	+	C	C	A:*;G:W
+chr1	134	135	TX4:8	0	+	G	G	A:S;T:C;C:R
+chr1	135	136	TX4:9	0	+	G	G	A:D;T:V;C:A
+chr1	136	137	TX4:10	4	+	T	G	
+chr1	137	138	TX4:11	.	+	A	.	
+chr1	153	154	TX5:11	.	-	C	.	
+chr1	154	155	TX5:10	.	-	A	.	
+chr1	155	156	TX5:9	2	-	T	F	A:L;G:L
+chr1	156	157	TX5:8	0	-	T	F	A:Y;C:S;G:C
+chr1	157	158	TX5:7	0	-	T	F	A:I;C:L;G:V
+chr1	158	159	TX5:6	2	-	A	K	T:N;C:N
+chr1	159	160	TX5:5	0	-	A	K	T:I;C:T;G:R
+chr1	160	161	TX5:4	0	-	A	K	T:*;C:Q;G:E
+chr1	161	162	TX5:3	2	-	T	H	A:Q;G:Q
+chr1	162	163	TX5:2	0	-	A	H	T:L;C:P;G:R
+chr1	163	164	TX5:1	0	-	C	H	A:N;T:Y;G:D
+chr1	164	165	TX5:0	.	-	G	.	
+chr1	185	186	TX6:0	0	+	A	M	T:L;C:L;G:V
+chr1	186	187	TX6:1	0	+	T	M	A:K;C:T;G:R
+chr1	187	188	TX6:2	0	+	G	M	A:I;T:I;C:I
+chr1	188	189	TX6:3	0	+	C	P	A:T;T:S;G:A
+chr1	189	190	TX6:4	0	+	C	P	A:H;T:L;G:R
+chr1	190	191	TX6:5	4	+	C	P	
+chr1	191	192	TX6:6	0	+	T	*	A:K;C:Q;G:E
+chr1	192	193	TX6:7	2	+	A	*	T:L;C:S
+chr1	193	194	TX6:8	2	+	A	*	T:Y;C:Y
+chr1	209	210	TX7:8	2	-	G	*	T:Y;C:Y
+chr1	210	211	TX7:7	0	-	A	*	T:L;C:S;G:W
+chr1	211	212	TX7:6	0	-	T	*	A:K;C:Q;G:E
+chr1	212	213	TX7:5	4	-	A	G	
+chr1	213	214	TX7:4	0	-	G	G	A:E;T:V;C:A
+chr1	214	215	TX7:3	0	-	G	G	A:R;T:*;C:R
+chr1	215	216	TX7:2	0	-	G	M	A:I;T:I;C:I
+chr1	216	217	TX7:1	0	-	T	M	A:K;C:T;G:R
+chr1	217	218	TX7:0	0	-	A	M	T:L;C:L;G:V
+chr1	238	239	TX8:0	0	+	A	M	T:L;C:L;G:V
+chr1	239	240	TX8:1	0	+	T	M	A:K;C:T;G:R
+chr1	240	241	TX8:2	0	+	G	M	A:I;T:I;C:I
+chr1	241	242	TX8:3	0	+	C	H	A:N;T:Y;G:D
+chr1	242	243	TX8:4	0	+	A	H	T:L;C:P;G:R
+chr1	243	244	TX8:5	2	+	T	H	A:Q;G:Q
+chr1	244	245	TX8:6	0	+	T	*	A:K;C:Q;G:E
+chr1	245	246	TX8:7	2	+	A	*	T:L;C:S
+chr1	246	247	TX8:8	2	+	A	*	T:Y;C:Y

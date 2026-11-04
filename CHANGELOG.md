@@ -1,6 +1,22 @@
 2026.11.03
 - Added a strand column (column 6) to `degeneracy-all-sites.bed`, making it a BED6+ file, and a `strand` column to `transcript-counts.tsv` (#56)
 - Clarified in the README that the reference nucleotides and the nucleotides in the mutation summary column are reported on the strand of the transcript, so they are the complement of the genome for transcripts on the `-` strand (#56)
+- Added a pytest test suite (`tests/`) with small hand-checked inputs covering degeneracy annotation, sequence extraction, the command line options, and the MK tables and tests
+- Added a GitHub Actions workflow that runs the tests on every push and pull request
+- Fixed MK counts skipping variants at the first base of a transcript's first full codon
+- Fixed MK counts for partial transcripts on the `-` strand with different numbers of leading and trailing out-of-frame bases, where variants were placed at the wrong codon position
+- Fixed MK counts missing a variant at the first base of a transcript, which happens when a transcript has no UTR at that end
+- Fixed pN and pS including alleles at or below the `-maf` cutoff when `-imp` is set below it
+- `-maf 0` and `-imp 0` are no longer replaced by the default cutoffs
+- The neutrality index (`odds_ni`, `imp.odds_ni`) is now calculated from the exact counts, which can be fractional. The p-values from Fisher's exact test use the counts rounded to the nearest integer. Previously, scipy truncated fractional counts for both
+- Fixed `mrna_length` in `transcript-counts.tsv` being one base short. The minimum transcript length (`-m`) now uses the correct length, so transcripts exactly `-m` bases long are kept
+- Blank lines in the annotation file are now skipped instead of crashing
+- `-ca` and `-la` now translate codons with ambiguous bases as `X` instead of crashing, and now exit after writing sequences, like `-c` and `-l`
+- Using `-v` with `-s` now gives an error (OP17) instead of crashing, and a record with no AA field in a polarized VCF now gives an error (VCF4) instead of a traceback
+- Error codes used twice were renumbered: `-m` errors are now OP16 and missing outgroup samples are now VCF3
+- `-imp` and `-sfs` without `-v` now give warnings, and the start of the log only lists the output files that will be written
+- The log now shows the default `-maf` setting as `1 / 2N (default)` instead of `False`, and records the cutoff calculated from the VCF file. It also now shows the `-imp` setting
+- Clarified the `-maf` and `-imp` documentation (alleles at or below the `-maf` cutoff are not counted), and fixed the OP2 error message and the `--version` help
 
 2023.08.31
 - Added a check for trailing semi-colons in GFF file info fields

@@ -1,0 +1,21 @@
+##fileformat=VCFv4.2
+##contig=<ID=chr1,length=287>
+##INFO=<ID=AA,Number=1,Type=String,Description="Ancestral allele">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	in01	in02	in03	in04	in05	in06	in07	in08	in09	in10	out1
+chr1	21	.	T	C	.	PASS	AA=T	GT	0/1	0/1	0/1	0/0	0/0	0/0	0/0	0/0	0/0	./.	0/0
+chr1	24	.	A	G	.	PASS	AA=A	GT	0/0	0/0	0/0	0/0	0/0	0/0	0/0	0/0	0/0	0/0	1/1
+chr1	25	.	A	G	.	PASS	AA=A	GT	0/0	0/0	0/0	0/0	0/0	0/1	0/0	0/0	0/0	0/0	0/0
+chr1	29	.	G	C	.	PASS	AA=G	GT	0/0	0/0	0/0	0/1	0/1	0/0	0/0	0/0	0/0	0/0	0/0
+chr1	32	.	G	A	.	PASS	AA=G	GT	0/0	0/0	0/0	0/0	0/0	0/0	0/0	0/0	0/0	0/0	1/1
+chr1	33	.	A	G	.	PASS	AA=A	GT	1/1	1/1	1/1	1/1	1/1	1/1	1/1	1/1	1/1	1/1	0/0
+chr1	36	.	A	G,T	.	PASS	AA=A	GT	0/1	0/1	0/2	0/2	2/2	0/0	0/0	0/0	0/0	0/0	0/0
+chr1	87	.	G	A	.	PASS	AA=G	GT	0/1	0/1	0/1	0/1	0/0	0/0	0/0	0/0	0/0	0/0	0/0
+chr1	89	.	A	G	.	PASS	AA=A	GT	0/0	0/0	0/0	0/0	0/0	0/0	0/0	0/0	0/0	0/0	1/1
+chr1	106	.	T	C	.	PASS	AA=T	GT	0/0	0/0	0/0	0/0	0/0	0/0	0/0	0/0	0/0	0/0	1/1
+chr1	108	.	T	C	.	PASS	AA=C	GT	0/0	0/0	0/0	0/0	0/1	0/1	0/0	0/0	0/0	0/0	0/0
+chr1	161	.	T	G	.	PASS	AA=T	GT	0/0	0/0	0/0	0/0	0/0	0/0	0/0	0/0	0/0	0/0	1/1
+chr1	186	.	A	G	.	PASS	AA=A	GT	0/0	0/0	0/0	0/0	0/0	0/0	0/1	0/1	0/0	0/0	0/0
+chr1	210	.	C	T	.	PASS	AA=C	GT	0/0	0/0	0/0	0/0	0/0	0/0	0/0	0/0	0/1	0/1	0/0
+chr1	243	.	A	G	.	PASS	AA=A	GT	0/0	0/0	0/0	0/0	0/0	0/0	0/0	0/0	0/0	0/0	1/1
+chr1	244	.	T	A	.	PASS	AA=T	GT	0/0	0/0	0/0	0/0	0/0	0/0	0/0	0/0	0/0	0/0	1/1

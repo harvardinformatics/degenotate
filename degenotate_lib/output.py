@@ -39,7 +39,7 @@ def compileBedLine(globs, transcript, transcript_region, cds_coord, base, codon,
     #       to T which changes the AA from the reference AA to Serine
     # This is initialized here so it is still added as a column even when degen is 4
 
-    if base_degen not in [4, "."]:
+    if base_degen not in ["4", "."]:
     # If any substitutions of the current base change the current AA, annotate them here
 
         for new_base in globs['bases']:

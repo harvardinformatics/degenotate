@@ -23,6 +23,7 @@
 - [Installation](#installation)
     - [Installing with bioconda](#installing-from-bioconda)
     - [Installing from source](#installing-from-source)
+    - [Running the tests](#running-the-tests)
 - [Usage](#usage)
 - [Output](#output)
     - [How degenotate classifies degeneracy](#how-degenotate-classifies-degeneracy)
@@ -88,6 +89,22 @@ conda activate degenotate
 ```
 
 to activate the environment.
+
+## Running the tests
+
+If you've installed from source, you can run the test suite with [pytest](https://docs.pytest.org/). pytest isn't included in `environment.yml`, so install it into the environment first:
+
+```bash
+conda install -n degenotate -c conda-forge pytest
+```
+
+Then, from the root of the repository:
+
+```bash
+pytest
+```
+
+The tests run degenotate on small inputs in `tests/data/`, where the expected outputs are worked out by hand (see [tests/data/README.md](tests/data/README.md)). Tests of the VCF options are skipped if Python is older than 3.10 or if pysam, NetworkX, or scipy is missing. Tests marked `xfail` are known bugs. They are expected to fail until the bug is fixed.
 
 # Usage
 
@@ -186,7 +203,7 @@ When provided with a multi-sample VCF file that includes outgroup samples, degen
 
 | transcript | pN | pS | dN | dS | pval	| odds_ni |	dos | imp.pval | imp.odds_ni | imp.dos | pn_af | ps_af |
 | ---------- | -- | -- | -- | -- | ---- | ------- | --- | -------- | ----------- | ------- | ----- | ----- |
-| Transcript ID | Count of polymorphic non-synonymous sites | Count of polymorphic synonymous sites | Count of fixed non-synonymous sites | Count of fixed synonymous sites | The raw p-value from the MK test | The odds-ratio from the MK test, which is equivalent to the neutrality index | The direction of selection | The raw p-value from the imputed MK test | The odds ratio (neutrality index) from the imputed MK test | The direction of selection (from imputed MK test) | allele frequencies of each non-synonymous polymorphism found in the transcript (if -sfs specified) | allele frequencies of each synonymous polymorphism found in the transcript (if -sfs specified)|
+| Transcript ID | Count of polymorphic non-synonymous sites | Count of polymorphic synonymous sites | Count of fixed non-synonymous sites | Count of fixed synonymous sites | The raw p-value from the MK test | The neutrality index, (pN · dS) / (pS · dN), which is equivalent to the odds ratio from the MK test | The direction of selection | The raw p-value from the imputed MK test | The odds ratio (neutrality index) from the imputed MK test | The direction of selection (from imputed MK test) | allele frequencies of each non-synonymous polymorphism found in the transcript (if -sfs specified) | allele frequencies of each synonymous polymorphism found in the transcript (if -sfs specified)|
 
 # Options
 
@@ -203,13 +220,13 @@ When provided with a multi-sample VCF file that includes outgroup samples, degen
 | `-sfs` | Set this flag to output raw allele frequencies in the mk table|
 | `-d` | degenotate assumes the chromosome IDs in the GFF file exactly match the sequence headers in the FASTA file. If this is not the case, use this to specify a character at which the FASTA headers will be trimmed. |
 | `-c` | If a file is provided, the program will extract CDS sequences from the genome and write them to the file and exit. If no file is given with the option, a file with the name of 'cds-nt.fa' will be written to the output directory. This option is equivalent to '-x 0234' except this stops the program before calculating degeneracy. |
-| `-ca` |  The same as `-c`, but writes translated amino acid sequences instead. Both `-c` and `-ca` can be specified. Default file name is 'cds-aa.fa'. |
+| `-ca` |  The same as `-c`, but writes translated amino acid sequences instead. Codons with ambiguous bases (e.g. `N`) are translated as `X`. Both `-c` and `-ca` can be specified. Default file name is 'cds-aa.fa'. |
 | `-l` | If a file is provided, the program will extract CDS sequences from the longest transcript for each gene and write them to the file and exit. If no file is given with the option, a file with the name of 'cds-nt-longest.fa' will be written to the output directory. Both `-c` and `-l` can be specified. |
 | `-la` |  The same as `-l`, but writes translated amino acid sequences instead. Both `-l` and `-la` can be specified to write both files. Default file name is 'cds-aa-longest.fa'. |
 | `-x` | Extract sites of a certain degeneracy. For instance, to extract 4-fold degenerate sites enter '4'. To extract 2- and 4-fold degenerate sites enter '24' and so on. | 
 | `-m` | The minimum length of a transcript for it to be counted. Default (and global min): 3 | 
-| `-maf` | The minor allele frequency cutoff for MK tests. Sites where alternate alleles in the ingroup are below this frequency will be excluded. Default: 1 / 2N, where N is the number of ingroup samples | 
-| `-imp` | The minor allele frequency cutoff that distinguishes low and high allele frequencies for imputed MK test. Only used if provided VCF is polarized. Default: 0.15 |
+| `-maf` | The allele frequency cutoff for MK tests. Alternate alleles (derived alleles, for a polarized VCF) in the ingroup at or below this frequency will not be counted as polymorphisms. Default: 1 / 2N, where N is the number of ingroup samples, which excludes singletons at sites with no missing genotypes | 
+| `-imp` | The allele frequency cutoff that distinguishes low (at or below the cutoff) and high (above the cutoff) frequency polymorphisms for the imputed MK test. Only used if provided VCF is polarized. Default: 0.15 |
 | `--no-fixed-in` | Set this if you wish to exclude sites from the MK test in which all ingroup samples share the same alternate allele (only the reference differs). | 
 | `--overwrite` | Set this to overwrite existing files. |
 | `--appendlog` | Set this to keep the old log file even if `--overwrite` is specified. New log information will instead be appended to the previous log file. |
@@ -225,7 +242,8 @@ To compute MK tables of synonymous and nonsynonymous polymorphism and divergence
 - Codons with multiple fixed differences: If there are multiple fixed differences in a single codon in the outgroup, we compute all possible mutational pathways between the ingroup codon and the outgroup codon, and take the average number of nonsynonymous and synonymous changes across these paths, weighted equally. This means we can have fractional numbers of synonymous and nonsynonymous divergence. 
 - Defining fixed differences: We consider a site to be a fixed difference only if all the alleles in the outgroup do not exist in the ingroup. This means, for example, that a polymorphic site in the outgroup can still contain a fixed difference as long as both the alleles are different from any ingroup allele. In this case, we use the highest frequency outgroup allele.
 - Defining polymorphic sites: We consider polymorphic sites to be any site where at least one ingroup individual has a non-reference allele. In most cases this is intuitive, however there are two edge cases worth pointing out. First, if all ingroup individuals are homozygous alternate, we will count that position as a polymorphism **unless the `--no-fixed-in` option is specified**. This has implications if the reference genome is from a different population or species than your ingroup sequence. Second, we consider sites with shared polymorphism between the ingroup and the outgroup to be polymorphic, since we do not consider outgroup sequence at all when defining polymorphisms.
-- Site frequency: Use the `-maf` option to specify a minimum ingroup minor allele frequency to consider sites. For example, with `-maf 0.3`, sites will only be considered for polymorphism if the minor allele exists in 30% of haplotypes (2 times the number of individuals). For now, if you want to exclude singletons or other low-frequency **fixed differences** from MK calculations, you need to remove these sites from your VCF before running degenotate.
+- Site frequency: Use the `-maf` option to specify an ingroup allele frequency cutoff for polymorphisms. The frequency is that of the alternate allele, or of the derived allele for a polarized VCF, among the called ingroup haplotypes (2 times the number of individuals, minus missing genotypes). Alleles at or below the cutoff are not counted. For example, with `-maf 0.3`, an alternate allele is only counted as a polymorphism if it is in more than 30% of haplotypes. The default, 1 / 2N, excludes singletons at sites with no missing genotypes (with missing genotypes, a singleton's frequency is above 1 / 2N). For now, if you want to exclude singletons or other low-frequency **fixed differences** from MK calculations, you need to remove these sites from your VCF before running degenotate.
+- Fractional counts: dN and dS can be fractional (see above), and so can the number of non-synonymous polymorphisms in the imputed MK test after the weakly deleterious ones are removed. The neutrality index (`odds_ni`, `imp.odds_ni`) and the direction of selection are calculated from these exact counts. Fisher's exact test needs whole numbers, so the p-values (`pval`, `imp.pval`) are calculated from the counts rounded to the nearest integer (0.5 rounds up).
 - Weakly deleterious polymorphisms (of non-synonymous class) are segregating at low allele frequencies and their fraction can be estimated from the polymorphisms of synonymous class (main assumption of imputed MK test).
 
 **Any of these assumptions may change in future releases.** 

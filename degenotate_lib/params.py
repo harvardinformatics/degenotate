@@ -26,8 +26,8 @@ class StrictDict(dict):
 
 def init():
     globs_init = {
-        'version' : '1.2.4',
-        'releasedate' : "August 2023",
+        'version' : '1.4.0',
+        'releasedate' : "November 2026",
         'authors' : "Timothy Sackton, Gregg Thomas",
         'doi' : '',
         'http' : 'https://github.com/harvardinformatics/degenotate',
@@ -120,7 +120,7 @@ def init():
 
         'ingroup-maf-cutoff' : False,
         # The frequency cutoff for the minor allele in the ingroups to be considered in the MK tests
-        # Alleles present BELOW this frequency will not be considered
+        # Alleles present AT OR BELOW this frequency will not be considered
         # Currently defaults to 1 / 2N, where N is the number of ingroup samples, so this has to be calculated
         # after we read the VCF
 
